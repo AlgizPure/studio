@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from './ui/badge';
 import type { LucideIcon } from 'lucide-react';
 import type { Exercise, Habit } from '@/lib/types';
-import { Target, Pencil, Dumbbell } from 'lucide-react';
+import { Target, Pencil, Dumbbell, Timer } from 'lucide-react';
 import { AddExerciseDialog } from './add-exercise-dialog';
 import { AddHabitDialog } from './add-habit-dialog';
 import { Button } from './ui/button';
@@ -58,7 +58,6 @@ export function DailySchedule({
               const dailyExercises = exercises.filter(ex => ex.days?.includes(day));
               
               const allItems = [
-                ...items.map(item => ({...item, isDefault: true, id: `${day}-${item.id}`})), 
                 ...dailyHabits.map(habit => ({
                   id: habit.id,
                   time: habitCategories.find(c => c.id === habit.categoryId)?.name || 'Habit',
@@ -68,7 +67,6 @@ export function DailySchedule({
                   icon: Target,
                   raw: habit,
                   isPomodoro: !!habit.pomodoro,
-                  isCustom: true,
                 })),
                 ...dailyExercises.map(ex => ({
                     id: ex.id,
@@ -78,7 +76,6 @@ export function DailySchedule({
                     duration: exerciseCategories.find(c => c.id === ex.categoryId)?.name || 'Workout',
                     icon: Dumbbell,
                     raw: ex,
-                    isCustom: ex.custom,
                 }))
               ].sort((a, b) => {
                 const aTime = (a.time || '99:99').split(' ')[0];
@@ -99,7 +96,6 @@ export function DailySchedule({
                       <div className="space-y-4 pt-2">
                         {allItems.map((item) => {
                             const Icon = item.icon as LucideIcon;
-                            const isCustomItem = (item as any).isCustom;
 
                             const editTrigger = (
                               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -116,10 +112,10 @@ export function DailySchedule({
                                     <p className="font-semibold">{item.activityName}</p>
                                     <p className="text-sm text-muted-foreground">{item.time}</p>
                                 </div>
-                                {(item as any).isPomodoro && <PomodoroIcon className="mr-2"/>}
+                                {(item as any).isPomodoro ? <PomodoroIcon className="mr-2"/> : null}
                                 <Badge variant={item.activityType === 'Habit' ? 'secondary' : 'outline'} className="mr-2">{item.duration}</Badge>
                                 
-                                {isCustomItem && item.activityType === 'Habit' ? (
+                                {item.activityType === 'Habit' ? (
                                     <AddHabitDialog
                                         habitToEdit={item.raw as Habit}
                                         onHabitUpdate={onHabitUpdate}
@@ -128,7 +124,7 @@ export function DailySchedule({
                                         trigger={editTrigger}
                                         openManageCategories={openManageCategories}
                                     />
-                                ) : isCustomItem && item.activityType === 'Workout' ? (
+                                ) : item.activityType === 'Workout' ? (
                                     <AddExerciseDialog
                                         exerciseToEdit={item.raw as Exercise}
                                         onExerciseUpdate={onExerciseUpdate}
@@ -138,7 +134,6 @@ export function DailySchedule({
                                         openManageCategories={() => setIsManageExerciseCategoriesOpen(true)}
                                     />
                                 ) : (
-                                  // Placeholder for default items to maintain layout
                                   <div className="w-8 h-8" />
                                 )}
                               </div>
@@ -146,7 +141,7 @@ export function DailySchedule({
                         })}
                       </div>
                     ) : (
-                      <p className="text-muted-foreground pt-2">Rest day. Well deserved!</p>
+                      <p className="text-muted-foreground pt-2">Nothing scheduled. Add an activity!</p>
                     )}
                   </AccordionContent>
                 </AccordionItem>
