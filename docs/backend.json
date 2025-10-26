@@ -4,284 +4,235 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user's profile with personal information and preferences.",
+      "description": "Represents a user profile within the Zenith Trainer application.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the UserProfile entity."
+          "description": "Unique identifier for the user profile."
         },
-        "displayName": {
+        "name": {
           "type": "string",
-          "description": "User's display name."
+          "description": "User's full name."
         },
         "email": {
           "type": "string",
           "description": "User's email address.",
           "format": "email"
         },
-        "photoURL": {
-          "type": "string",
-          "description": "URL of the user's profile picture.",
-          "format": "uri"
-        },
-        "currentStreak": {
+        "weight": {
           "type": "number",
-          "description": "The user's current consecutive day activity streak."
+          "description": "User's weight in kilograms."
         },
-        "lastActiveDate": {
+        "height": {
+          "type": "number",
+          "description": "User's height in centimeters."
+        },
+        "workoutPlanIds": {
+          "type": "array",
+          "description": "References to WorkoutPlan. (Relationship: UserProfile 1:N WorkoutPlan)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "habitTrackerId": {
           "type": "string",
-          "description": "The last date the user completed an activity, in ISO format (YYYY-MM-DD)."
+          "description": "Reference to HabitTracker. (Relationship: UserProfile 1:1 HabitTracker)"
         }
       },
-      "required": ["id", "email"]
+      "required": [
+        "id",
+        "name",
+        "email"
+      ]
     },
-    "ExerciseCategory": {
+    "WorkoutPlan": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ExerciseCategory",
+      "title": "WorkoutPlan",
       "type": "object",
-      "description": "Represents a category for exercises.",
+      "description": "Represents a workout plan, containing a set of scheduled workouts.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the category."
+          "description": "Unique identifier for the workout plan."
         },
         "name": {
           "type": "string",
-          "description": "Name of the category."
+          "description": "Name of the workout plan."
         },
-        "authorId": {
+        "description": {
           "type": "string",
-          "description": "The ID of the user who created this category."
+          "description": "Description of the workout plan."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N WorkoutPlan)"
+        },
+        "scheduledWorkoutIds": {
+          "type": "array",
+          "description": "References to ScheduledWorkout. (Relationship: WorkoutPlan 1:N ScheduledWorkout)",
+          "items": {
+            "type": "string"
+          }
         }
       },
-      "required": ["id", "name"]
+      "required": [
+        "id",
+        "name",
+        "userId"
+      ]
+    },
+    "ScheduledWorkout": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ScheduledWorkout",
+      "type": "object",
+      "description": "Represents a specific workout scheduled for a particular day and time.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the scheduled workout."
+        },
+        "workoutPlanId": {
+          "type": "string",
+          "description": "Reference to WorkoutPlan. (Relationship: WorkoutPlan 1:N ScheduledWorkout)"
+        },
+        "exerciseIds": {
+          "type": "array",
+          "description": "References to Exercise. (Relationship: ScheduledWorkout N:N Exercise)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dayOfWeek": {
+          "type": "string",
+          "description": "Day of the week for the scheduled workout (e.g., Monday, Tuesday)."
+        },
+        "timeOfDay": {
+          "type": "string",
+          "description": "Time of day for the scheduled workout (e.g., Morning, Afternoon, Evening)."
+        },
+        "durationMinutes": {
+          "type": "number",
+          "description": "Duration of the workout in minutes."
+        }
+      },
+      "required": [
+        "id",
+        "workoutPlanId",
+        "dayOfWeek",
+        "timeOfDay"
+      ]
     },
     "Exercise": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Exercise",
       "type": "object",
-      "description": "Represents a single exercise that can be added to a workout or schedule.",
+      "description": "Represents a specific exercise with details such as name, description, and instructions.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Exercise entity."
+          "description": "Unique identifier for the exercise."
         },
         "name": {
           "type": "string",
           "description": "Name of the exercise."
         },
-        "categoryId": {
-          "type": "string",
-          "description": "Reference to the ExerciseCategory."
-        },
         "description": {
           "type": "string",
-          "description": "Description of how to perform the exercise."
+          "description": "Description of the exercise."
         },
-        "image": {
+        "instructions": {
           "type": "string",
-          "description": "URL of an image demonstrating the exercise.",
+          "description": "Instructions on how to perform the exercise."
+        },
+        "exerciseType": {
+          "type": "string",
+          "description": "The type of exercise, e.g., strength training, bio-dynamics, TRX, static."
+        },
+        "equipment": {
+          "type": "string",
+          "description": "Equipment required for the exercise (e.g., dumbbells, resistance bands, TRX)."
+        },
+        "videoUrl": {
+          "type": "string",
+          "description": "URL of a video demonstrating the exercise.",
           "format": "uri"
-        },
-        "custom": {
-          "type": "boolean",
-          "description": "Flag indicating if this is a custom exercise created by the user."
-        },
-        "time": {
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "exerciseType"
+      ]
+    },
+    "HabitTracker": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HabitTracker",
+      "type": "object",
+      "description": "Represents a habit tracker for tracking mindfulness, study lessons, and other activities.",
+      "properties": {
+        "id": {
           "type": "string",
-          "description": "Scheduled time for the exercise (e.g., '08:00')."
+          "description": "Unique identifier for the habit tracker."
         },
-        "days": {
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:1 HabitTracker)"
+        },
+        "habitItemIds": {
           "type": "array",
+          "description": "References to HabitItem. (Relationship: HabitTracker 1:N HabitItem)",
           "items": {
-            "type": "string",
-            "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-          },
-          "description": "Days of the week the exercise is scheduled for."
-        },
-        "authorId": {
-          "type": "string",
-          "description": "The ID of the user who created this exercise."
-        },
-        "lastCompleted": {
-          "type": "string",
-          "description": "The ISO date string of when the exercise was last completed.",
-          "format": "date-time"
-        },
-        "distance": {
-            "type": "number",
-            "description": "Distance covered in kilometers, for cardio exercises."
-        },
-        "parameters": {
-          "type": "array",
-          "description": "User-defined parameters for logging exercise metrics.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {"type": "string"},
-              "name": {"type": "string"},
-              "unit": {"type": "string"},
-              "defaultValue": {"type": "number"}
-            },
-            "required": ["id", "name", "unit", "defaultValue"]
+            "type": "string"
           }
         }
       },
-      "required": ["id", "name", "categoryId", "description"]
+      "required": [
+        "id",
+        "userId"
+      ]
     },
-     "ExerciseLog": {
+    "HabitItem": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ExerciseLog",
+      "title": "HabitItem",
       "type": "object",
-      "description": "A log entry for a completed exercise instance with specific parameter values.",
-      "properties": {
-        "id": {"type": "string"},
-        "exerciseId": {"type": "string"},
-        "userId": {"type": "string"},
-        "date": {"type": "string", "format": "date"},
-        "values": {
-          "type": "object",
-          "description": "A map of parameter IDs to their logged numeric values."
-        }
-      },
-      "required": ["id", "exerciseId", "userId", "date", "values"]
-    },
-    "HabitCategory": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "HabitCategory",
-      "type": "object",
-      "description": "Represents a category for habits.",
+      "description": "Represents a single item in the habit tracker, such as mindfulness or study lesson.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the category."
+          "description": "Unique identifier for the habit item."
+        },
+        "habitTrackerId": {
+          "type": "string",
+          "description": "Reference to HabitTracker. (Relationship: HabitTracker 1:N HabitItem)"
         },
         "name": {
           "type": "string",
-          "description": "Name of the category."
+          "description": "Name of the habit item (e.g., Mindfulness, Study Lesson)."
         },
-        "authorId": {
+        "program": {
           "type": "string",
-          "description": "The ID of the user who created this category."
-        }
-      },
-      "required": ["id", "name"]
-    },
-    "Habit": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Habit",
-      "type": "object",
-      "description": "Represents a habit that the user wants to track.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Habit entity."
+          "description": "Name of the program (e.g., Mathematics, Language)."
         },
-        "name": {
-          "type": "string",
-          "description": "Name of the habit."
-        },
-        "categoryId": {
-          "type": "string",
-          "description": "Reference to the HabitCategory."
-        },
-        "goal": {
-          "type": "string",
-          "description": "A specific goal for the habit (e.g., '8 glasses', '15 minutes')."
+        "lessons": {
+          "type": "number",
+          "description": "Number of lessons for the program."
         },
         "completed": {
           "type": "boolean",
-          "description": "Indicates whether the habit was completed for the current period."
-        },
-        "days": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-          },
-          "description": "Days of the week the habit is active."
-        },
-        "pomodoro": {
-          "type": "object",
-          "properties": {
-            "cycles": {
-              "type": "number"
-            }
-          },
-          "description": "Configuration for an associated Pomodoro timer."
-        },
-        "authorId": {
-          "type": "string",
-          "description": "The ID of the user who created this habit."
+          "description": "Indicates whether the habit item is completed for the day."
         }
       },
-      "required": ["id", "name", "categoryId"]
-    },
-    "Program": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Program",
-      "type": "object",
-      "description": "A structured workout program, which can be a user-created program or a template.",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "isTemplate": { "type": "boolean" },
-        "authorId": { "type": "string" }
-      },
-      "required": ["id", "name", "description", "isTemplate"]
-    },
-    "Workout": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "Workout",
-        "type": "object",
-        "description": "A single workout session within a program, consisting of multiple exercises.",
-        "properties": {
-            "id": { "type": "string" },
-            "name": { "type": "string" },
-            "description": { "type": "string" },
-            "level": { "type": "number" },
-            "exercises": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "exerciseId": { "type": "string" },
-                        "sets": { "type": "number" },
-                        "reps": { "type": "number" },
-                        "duration": { "type": "string" }
-                    },
-                    "required": ["exerciseId"]
-                }
-            }
-        },
-        "required": ["id", "name", "exercises"]
-    },
-    "ProgramWorkout": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "ProgramWorkout",
-        "type": "object",
-        "description": "Links a Workout to a Program and defines its schedule within that program.",
-        "properties": {
-            "id": { "type": "string" },
-            "workoutId": { "type": "string" },
-            "schedule": {
-                "type": "object",
-                "properties": {
-                    "type": { "type": "string", "enum": ["repeating", "fixed_times"] },
-                    "days": { "type": "array", "items": { "type": "string" } },
-                    "repeatCount": { "type": "number" },
-                    "endDate": { "type": "string", "format": "date-time" }
-                }
-            }
-        },
-        "required": ["id", "workoutId", "schedule"]
+      "required": [
+        "id",
+        "habitTrackerId",
+        "name"
+      ]
     }
   },
   "auth": {
     "providers": [
-      "google.com",
-      "password"
+      "password",
+      "anonymous"
     ]
   },
   "firestore": {
@@ -293,84 +244,120 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores user profile data. Accessible only by the authenticated user. `userId` must match `request.auth.uid`."
+          "description": "Stores user profile information.  Root path for all user-owned data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
         }
       },
       {
-        "path": "/users/{userId}/exercises/{exerciseId}",
+        "path": "/users/{userId}/workoutPlans/{workoutPlanId}",
         "definition": {
-            "entityName": "Exercise",
-            "schema": { "$ref": "#/backend/entities/Exercise"},
-            "description": "Stores custom exercises created by the user."
-        }
-      },
-       {
-        "path": "/users/{userId}/exerciseLogs/{logId}",
-        "definition": {
-            "entityName": "ExerciseLog",
-            "schema": { "$ref": "#/backend/entities/ExerciseLog"},
-            "description": "Stores instances of completed exercises with their specific parameter values."
-        }
-      },
-      {
-        "path": "/users/{userId}/exerciseCategories/{categoryId}",
-        "definition": {
-            "entityName": "ExerciseCategory",
-            "schema": { "$ref": "#/backend/entities/ExerciseCategory"},
-            "description": "Stores user-defined categories for exercises."
-        }
-      },
-      {
-        "path": "/users/{userId}/habits/{habitId}",
-        "definition": {
-          "entityName": "Habit",
+          "entityName": "WorkoutPlan",
           "schema": {
-            "$ref": "#/backend/entities/Habit"
+            "$ref": "#/backend/entities/WorkoutPlan"
           },
-          "description": "Stores habits tracked by the user."
+          "description": "Stores workout plans created by the user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "workoutPlanId",
+              "description": "The unique identifier of the workout plan."
+            }
+          ]
         }
       },
       {
-        "path": "/users/{userId}/habitCategories/{categoryId}",
+        "path": "/users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId}",
         "definition": {
-            "entityName": "HabitCategory",
-            "schema": { "$ref": "#/backend/entities/HabitCategory"},
-            "description": "Stores user-defined categories for habits."
+          "entityName": "ScheduledWorkout",
+          "schema": {
+            "$ref": "#/backend/entities/ScheduledWorkout"
+          },
+          "description": "Stores scheduled workouts within a workout plan. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "workoutPlanId",
+              "description": "The unique identifier of the workout plan."
+            },
+            {
+              "name": "scheduledWorkoutId",
+              "description": "The unique identifier of the scheduled workout."
+            }
+          ]
         }
       },
       {
-        "path": "/programs/{programId}",
+        "path": "/exercises/{exerciseId}",
         "definition": {
-            "entityName": "Program",
-            "schema": { "$ref": "#/backend/entities/Program" },
-            "description": "Stores program templates available to all users."
+          "entityName": "Exercise",
+          "schema": {
+            "$ref": "#/backend/entities/Exercise"
+          },
+          "description": "Stores exercises. All users have read access.",
+          "params": [
+            {
+              "name": "exerciseId",
+              "description": "The unique identifier of the exercise."
+            }
+          ]
         }
       },
       {
-        "path": "/users/{userId}/programs/{programId}",
+        "path": "/users/{userId}/habitTrackers/{habitTrackerId}",
         "definition": {
-            "entityName": "Program",
-            "schema": { "$ref": "#/backend/entities/Program" },
-            "description": "Stores programs created by the user."
+          "entityName": "HabitTracker",
+          "schema": {
+            "$ref": "#/backend/entities/HabitTracker"
+          },
+          "description": "Stores habit trackers for each user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "habitTrackerId",
+              "description": "The unique identifier of the habit tracker."
+            }
+          ]
         }
       },
       {
-        "path": "/users/{userId}/workouts/{workoutId}",
+        "path": "/users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId}",
         "definition": {
-            "entityName": "Workout",
-            "schema": { "$ref": "#/backend/entities/Workout" },
-            "description": "Stores workout sessions created by the user."
-        }
-      },
-      {
-        "path": "/users/{userId}/programs/{programId}/workouts/{programWorkoutId}",
-        "definition": {
-            "entityName": "ProgramWorkout",
-            "schema": { "$ref": "#/backend/entities/ProgramWorkout" },
-            "description": "Links a workout to a specific user program."
+          "entityName": "HabitItem",
+          "schema": {
+            "$ref": "#/backend/entities/HabitItem"
+          },
+          "description": "Stores individual habit items within a habit tracker. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "habitTrackerId",
+              "description": "The unique identifier of the habit tracker."
+            },
+            {
+              "name": "habitItemId",
+              "description": "The unique identifier of the habit item."
+            }
+          ]
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support Zenith Trainer's core features. It segregates user-specific data under a `/users/{userId}` path to secure it with path-based ownership rules (`request.auth.uid == userId`). Shared data, like program templates, resides in a global collection. This structure ensures data privacy, scalability, and efficient querying by keeping related data nested (e.g., workouts within a program) while allowing for flexible relationships (e.g., shared exercises)."
+    "reasoning": "The Firestore structure is designed to support the Zenith Trainer application's core features, focusing on user-specific data and collaborative elements. The structure prioritizes Authorization Independence by denormalizing user ownership.  It leverages path-based ownership for WorkoutPlans, ScheduledWorkouts, HabitTrackers and HabitItems.  This approach simplifies security rules and ensures atomic operations.\n\nUser profiles are stored under `/users/{userId}` which ensures clear ownership. Workout plans, scheduled workouts, habit trackers, and habit items are structured as subcollections of the user's document, enabling easy retrieval and management of user-specific data. This also supports the QAPs by allowing secure `list` operations within a user's own data.\n\nThis design eliminates the need for complex `get()` calls in security rules, enhancing security and performance. It provides a scalable and maintainable structure for the application's data."
   }
 }

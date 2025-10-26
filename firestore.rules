@@ -1,126 +1,111 @@
 /**
- * @file Firebase Security Rules for Zenith Trainer.
+ * @fileoverview Firestore Security Rules for Zenith Trainer Application
  *
- * @description This ruleset enforces a strict user-ownership model for all personal data,
- *  while allowing public read access to a global exercises collection. It leverages
- *  path-based authorization and avoids complex queries within the rules.
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for personal data,
+ * while allowing public read access to shared resources like exercises.
  *
- * @dataStructure
- *  - /users/{userId}/profile: User profile information, accessible only to the user.
- *  - /users/{userId}/workoutRoutines/{workoutRoutineId}: Workout routines created by the user.
- *  - /users/{userId}/workoutRoutines/{workoutRoutineId}/workoutExercises/{workoutExerciseId}: Exercises within a workout routine.
- *  - /exercises/{exerciseId}: A global, publicly readable collection of exercises. Write access is not granted in this prototype.
- *  - /users/{userId}/habits/{habitId}: User-defined habits.
- *  - /users/{userId}/habits/{habitId}/habitCompletions/{habitCompletionId}: Records of habit completion.
+ * Data Structure:
+ * - User profiles are stored under `/users/{userId}`, serving as the root
+ *   for all user-specific data.
+ * - Workout plans, scheduled workouts, habit trackers, and habit items are
+ *   nested under the user's profile, ensuring data isolation.
+ * - Exercises are stored in a top-level `/exercises` collection, accessible
+ *   to all users.
  *
- * @keySecurityDecisions
- *  - User data (profiles, routines, habits) is strictly owned by the authenticated user.
- *  - The /exercises collection is publicly readable, but not writable in this version.
- *  - List operations are only allowed within a user's data scope (e.g., listing workout routines).
- *  - Data validation is minimal in this prototyping phase, focusing on ownership and relational integrity.
+ * Key Security Decisions:
+ * - Users can only access their own profiles and associated data.
+ * - Exercises are publicly readable but not writable by end-users.
+ * - Listing of user profiles is disallowed to prevent data leakage.
  *
- * @denormalizationForAuthorization
- *  - All user-owned documents are nested under the /users/{userId} path, allowing for simple `isOwner(userId)` checks.
- *  - No external data lookups (e.g., `get()` calls) are required for authorization.
+ * Denormalization for Authorization:
+ * - WorkoutPlans, ScheduledWorkouts, HabitTrackers, and HabitItems should
+ *   include a `userId` field that matches the parent `/users/{userId}` path.
+ *   This denormalization enables simple and performant authorization checks
+ *   without requiring additional reads.
  *
- * @structuralSegregation
- *  - User-specific data is stored in private subcollections under /users/{userId}.
- *  - Publicly readable data (exercises) is stored in a top-level collection.
+ * Structural Segregation:
+ * - Private user data (profiles, workout plans, habit trackers) is stored
+ *   under the `/users/{userId}` path, while public data (exercises) is stored
+ *   in a top-level collection. This segregation simplifies access control and
+ *   improves query performance.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Protects user profile data, ensuring only the authenticated user can access it.
-     * @path /users/{userId}/profile
-     * @allow (create) User with UID 'user_abc' can create their profile at /users/user_abc/profile.
-     * @allow (get, update, delete) User with UID 'user_abc' can get, update, and delete their profile at /users/user_abc/profile.
-     * @deny (create) User with UID 'user_xyz' cannot create a profile for 'user_abc' at /users/user_abc/profile.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot get, update, or delete the profile of 'user_abc' at /users/user_abc/profile.
-     * @principle Enforces document ownership for all operations.
+     * @description Enforces user-ownership for user profiles.
+     * @path /users/{userId}
+     * @allow (create) - User with UID 'user_abc' can create their profile at /users/user_abc.
+     * @allow (get, update, delete) - User with UID 'user_abc' can read, update, and delete their profile at /users/user_abc.
+     * @deny (create) - User with UID 'user_xyz' cannot create a profile at /users/user_abc.
+     * @deny (get, update, delete) - User with UID 'user_xyz' cannot read, update, or delete the profile at /users/user_abc.
+     * @deny (list) Listing all user profiles is forbidden.
+     * @principle Enforces document ownership and restricts listing for privacy.
      */
-    match /users/{userId}/profile {
-      // Helper function to check if the user is signed in and owns the resource.
-      function isSignedIn() {
-        return request.auth != null;
-      }
+    match /users/{userId} {
       function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource.data != null;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
+      allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && resource.data.id == userId;
+      allow delete: if isOwner(userId) && resource.data.id == userId && resource != null;
     }
 
     /**
-     * @description Protects workout routines, ensuring only the authenticated user can access them.
-     * @path /users/{userId}/workoutRoutines/{workoutRoutineId}
-     * @allow (create) User with UID 'user_abc' can create a workout routine at /users/user_abc/workoutRoutines/routine_123.
-     * @allow (get, update, delete) User with UID 'user_abc' can get, update, and delete their workout routine at /users/user_abc/workoutRoutines/routine_123.
-     * @deny (create) User with UID 'user_xyz' cannot create a workout routine for 'user_abc' at /users/user_abc/workoutRoutines/routine_123.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot get, update, or delete the workout routine of 'user_abc' at /users/user_abc/workoutRoutines/routine_123.
-     * @principle Enforces document ownership for all operations.
+     * @description Enforces user-ownership for workout plans.
+     * @path /users/{userId}/workoutPlans/{workoutPlanId}
+     * @allow (create) - User with UID 'user_abc' can create a workout plan under /users/user_abc/workoutPlans/plan_123 if workoutPlan.userId == 'user_abc'.
+     * @allow (get, update, delete) - User with UID 'user_abc' can read, update, and delete their workout plan under /users/user_abc/workoutPlans/plan_123 if workoutPlan.userId == 'user_abc'.
+     * @allow (list) - User with UID 'user_abc' can list workout plans under /users/user_abc/workoutPlans.
+     * @deny (create) - User with UID 'user_xyz' cannot create a workout plan under /users/user_abc/workoutPlans/plan_123.
+     * @deny (get, update, delete) - User with UID 'user_xyz' cannot read, update, or delete the workout plan under /users/user_abc/workoutPlans/plan_123.
+     * @principle Enforces document ownership for writes and allows owner-only reads and lists.
      */
-    match /users/{userId}/workoutRoutines/{workoutRoutineId} {
-      // Helper function to check if the user is signed in and owns the resource.
-      function isSignedIn() {
-        return request.auth != null;
-      }
+    match /users/{userId}/workoutPlans/{workoutPlanId} {
       function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource.data != null;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isOwner(userId) && request.resource.data.userId == userId && resource != null;
+      allow delete: if isOwner(userId) && resource.data.userId == userId && resource != null;
     }
 
     /**
-     * @description Protects workout exercises, ensuring only the authenticated user can access them.
-     * @path /users/{userId}/workoutRoutines/{workoutRoutineId}/workoutExercises/{workoutExerciseId}
-     * @allow (create) User with UID 'user_abc' can create a workout exercise at /users/user_abc/workoutRoutines/routine_123/workoutExercises/exercise_456.
-     * @allow (get, update, delete) User with UID 'user_abc' can get, update, and delete their workout exercise at /users/user_abc/workoutRoutines/routine_123/workoutExercises/exercise_456.
-     * @deny (create) User with UID 'user_xyz' cannot create a workout exercise for 'user_abc' at /users/user_abc/workoutRoutines/routine_123/workoutExercises/exercise_456.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot get, update, or delete the workout exercise of 'user_abc' at /users/user_abc/workoutRoutines/routine_123/workoutExercises/exercise_456.
-     * @principle Enforces document ownership for all operations.
+     * @description Enforces user-ownership for scheduled workouts.
+     * @path /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId}
+     * @allow (create) - User with UID 'user_abc' can create a scheduled workout under /users/user_abc/workoutPlans/plan_123/scheduledWorkouts/workout_456 if scheduledWorkout.workoutPlanId == 'plan_123'.
+     * @allow (get, update, delete) - User with UID 'user_abc' can read, update, and delete their scheduled workout under /users/user_abc/workoutPlans/plan_123/scheduledWorkouts/workout_456.
+     * @allow (list) - User with UID 'user_abc' can list scheduled workouts under /users/user_abc/workoutPlans/plan_123/scheduledWorkouts.
+     * @deny (create) - User with UID 'user_xyz' cannot create a scheduled workout under /users/user_abc/workoutPlans/plan_123/scheduledWorkouts/workout_456.
+     * @deny (get, update, delete) - User with UID 'user_xyz' cannot read, update, or delete the scheduled workout under /users/user_abc/workoutPlans/plan_123/scheduledWorkouts/workout_456.
+     * @principle Enforces document ownership for writes and allows owner-only reads and lists.
      */
-    match /users/{userId}/workoutRoutines/{workoutRoutineId}/workoutExercises/{workoutExerciseId} {
-      // Helper function to check if the user is signed in and owns the resource.
-      function isSignedIn() {
-        return request.auth != null;
-      }
+    match /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId} {
       function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource.data != null;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && resource != null;
+      allow delete: if isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Allows public read access to exercises, but restricts write access.
+     * @description Allows public read access to exercises, but restricts writes.
      * @path /exercises/{exerciseId}
-     * @allow (get, list) Any user (or unauthenticated user) can read the exercise data.
-     * @deny (create, update, delete) No user can create, update, or delete exercises (write operations are disabled).
-     * @principle Provides public read access while restricting write access.
+     * @allow (get, list) - Any user can read exercises.
+     * @deny (create, update, delete) - No user can create, update, or delete exercises through the client.
+     * @principle Allows public read access while restricting write access to authorized sources only (e.g., backend functions).
      */
     match /exercises/{exerciseId} {
       allow get, list: if true;
@@ -128,66 +113,47 @@ service cloud.firestore {
     }
 
     /**
-     * @description Protects habits, ensuring only the authenticated user can access them.
-     * @path /users/{userId}/habits/{habitId}
-     * @allow (create) User with UID 'user_abc' can create a habit at /users/user_abc/habits/habit_123.
-     * @allow (get, update, delete) User with UID 'user_abc' can get, update, and delete their habit at /users/user_abc/habits/habit_123.
-     * @deny (create) User with UID 'user_xyz' cannot create a habit for 'user_abc' at /users/user_abc/habits/habit_123.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot get, update, or delete the habit of 'user_abc' at /users/user_abc/habits/habit_123.
-     * @principle Enforces document ownership for all operations.
+     * @description Enforces user-ownership for habit trackers.
+     * @path /users/{userId}/habitTrackers/{habitTrackerId}
+     * @allow (create) - User with UID 'user_abc' can create a habit tracker under /users/user_abc/habitTrackers/tracker_789 if habitTracker.userId == 'user_abc'.
+     * @allow (get, update, delete) - User with UID 'user_abc' can read, update, and delete their habit tracker under /users/user_abc/habitTrackers/tracker_789.
+     * @allow (list) - User with UID 'user_abc' can list habit trackers under /users/user_abc/habitTrackers.
+     * @deny (create) - User with UID 'user_xyz' cannot create a habit tracker under /users/user_abc/habitTrackers/tracker_789.
+     * @deny (get, update, delete) - User with UID 'user_xyz' cannot read, update, or delete the habit tracker under /users/user_abc/habitTrackers/tracker_789.
+     * @principle Enforces document ownership for writes and allows owner-only reads and lists.
      */
-    match /users/{userId}/habits/{habitId} {
-      // Helper function to check if the user is signed in and owns the resource.
-      function isSignedIn() {
-        return request.auth != null;
-      }
+    match /users/{userId}/habitTrackers/{habitTrackerId} {
       function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource.data != null;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isOwner(userId) && request.resource.data.userId == userId && resource != null;
+      allow delete: if isOwner(userId) && resource.data.userId == userId && resource != null;
     }
 
     /**
-     * @description Protects habit completions, ensuring only the authenticated user can access them.
-     * @path /users/{userId}/habits/{habitId}/habitCompletions/{habitCompletionId}
-     * @allow (create) User with UID 'user_abc' can create a habit completion at /users/user_abc/habits/habit_123/habitCompletions/completion_456.
-     * @allow (get, update, delete) User with UID 'user_abc' can get, update, and delete their habit completion at /users/user_abc/habits/habit_123/habitCompletions/completion_456.
-     * @deny (create) User with UID 'user_xyz' cannot create a habit completion for 'user_abc' at /users/user_abc/habits/habit_123/habitCompletions/completion_456.
-     * @deny (get, update, delete) User with UID 'user_xyz' cannot get, update, or delete the habit completion of 'user_abc' at /users/user_abc/habits/habit_123/habitCompletions/completion_456.
-     * @principle Enforces document ownership for all operations.
+     * @description Enforces user-ownership for habit items.
+     * @path /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId}
+     * @allow (create) - User with UID 'user_abc' can create a habit item under /users/user_abc/habitTrackers/tracker_789/habitItems/item_012.
+     * @allow (get, update, delete) - User with UID 'user_abc' can read, update, and delete their habit item under /users/user_abc/habitTrackers/tracker_789/habitItems/item_012.
+     * @allow (list) - User with UID 'user_abc' can list habit items under /users/user_abc/habitTrackers/tracker_789/habitItems.
+     * @deny (create) - User with UID 'user_xyz' cannot create a habit item under /users/user_abc/habitTrackers/tracker_789/habitItems/item_012.
+     * @deny (get, update, delete) - User with UID 'user_xyz' cannot read, update, or delete the habit item under /users/user_abc/habitTrackers/tracker_789/habitItems/item_012.
+     * @principle Enforces document ownership for writes and allows owner-only reads and lists.
      */
-    match /users/{userId}/habits/{habitId}/habitCompletions/{habitCompletionId} {
-      // Helper function to check if the user is signed in and owns the resource.
-      function isSignedIn() {
-        return request.auth != null;
-      }
+    match /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId} {
       function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource.data != null;
+        return request.auth != null && request.auth.uid == userId;
       }
 
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
-    }
-       /**
-     * @description Allow read access to the entire users collection
-     */
-    match /users/{userId} {
-        allow get: if isSignedIn() && request.auth.uid == userId;
-        allow list: if false;
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && resource != null;
+      allow delete: if isOwner(userId) && resource != null;
     }
   }
 }
