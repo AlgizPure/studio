@@ -19,6 +19,7 @@ export type Exercise = {
   days?: Day[];
   authorId?: string;
   lastCompleted?: string; // ISO date string
+  distance?: number; // in kilometers
 };
 
 export type Workout = {

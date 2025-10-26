@@ -51,12 +51,17 @@ export default function DashboardPage() {
         completedHabits = habits.filter(h => h.completed).length;
     }
     const habitCompletionPercentage = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0;
+    
+    const runningDistanceThisWeek = (exercises || [])
+      .filter(ex => ex.lastCompleted && isWithinInterval(new Date(ex.lastCompleted), { start: startOfThisWeek, end: endOfThisWeek }) && ex.distance)
+      .reduce((total, ex) => total + (ex.distance || 0), 0);
 
 
     return {
       workoutsCompleted: completedWorkoutsThisWeek.length,
       workoutsScheduled: scheduledWorkoutsThisWeek.length,
       habitCompletion: habitCompletionPercentage,
+      runningDistance: runningDistanceThisWeek.toFixed(1),
     }
   }, [exercises, habits]);
 
@@ -177,7 +182,7 @@ export default function DashboardPage() {
             <HeartPulse className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0km</div>
+            <div className="text-2xl font-bold">{weeklyStats.runningDistance}km</div>
             <p className="text-xs text-muted-foreground">
               This week's total
             </p>

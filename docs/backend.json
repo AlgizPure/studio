@@ -107,6 +107,10 @@
           "type": "string",
           "description": "The ISO date string of when the exercise was last completed.",
           "format": "date-time"
+        },
+        "distance": {
+            "type": "number",
+            "description": "Distance covered in kilometers, for cardio exercises."
         }
       },
       "required": ["id", "name", "categoryId", "description"]

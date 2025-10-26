@@ -35,6 +35,10 @@ const exerciseSchema = z.object({
   image: z.string().url().optional().or(z.literal('')),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format.').optional(),
   days: z.array(z.string()).optional(),
+  distance: z.preprocess(
+    (val) => (val === '' ? undefined : Number(val)),
+    z.number().positive('Distance must be a positive number.').optional()
+  ),
 });
 
 type ExerciseFormValues = z.infer<typeof exerciseSchema>;
@@ -61,10 +65,16 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
     reset,
     control,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<ExerciseFormValues>({
     resolver: zodResolver(exerciseSchema),
   });
+  
+  const watchedCategoryId = watch('categoryId');
+  const isCardio = categories.find(c => c.id === watchedCategoryId)?.name.toLowerCase().includes('cardio') 
+    || categories.find(c => c.id === watchedCategoryId)?.name.toLowerCase().includes('running');
+
 
   useEffect(() => {
     if (isOpen) {
@@ -75,6 +85,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
         setValue('image', exerciseToEdit.image);
         setValue('time', exerciseToEdit.time || '00:00');
         setValue('days', exerciseToEdit.days || []);
+        setValue('distance', exerciseToEdit.distance);
       } else {
         reset({
           name: '',
@@ -83,6 +94,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
           image: customImage,
           time: '00:00',
           days: [],
+          distance: undefined,
         });
       }
     }
@@ -93,7 +105,8 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
     try {
       const finalData = {
         ...data,
-        image: data.image || customImage
+        image: data.image || customImage,
+        distance: data.distance || undefined,
       }
       if (isEditMode && exerciseToEdit && onExerciseUpdate) {
           const updatedExercise: Exercise = {
@@ -233,6 +246,18 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
               />
             </div>
              {errors.categoryId && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.categoryId.message}</p>}
+
+            {isCardio && (
+                <>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="distance" className="text-right">
+                    Distance (km)
+                    </Label>
+                    <Input id="distance" type="number" step="0.1" placeholder="e.g., 5" className="col-span-3" {...register('distance')} />
+                </div>
+                {errors.distance && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.distance.message}</p>}
+                </>
+            )}
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="description" className="text-right">
