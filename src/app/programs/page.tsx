@@ -9,6 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { seedProgramTemplates } from '../actions';
+import { Button } from '@/components/ui/button';
 
 export default function ProgramsPage() {
   const { user } = useUser();
@@ -24,8 +26,8 @@ export default function ProgramsPage() {
   const { data: userPrograms, loading: userProgramsLoading } = useCollection<Program>(userProgramsQuery);
 
   const templateProgramsQuery = useMemoFirebase(
-    () => (user && firestore ? query(collection(firestore, 'programs'), where('isTemplate', '==', true)) : null),
-    [user, firestore]
+    () => (firestore ? query(collection(firestore, 'programs'), where('isTemplate', '==', true)) : null),
+    [firestore]
   );
   const { data: templatePrograms, loading: templateProgramsLoading } = useCollection<Program>(templateProgramsQuery);
 
@@ -133,6 +135,15 @@ export default function ProgramsPage() {
     }
   };
 
+  const handleSeed = async () => {
+    const result = await seedProgramTemplates();
+    if(result.success) {
+      toast({ title: "Seeding Complete", description: result.message });
+    } else {
+      toast({ variant: 'destructive', title: "Seeding Failed", description: result.message });
+    }
+  }
+
   const isLoading = userProgramsLoading || templateProgramsLoading;
 
   return (
@@ -146,7 +157,12 @@ export default function ProgramsPage() {
             Manage your programs or start a new one from a template.
           </p>
         </div>
-        <AddProgramDialog onProgramAdd={handleAddProgram} />
+        <div className="flex items-center gap-2">
+           {process.env.NODE_ENV === 'development' && (
+            <Button variant="outline" onClick={handleSeed}>Seed Templates</Button>
+           )}
+          <AddProgramDialog onProgramAdd={handleAddProgram} />
+        </div>
       </div>
 
       <div>
