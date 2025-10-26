@@ -58,7 +58,7 @@ export function PlanTomorrowDialog() {
           <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center pr-4">
               <h3 className="font-semibold text-lg">Exercises</h3>
-               <AddExerciseDialog onExerciseAdd={handleAddExercise} openManageCategories={() => setIsManageExerciseCategoriesOpen(true)} />
+               <AddExerciseDialog onExerciseAdd={handleAddExercise} onExerciseUpdate={(ex) => setExercises(prev => prev.map(e => e.id === ex.id ? ex : e))} onExerciseDelete={(id) => setExercises(prev => prev.filter(e => e.id !== id))} openManageCategories={() => setIsManageExerciseCategoriesOpen(true)} />
             </div>
             <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">

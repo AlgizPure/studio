@@ -44,7 +44,7 @@ export default function LibraryPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <AddExerciseDialog onExerciseAdd={handleAddExercise} openManageCategories={() => setIsManageCategoriesOpen(true)} />
+          <AddExerciseDialog onExerciseAdd={handleAddExercise} onExerciseUpdate={(ex) => setExercises(prev => prev.map(p => p.id === ex.id ? ex : p))} openManageCategories={() => setIsManageCategoriesOpen(true)} />
         </div>
       </div>
       <Tabs defaultValue="all" className="w-full">

@@ -80,7 +80,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
         days: [],
       });
     }
-  }, [isEditMode, exerciseToEdit, setValue, reset]);
+  }, [isEditMode, exerciseToEdit, setValue, reset, isOpen]);
 
 
   const onSubmit: SubmitHandler<ExerciseFormValues> = (data) => {
@@ -311,7 +311,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
              {errors.days && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.days.message}</p>}
           </div>
           <DialogFooter>
-            {isEditMode && (
+            {isEditMode && onExerciseDelete && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button type="button" variant="destructive">Delete</Button>
