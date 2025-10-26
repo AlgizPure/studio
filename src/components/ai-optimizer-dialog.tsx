@@ -18,8 +18,10 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getOptimizedRoutine } from '@/app/actions';
+import { getOptimizedRoutine, applySchedule } from '@/app/actions';
 import { ScrollArea } from './ui/scroll-area';
+import type { AIRoutineOptimizerOutput } from '@/ai/flows/ai-routine-optimizer';
+import { useUser } from '@/firebase';
 
 const schema = z.object({
   goals: z.string().min(10, 'Please describe your goals in more detail.'),
@@ -33,8 +35,10 @@ type FormFields = z.infer<typeof schema>;
 export function AiOptimizerDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
+  const [suggestion, setSuggestion] = useState<AIRoutineOptimizerOutput | null>(null);
   const { toast } = useToast();
+  const { user } = useUser();
 
   const {
     register,
@@ -58,7 +62,7 @@ export function AiOptimizerDialog() {
     setIsLoading(false);
 
     if (result.success && result.data) {
-      setSuggestion(result.data.suggestedSchedule);
+      setSuggestion(result.data);
     } else {
       toast({
         variant: 'destructive',
@@ -68,6 +72,31 @@ export function AiOptimizerDialog() {
     }
   };
   
+  const handleApplySchedule = async () => {
+    if (!suggestion || !suggestion.structuredSchedule || !user) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No schedule to apply or user not logged in.',
+      });
+      return;
+    }
+    setIsApplying(true);
+    const result = await applySchedule(suggestion.structuredSchedule, user.uid);
+    setIsApplying(false);
+
+    if (result.success) {
+      toast({ title: "Schedule Applied!", description: "Your new schedule is now active."});
+      handleOpenChange(false);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error Applying Schedule',
+        description: result.error || 'An unknown error occurred.',
+      });
+    }
+  }
+
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
@@ -99,14 +128,13 @@ export function AiOptimizerDialog() {
            <div className="space-y-4">
             <h3 className="font-semibold">Suggested Weekly Schedule:</h3>
             <ScrollArea className="h-72 w-full rounded-md border p-4">
-                <pre className="text-sm whitespace-pre-wrap font-body">{suggestion}</pre>
+                <pre className="text-sm whitespace-pre-wrap font-body">{suggestion.textualDescription}</pre>
             </ScrollArea>
             <DialogFooter>
                 <Button variant="outline" onClick={() => setSuggestion(null)}>Back to Form</Button>
-                <Button onClick={() => {
-                    toast({ title: "Schedule Applied!", description: "Your new schedule is now active."});
-                    handleOpenChange(false);
-                }}>Apply Schedule</Button>
+                <Button onClick={handleApplySchedule} disabled={isApplying}>
+                  {isApplying ? 'Applying...' : 'Apply Schedule'}
+                </Button>
             </DialogFooter>
            </div>
         ) : (
