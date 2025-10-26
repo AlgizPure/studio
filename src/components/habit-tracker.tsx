@@ -6,13 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { PomodoroTimer } from './pomodoro-timer';
-import type { Habit } from '@/lib/types';
-import { useState, useMemo } from 'react';
+import type { Habit, Day } from '@/lib/types';
+import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { AddHabitDialog } from './add-habit-dialog';
 
 export function HabitTracker() {
   const [trackedHabits, setTrackedHabits] = useState<Habit[]>(habits);
+  const [today, setToday] = useState<Day | null>(null);
+
+  useEffect(() => {
+    const date = new Date();
+    const dayOfWeek = date.toLocaleString('en-US', { weekday: 'long' }) as Day;
+    setToday(dayOfWeek);
+  }, []);
 
   const handleToggleCompletion = (habitId: string) => {
     setTrackedHabits(prevHabits =>
@@ -26,13 +33,21 @@ export function HabitTracker() {
     setTrackedHabits(prev => [...prev, newHabit]);
   };
   
+  const todaysHabits = useMemo(() => {
+    if (!today) return [];
+    return trackedHabits.filter(habit => {
+      // Show if days are not specified (all days) or if today is in the days array
+      return !habit.days || habit.days.length === 0 || habit.days.includes(today);
+    });
+  }, [trackedHabits, today]);
+
   const sortedHabits = useMemo(() => {
-    return [...trackedHabits].sort((a, b) => {
+    return [...todaysHabits].sort((a, b) => {
       if (a.completed && !b.completed) return 1;
       if (!a.completed && b.completed) return -1;
       return 0;
     });
-  }, [trackedHabits]);
+  }, [todaysHabits]);
 
   return (
     <Card className="glass">
@@ -71,6 +86,11 @@ export function HabitTracker() {
             </div>
           );
         })}
+         {sortedHabits.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No habits scheduled for today.</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
