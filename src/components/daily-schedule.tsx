@@ -47,9 +47,8 @@ export function DailySchedule({
   return (
     <>
       <Card className="glass">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle className="font-headline">Exercises</CardTitle>
-          <AddExerciseDialog onExerciseAdd={onExerciseAdd} openManageCategories={() => setIsManageExerciseCategoriesOpen(true)} />
         </CardHeader>
         <CardContent>
           <Accordion type="single" collapsible defaultValue={today} className="w-full">
