@@ -71,7 +71,12 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
     reset();
   };
   
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const [currentPath, setCurrentPath] = useState('');
+  
+  React.useEffect(() => {
+    setCurrentPath(window.location.pathname);
+  }, []);
+
   const isLibraryPage = currentPath.includes('/library');
 
   return (

@@ -10,21 +10,27 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { PlusSquare, GripVertical, Plus } from 'lucide-react';
-import { habits, exercises as initialExercises } from '@/lib/data';
+import { PlusSquare, GripVertical } from 'lucide-react';
+import { habits as initialHabits, exercises as initialExercises } from '@/lib/data';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import { AddExerciseDialog } from './add-exercise-dialog';
+import { AddHabitDialog } from './add-habit-dialog';
 import { useState }from 'react';
-import type { Exercise } from '@/lib/types';
+import type { Exercise, Habit } from '@/lib/types';
 
 
 export function PlanTomorrowDialog() {
     const [exercises, setExercises] = useState<Exercise[]>(initialExercises);
+    const [habits, setHabits] = useState<Habit[]>(initialHabits);
 
     const handleAddExercise = (newExercise: Exercise) => {
         setExercises(prev => [...prev, newExercise]);
+    };
+    
+    const handleAddHabit = (newHabit: Habit) => {
+        setHabits(prev => [...prev, newHabit]);
     };
 
   return (
@@ -66,6 +72,7 @@ export function PlanTomorrowDialog() {
           <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center pr-4">
                 <h3 className="font-semibold text-lg">Habits</h3>
+                <AddHabitDialog onHabitAdd={handleAddHabit} />
             </div>
             <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">
