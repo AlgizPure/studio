@@ -47,7 +47,7 @@ export default function SchedulePage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-headline font-bold tracking-tight">
-              Weekly Schedule
+              Week's Activities
             </h1>
             <p className="text-muted-foreground">
               Your plan for the entire week.
@@ -65,17 +65,19 @@ export default function SchedulePage() {
                 />
           </div>
         </div>
-        <DailySchedule 
-          exercises={exercises} 
-          habits={habits} 
-          onExerciseAdd={handleAddExercise} 
-          onHabitAdd={handleAddHabit}
-          onExerciseUpdate={handleUpdateExercise}
-          onHabitUpdate={handleUpdateHabit}
-          onExerciseDelete={handleDeleteExercise}
-          onHabitDelete={handleDeleteHabit}
-          openManageCategories={() => setIsManageCategoriesOpen(true)}
-        />
+        <div className="space-y-6">
+          <DailySchedule 
+            exercises={exercises} 
+            habits={habits} 
+            onExerciseAdd={handleAddExercise} 
+            onHabitAdd={handleAddHabit}
+            onExerciseUpdate={handleUpdateExercise}
+            onHabitUpdate={handleUpdateHabit}
+            onExerciseDelete={handleDeleteExercise}
+            onHabitDelete={handleDeleteHabit}
+            openManageCategories={() => setIsManageCategoriesOpen(true)}
+          />
+        </div>
       </div>
       <ManageCategoriesDialog open={isManageCategoriesOpen} onOpenChange={setIsManageCategoriesOpen} />
     </>
