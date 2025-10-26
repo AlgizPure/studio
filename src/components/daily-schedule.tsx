@@ -68,6 +68,7 @@ export function DailySchedule({
                   icon: Target,
                   raw: habit,
                   isPomodoro: !!habit.pomodoro,
+                  isCustom: true,
                 })),
                 ...dailyExercises.map(ex => ({
                     id: ex.id,
@@ -77,7 +78,7 @@ export function DailySchedule({
                     duration: exerciseCategories.find(c => c.id === ex.categoryId)?.name || 'Workout',
                     icon: Dumbbell,
                     raw: ex,
-                    custom: ex.custom
+                    isCustom: ex.custom,
                 }))
               ].sort((a, b) => {
                 if (!a.time || a.time === 'Habit' || a.time === 'Any time') return 1;
@@ -100,8 +101,7 @@ export function DailySchedule({
                       <div className="space-y-4 pt-2">
                         {allItems.map((item) => {
                             const Icon = item.icon as LucideIcon;
-                            const isDefaultItem = (item as any).isDefault;
-                            const isCustomItem = !isDefaultItem;
+                            const isCustomItem = (item as any).isCustom;
 
                             const editTrigger = (
                               <Button variant="ghost" size="icon" className="h-8 w-8">
