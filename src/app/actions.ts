@@ -3,6 +3,8 @@
 import { aiRoutineOptimizer, AIRoutineOptimizerInput, AIRoutineOptimizerOutput, ScheduledActivity } from '@/ai/flows/ai-routine-optimizer';
 import { getFirestore, collection, doc, getDoc, getDocs, writeBatch } from 'firebase-admin/firestore';
 import { getFirebaseAdminApp } from '@/firebase/admin';
+import type { Program, Workout } from '@/lib/types';
+
 
 export async function getOptimizedRoutine(
   input: AIRoutineOptimizerInput
@@ -16,52 +18,34 @@ export async function getOptimizedRoutine(
   }
 }
 
-export async function addTemplateProgramToUser(programId: string, userId: string): Promise<{ success: boolean; error?: string; newProgramId?: string }> {
-  if (!userId) {
-    return { success: false, error: 'User is not authenticated.' };
-  }
-  
+export async function getTemplateProgramData(programId: string): Promise<{ success: boolean; error?: string; programData?: Program, workouts?: Omit<Workout, 'id'>[] }> {
   try {
     const adminDb = getFirestore(getFirebaseAdminApp());
-    const batch = adminDb.batch();
-
+    
     // 1. Get the template program
     const templateProgramRef = adminDb.doc(`programs/${programId}`);
     const templateProgramSnap = await getDoc(templateProgramRef);
 
-    if (!templateProgramSnap.exists) {
+    if (!templateProgramSnap.exists()) {
       return { success: false, error: 'Program template not found.' };
     }
-    const templateProgramData = templateProgramSnap.data();
-
-    // 2. Create a new program for the user
-    const userProgramsRef = adminDb.collection(`users/${userId}/programs`);
-    const newUserProgramRef = doc(userProgramsRef);
-    batch.set(newUserProgramRef, {
-      ...templateProgramData,
-      isTemplate: false,
-      authorId: userId,
-    });
-
-    // 3. Get the workouts from the template's subcollection
+    const programData = templateProgramSnap.data() as Program;
+    
+    // 2. Get the workouts from the template's subcollection
     const templateWorkoutsRef = collection(templateProgramRef, 'workouts');
     const templateWorkoutsSnap = await getDocs(templateWorkoutsRef);
-
-    // 4. Add each workout to the new user program's subcollection
+    
+    const workouts: Omit<Workout, 'id'>[] = [];
     if (!templateWorkoutsSnap.empty) {
-      const newUserProgramWorkoutsRef = collection(newUserProgramRef, 'workouts');
       templateWorkoutsSnap.forEach(workoutDoc => {
-        const newWorkoutRef = doc(newUserProgramWorkoutsRef);
-        batch.set(newWorkoutRef, workoutDoc.data());
+        workouts.push(workoutDoc.data() as Omit<Workout, 'id'>);
       });
     }
+    
+    return { success: true, programData, workouts };
 
-    // 5. Commit the batch
-    await batch.commit();
-
-    return { success: true, newProgramId: newUserProgramRef.id };
   } catch (error) {
-    console.error('Error adding template program to user:', error);
-    return { success: false, error: 'An unexpected error occurred while adding the program.' };
+    console.error('Error fetching template program data:', error);
+    return { success: false, error: 'An unexpected error occurred while fetching the program template.' };
   }
 }
