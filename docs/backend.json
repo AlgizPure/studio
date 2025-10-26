@@ -1,0 +1,241 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's profile information.",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "avatarUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's profile picture."
+        }
+      }
+    },
+    "Program": {
+      "title": "Workout Program",
+      "description": "A structured collection of workouts designed to achieve a specific fitness goal.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the program."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the program."
+        },
+        "isTemplate": {
+          "type": "boolean",
+          "description": "Whether this program is a template for others to use."
+        },
+        "authorId": {
+          "type": "string",
+          "description": "The ID of the user who created this program (if not a template)."
+        }
+      },
+      "required": ["name"]
+    },
+    "Workout": {
+      "title": "Workout",
+      "description": "A single workout session, which is part of a program and consists of multiple exercises.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the workout (e.g., 'Leg Day', 'Cardio Blast')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the workout."
+        },
+        "level": {
+          "type": "number",
+          "description": "The difficulty level of the workout."
+        }
+      },
+      "required": ["name"]
+    },
+    "Exercise": {
+      "title": "Exercise",
+      "description": "A single exercise activity.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the exercise."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the exercise."
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to the exercise category."
+        }
+      },
+      "required": ["name"]
+    },
+    "WorkoutExercise": {
+      "title": "Workout Exercise",
+      "description": "Defines an exercise within a workout, including sets, reps, or duration.",
+      "type": "object",
+      "properties": {
+        "exerciseId": {
+          "$ref": "#/backend/entities/Exercise"
+        },
+        "sets": {
+          "type": "number"
+        },
+        "reps": {
+          "type": "number"
+        },
+        "duration": {
+          "type": "string",
+          "description": "Duration of the exercise (e.g., '30min', '5min cycle')."
+        }
+      }
+    },
+    "ProgramWorkout": {
+      "title": "Program Workout",
+      "description": "Links a workout to a program and defines its schedule.",
+      "type": "object",
+      "properties": {
+        "workoutId": {
+          "$ref": "#/backend/entities/Workout"
+        },
+        "schedule": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["repeating", "fixed_times"]
+            },
+            "days": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "repeatCount": {
+              "type": "number"
+            },
+            "endDate": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        }
+      }
+    },
+    "WorkoutLog": {
+        "title": "Workout Log",
+        "description": "A log of a completed workout session by a user.",
+        "type": "object",
+        "properties": {
+            "userId": {
+                "type": "string"
+            },
+            "programId": {
+                "type": "string"
+            },
+            "workoutId": {
+                "type": "string"
+            },
+            "date": {
+                "type": "string",
+                "format": "date"
+            },
+            "completionPercentage": {
+                "type": "number"
+            },
+            "completedExercises": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "Habit": {
+      "title": "Habit",
+      "description": "A user's habit to track.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "categoryId": {
+          "type": "string"
+        },
+        "goal": {
+          "type": "string"
+        },
+        "days": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pomodoro": {
+            "type": "object",
+            "properties": {
+                "cycles": {
+                    "type": "number"
+                }
+            }
+        }
+      }
+    }
+  },
+  "auth": {
+    "providers": []
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/UserProfile" },
+      "description": "Stores public information about a user."
+    },
+    "/programs": {
+      "schema": { "$ref": "#/backend/entities/Program" },
+      "description": "Collection of all workout programs, including templates."
+    },
+    "/programs/{programId}/workouts": {
+      "schema": { "$ref": "#/backend/entities/ProgramWorkout" },
+      "description": "Defines the workouts and their schedule within a program."
+    },
+    "/workouts": {
+      "schema": { "$ref": "#/backend/entities/Workout" },
+      "description": "Global collection of all available workouts."
+    },
+    "/workouts/{workoutId}/exercises": {
+      "schema": { "$ref": "#/backend/entities/WorkoutExercise" },
+      "description": "The specific exercises that make up a workout."
+    },
+    "/exercises": {
+      "schema": { "$ref": "#/backend/entities/Exercise" },
+      "description": "Global collection of all available exercises."
+    },
+    "/users/{userId}/workoutLogs": {
+      "schema": { "$ref": "#/backend/entities/WorkoutLog" },
+      "description": "Logs of completed workouts for a user."
+    },
+    "/users/{userId}/habits": {
+      "schema": { "$ref": "#/backend/entities/Habit" },
+      "description": "Habits for a specific user."
+    },
+    "/users/{userId}/programs": {
+        "schema": { "$ref": "#/backend/entities/Program" },
+        "description": "Programs a user is currently participating in."
+    }
+  }
+}

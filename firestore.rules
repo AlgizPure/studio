@@ -1,0 +1,36 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Example rule: Allow users to read and write their own profile
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && isOwner(userId);
+    }
+
+    // Publicly readable data
+    match /programs/{programId} {
+      allow get;
+      allow list; // Allow for program store
+    }
+    match /workouts/{workoutId} {
+      allow get;
+    }
+    match /exercises/{exerciseId} {
+        allow get;
+    }
+
+    // Users can manage their own subscribed programs, workout logs, and habits
+    match /users/{userId}/{collection}/{docId} {
+      allow read, write, delete: if isSignedIn() && isOwner(userId);
+    }
+  }
+}
