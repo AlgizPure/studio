@@ -120,26 +120,25 @@ export function DailySchedule({
                                 </div>
                                 {(item as any).isPomodoro && <PomodoroIcon className="mr-2"/>}
                                 <Badge variant={item.activityType === 'Habit' ? 'secondary' : 'outline'} className="mr-2">{item.duration}</Badge>
-                                {isCustomItem && (
-                                  item.activityType === 'Habit' ? (
-                                      <AddHabitDialog
-                                          habitToEdit={item.raw as Habit}
-                                          onHabitUpdate={onHabitUpdate}
-                                          onHabitDelete={onHabitDelete}
-                                          onHabitAdd={onHabitAdd}
-                                          trigger={editTrigger}
-                                          openManageCategories={openManageCategories}
-                                      />
-                                  ) : (
-                                      <AddExerciseDialog
-                                          exerciseToEdit={item.raw as Exercise}
-                                          onExerciseUpdate={onExerciseUpdate}
-                                          onExerciseDelete={onExerciseDelete}
-                                          onExerciseAdd={onExerciseAdd}
-                                          trigger={editTrigger}
-                                          openManageCategories={() => setIsManageExerciseCategoriesOpen(true)}
-                                      />
-                                  )
+                                {isCustomItem && item.activityType === 'Habit' && (
+                                    <AddHabitDialog
+                                        habitToEdit={item.raw as Habit}
+                                        onHabitUpdate={onHabitUpdate}
+                                        onHabitDelete={onHabitDelete}
+                                        onHabitAdd={onHabitAdd}
+                                        trigger={editTrigger}
+                                        openManageCategories={openManageCategories}
+                                    />
+                                )}
+                                {isCustomItem && item.activityType === 'Workout' && (
+                                    <AddExerciseDialog
+                                        exerciseToEdit={item.raw as Exercise}
+                                        onExerciseUpdate={onExerciseUpdate}
+                                        onExerciseDelete={onExerciseDelete}
+                                        onExerciseAdd={onExerciseAdd}
+                                        trigger={editTrigger}
+                                        openManageCategories={() => setIsManageExerciseCategoriesOpen(true)}
+                                    />
                                 )}
                               </div>
                             )
