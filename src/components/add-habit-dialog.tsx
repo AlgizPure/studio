@@ -19,7 +19,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Habit, Day } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Checkbox } from './ui/checkbox';
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -45,6 +45,8 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
     handleSubmit,
     reset,
     control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<HabitFormValues>({
     resolver: zodResolver(habitSchema),
@@ -53,6 +55,16 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
       usePomodoro: false,
     },
   });
+
+  const watchedDays = watch('days') || [];
+
+  const handleAllDaysChange = (checked: boolean) => {
+    if (checked) {
+      setValue('days', daysOfWeek, { shouldValidate: true });
+    } else {
+      setValue('days', [], { shouldValidate: true });
+    }
+  };
 
   const onSubmit: SubmitHandler<HabitFormValues> = (data) => {
     const newHabit: Habit = {
@@ -109,7 +121,7 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
               <Label className="text-right pt-2">
                 Days
               </Label>
-              <div className="col-span-3 grid grid-cols-3 gap-2">
+              <div className="col-span-3 grid grid-cols-3 gap-y-2">
                 <Controller
                   name="days"
                   control={control}
@@ -135,6 +147,14 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
                     </>
                   )}
                 />
+                 <div className="flex items-center gap-2 mt-2 col-span-3">
+                  <Checkbox
+                    id="all-days-habit"
+                    checked={watchedDays.length === daysOfWeek.length}
+                    onCheckedChange={handleAllDaysChange}
+                  />
+                  <Label htmlFor="all-days-habit" className="text-sm font-normal">All Days</Label>
+                </div>
               </div>
             </div>
              {errors.days && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.days.message}</p>}
