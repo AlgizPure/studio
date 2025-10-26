@@ -4,23 +4,23 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%; /* Off White */
-    --foreground: 224 10% 15%;
+    --background: 40 30% 96%; /* Pastel Beige */
+    --foreground: 20 10% 15%;
 
-    --card: 210 20% 96%;
-    --card-foreground: 224 10% 15%;
+    --card: 40 25% 94%;
+    --card-foreground: 20 10% 15%;
 
-    --popover: 210 20% 98%;
-    --popover-foreground: 224 10% 15%;
+    --popover: 40 30% 96%;
+    --popover-foreground: 20 10% 15%;
     
     --primary: 210 5% 55%; /* Setdey - Neutral Gray */
     --primary-foreground: 210 20% 98%;
 
-    --secondary: 210 20% 92%;
-    --secondary-foreground: 224 10% 20%;
+    --secondary: 40 20% 92%;
+    --secondary-foreground: 20 10% 20%;
     
-    --muted: 210 20% 94%;
-    --muted-foreground: 224 10% 45%;
+    --muted: 40 20% 90%;
+    --muted-foreground: 20 10% 45%;
 
     --accent: 16 66% 60%; /* Terracoot - Terracotta */
     --accent-foreground: 210 20% 98%;
@@ -28,8 +28,8 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 210 20% 88%;
-    --input: 210 20% 93%;
+    --border: 40 20% 88%;
+    --input: 40 20% 92%;
     --ring: 16 66% 60%; /* Terracoot for ring */
 
     --chart-1: 210 5% 55%;
@@ -51,23 +51,23 @@
   }
 
   .dark {
-    --background: 224 10% 10%;
-    --foreground: 210 20% 92%;
+    --background: 40 10% 10%; /* Dark Warm Taupe */
+    --foreground: 40 10% 92%;
 
-    --card: 224 10% 12%;
-    --card-foreground: 210 20% 92%;
+    --card: 40 10% 12%;
+    --card-foreground: 40 10% 92%;
 
-    --popover: 224 10% 10%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 40 10% 10%;
+    --popover-foreground: 40 10% 92%;
     
     --primary: 210 5% 65%; /* Setdey - Neutral Gray */
     --primary-foreground: 224 10% 10%;
 
-    --secondary: 224 10% 20%;
-    --secondary-foreground: 210 20% 96%;
+    --secondary: 40 10% 20%;
+    --secondary-foreground: 40 10% 96%;
     
-    --muted: 224 10% 18%;
-    --muted-foreground: 210 20% 70%;
+    --muted: 40 10% 18%;
+    --muted-foreground: 40 10% 70%;
     
     --accent: 16 66% 60%; /* Terracoot */
     --accent-foreground: 224 10% 10%;
@@ -75,8 +75,8 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 224 10% 20%;
-    --input: 224 10% 20%;
+    --border: 40 10% 20%;
+    --input: 40 10% 20%;
     --ring: 16 66% 60%;
 
     --chart-1: 210 5% 65%;
