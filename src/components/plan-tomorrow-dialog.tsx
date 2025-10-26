@@ -9,16 +9,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { PlusSquare, GripVertical } from 'lucide-react';
+import { PlusSquare } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
-import { AddExerciseDialog } from './add-exercise-dialog';
-import { AddHabitDialog } from './add-habit-dialog';
-import { useState, useMemo, useEffect } from 'react';
+import { Separator } from './ui/separator';
+import { useState, useMemo } from 'react';
 import type { Exercise, Habit, ExerciseCategory, HabitCategory, Day } from '@/lib/types';
-import { ManageCategoriesDialog } from './manage-categories-dialog';
-import { ManageExerciseCategoriesDialog } from './manage-exercise-categories-dialog';
 import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc } from 'firebase/firestore';
 import { addDays, format } from 'date-fns';
@@ -53,13 +50,25 @@ export function PlanTomorrowDialog() {
     );
     const { data: habitCategories } = useCollection<HabitCategory>(habitCatQuery);
     
-    const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
-    const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);
-
     const tomorrow = useMemo(() => {
         const tomorrowDate = addDays(new Date(), 1);
         return format(tomorrowDate, 'EEEE') as Day;
     }, []);
+
+    const isExerciseScheduled = (exercise: Exercise) => (exercise.days || []).includes(tomorrow);
+    const isHabitScheduled = (habit: Habit) => (habit.days || []).includes(tomorrow);
+
+    const { scheduledExercises, unscheduledExercises } = useMemo(() => {
+        const scheduled = (exercises || []).filter(isExerciseScheduled);
+        const unscheduled = (exercises || []).filter(ex => !isExerciseScheduled(ex));
+        return { scheduledExercises: scheduled, unscheduledExercises: unscheduled };
+    }, [exercises, tomorrow]);
+
+    const { scheduledHabits, unscheduledHabits } = useMemo(() => {
+        const scheduled = (habits || []).filter(isHabitScheduled);
+        const unscheduled = (habits || []).filter(h => !isHabitScheduled(h));
+        return { scheduledHabits: scheduled, unscheduledHabits: unscheduled };
+    }, [habits, tomorrow]);
 
 
     const handleExerciseToggle = (exercise: Exercise) => {
@@ -67,9 +76,9 @@ export function PlanTomorrowDialog() {
         const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
 
         const currentDays = exercise.days || [];
-        const isScheduledForTomorrow = currentDays.includes(tomorrow);
+        const isScheduled = currentDays.includes(tomorrow);
         
-        const updatedDays = isScheduledForTomorrow 
+        const updatedDays = isScheduled 
             ? currentDays.filter(day => day !== tomorrow)
             : [...currentDays, tomorrow];
         
@@ -88,9 +97,9 @@ export function PlanTomorrowDialog() {
         const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
 
         const currentDays = habit.days || [];
-        const isScheduledForTomorrow = currentDays.includes(tomorrow);
+        const isScheduled = currentDays.includes(tomorrow);
         
-        const updatedDays = isScheduledForTomorrow 
+        const updatedDays = isScheduled 
             ? currentDays.filter(day => day !== tomorrow)
             : [...currentDays, tomorrow];
 
@@ -104,8 +113,6 @@ export function PlanTomorrowDialog() {
         });
     }
 
-    const isExerciseScheduled = (exercise: Exercise) => (exercise.days || []).includes(tomorrow);
-    const isHabitScheduled = (habit: Habit) => (habit.days || []).includes(tomorrow);
 
   return (
     <>
@@ -125,17 +132,16 @@ export function PlanTomorrowDialog() {
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
           <div className="flex flex-col space-y-4">
-            <div className="flex justify-between items-center pr-4">
-              <h3 className="font-semibold text-lg">Exercises</h3>
-            </div>
+            <h3 className="font-semibold text-lg">Exercises</h3>
             <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">
-                {(exercises || []).map((exercise) => (
+                <p className="text-sm font-medium text-muted-foreground">Scheduled</p>
+                {scheduledExercises.map((exercise) => (
                   <div key={exercise.id} className="flex items-center p-3 rounded-lg border bg-card/50">
                     <Checkbox 
                         id={`ex-${exercise.id}`} 
                         className="mr-4" 
-                        checked={isExerciseScheduled(exercise)}
+                        checked={true}
                         onCheckedChange={() => handleExerciseToggle(exercise)}
                     />
                     <div className="flex-1">
@@ -144,25 +150,58 @@ export function PlanTomorrowDialog() {
                     </div>
                   </div>
                 ))}
+                 {scheduledExercises.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Nothing scheduled yet.</p>}
+                <Separator className="my-4" />
+                <p className="text-sm font-medium text-muted-foreground">Unscheduled</p>
+                {unscheduledExercises.map((exercise) => (
+                  <div key={exercise.id} className="flex items-center p-3 rounded-lg border bg-card/50 opacity-70 hover:opacity-100 transition-opacity">
+                    <Checkbox 
+                        id={`ex-add-${exercise.id}`} 
+                        className="mr-4" 
+                        checked={false}
+                        onCheckedChange={() => handleExerciseToggle(exercise)}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor={`ex-add-${exercise.id}`} className="font-medium cursor-pointer">{exercise.name}</Label>
+                      <p className="text-xs text-muted-foreground">{(exerciseCategories || []).find(c => c.id === exercise.categoryId)?.name}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </ScrollArea>
           </div>
           <div className="flex flex-col space-y-4">
-            <div className="flex justify-between items-center pr-4">
-                <h3 className="font-semibold text-lg">Habits</h3>
-            </div>
+            <h3 className="font-semibold text-lg">Habits</h3>
             <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">
-                {(habits || []).map((habit) => (
+                 <p className="text-sm font-medium text-muted-foreground">Scheduled</p>
+                {scheduledHabits.map((habit) => (
                    <div key={habit.id} className="flex items-center p-3 rounded-lg border bg-card/50">
                     <Checkbox 
                         id={`hb-${habit.id}`} 
                         className="mr-4" 
-                        checked={isHabitScheduled(habit)}
+                        checked={true}
                         onCheckedChange={() => handleHabitToggle(habit)}
                     />
                     <div className="flex-1">
                       <Label htmlFor={`hb-${habit.id}`} className="font-medium cursor-pointer">{habit.name}</Label>
+                      <p className="text-xs text-muted-foreground">{habit.goal}</p>
+                    </div>
+                  </div>
+                ))}
+                {scheduledHabits.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Nothing scheduled yet.</p>}
+                <Separator className="my-4" />
+                <p className="text-sm font-medium text-muted-foreground">Unscheduled</p>
+                 {unscheduledHabits.map((habit) => (
+                   <div key={habit.id} className="flex items-center p-3 rounded-lg border bg-card/50 opacity-70 hover:opacity-100 transition-opacity">
+                    <Checkbox 
+                        id={`hb-add-${habit.id}`} 
+                        className="mr-4" 
+                        checked={false}
+                        onCheckedChange={() => handleHabitToggle(habit)}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor={`hb-add-${habit.id}`} className="font-medium cursor-pointer">{habit.name}</Label>
                       <p className="text-xs text-muted-foreground">{habit.goal}</p>
                     </div>
                   </div>
