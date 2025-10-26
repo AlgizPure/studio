@@ -21,8 +21,9 @@ export type Exercise = {
 export type Workout = {
   id: string;
   name:string;
-  exercises: { exerciseId: string; sets?: number; reps?: number; duration?: string }[];
+  description: string;
   level?: number;
+  exercises: { exerciseId: string; sets?: number; reps?: number; duration?: string }[];
 };
 
 export type HabitCategory = {

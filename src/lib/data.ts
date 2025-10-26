@@ -40,26 +40,31 @@ export const workouts: Workout[] = [
   {
     id: 'w1',
     name: 'Legs & Shoulders',
+    description: 'A workout focusing on lower body and shoulder strength.',
     exercises: [{ exerciseId: 'ex1', sets: 4, reps: 8 }, { exerciseId: 'ex2', sets: 3, reps: 10 }, { exerciseId: 'ex7' }, { exerciseId: 'ex8' }, { exerciseId: 'ex9' }]
   },
   {
     id: 'w2',
     name: 'Chest & Triceps',
+    description: 'A workout for upper body pushing muscles.',
     exercises: [{ exerciseId: 'ex3', sets: 4, reps: 8 }, { exerciseId: 'ex4', sets: 3, reps: 12 }, { exerciseId: 'ex7' }, { exerciseId: 'ex8' }, { exerciseId: 'ex9' }]
   },
   {
     id: 'w3',
     name: 'Back & Biceps',
+    description: 'A workout for upper body pulling muscles.',
     exercises: [{ exerciseId: 'ex5', sets: 3, reps: 6 }, { exerciseId: 'ex6', sets: 3, reps: 12 }, { exerciseId: 'ex7' }, { exerciseId: 'ex8' }, { exerciseId: 'ex9' }]
   },
   {
     id: 'w4',
     name: 'Bio-dynamics & Mobility',
+    description: 'Improve your movement quality and joint health.',
     exercises: [{ exerciseId: 'ex11', duration: '30min' }, { exerciseId: 'ex12', duration: '15min' }]
   },
   {
     id: 'w5',
     name: 'Static Strength (Zass)',
+    description: 'Isometric holds for building tendon and muscle strength.',
     exercises: [{ exerciseId: 'ex14', duration: '5min cycle' }]
   }
 ];
