@@ -13,7 +13,7 @@ interface PomodoroIconProps {
 
 export function PomodoroIcon({ className }: PomodoroIconProps) {
   return (
-    <div className={cn("relative h-8 w-8", className)}>
+    <div className={cn("relative h-10 w-10", className)}>
       <svg className="h-full w-full" viewBox="0 0 50 50">
         <circle
           className="stroke-current text-secondary"
@@ -32,10 +32,13 @@ export function PomodoroIcon({ className }: PomodoroIconProps) {
           r={CIRCLE_RADIUS}
           fill="transparent"
           strokeDasharray={CIRCLE_CIRCUMFERENCE}
-          strokeDashoffset={CIRCLE_CIRCUMFERENCE * (1 - 0.75)} // Example progress
+          strokeDashoffset={0} 
           transform="rotate(-90 25 25)"
         />
       </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xs font-mono text-muted-foreground">25</span>
+      </div>
     </div>
   );
 }
