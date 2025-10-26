@@ -11,11 +11,11 @@ import { useMemo } from 'react';
 // This provider is intended to be used in the root layout of your application.
 // It will initialize Firebase on the client side and provide the Firebase app,
 // Firestore, and Auth instances to all child components.
-export const FirebaseClientProvider = ({
+export function FirebaseClientProvider({
   children,
 }: {
   children: React.ReactNode;
-}) => {
+}) {
   const { app, firestore, auth } = useMemo(() => initializeFirebase(), []);
 
   const contextValue: FirebaseContext = {

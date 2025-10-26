@@ -8,11 +8,11 @@ import { useDoc } from './firestore/use-doc';
 import { useUser } from './auth/use-user';
 import {
   FirebaseProvider,
-  FirebaseClientProvider,
   useFirebaseApp,
   useFirestore,
   useAuth,
 } from './provider';
+import { FirebaseClientProvider } from './client-provider';
 
 // Initializes and returns a Firebase object with the app, auth, and firestore.
 // This is a singleton, so it will only be initialized once.
