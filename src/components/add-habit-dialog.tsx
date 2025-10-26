@@ -28,6 +28,7 @@ const habitSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   goal: z.string().optional(),
   days: z.array(z.string()).optional(),
+  usePomodoro: z.boolean().default(false).optional(),
 });
 
 type HabitFormValues = z.infer<typeof habitSchema>;
@@ -49,6 +50,7 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
     resolver: zodResolver(habitSchema),
     defaultValues: {
       days: [],
+      usePomodoro: false,
     },
   });
 
@@ -59,6 +61,7 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
       goal: data.goal,
       completed: false,
       days: data.days as Day[],
+      ...(data.usePomodoro && { pomodoro: { cycles: 1 } }),
     };
     onHabitAdd(newHabit);
     toast({
@@ -136,6 +139,23 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
             </div>
              {errors.days && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.days.message}</p>}
 
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="usePomodoro" className="text-right">Pomodoro</Label>
+                <Controller
+                    name="usePomodoro"
+                    control={control}
+                    render={({ field }) => (
+                        <div className="col-span-3 flex items-center gap-2">
+                            <Checkbox
+                                id="usePomodoro"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                            <Label htmlFor="usePomodoro" className="text-sm font-normal">Enable Pomodoro Timer</Label>
+                        </div>
+                    )}
+                />
+            </div>
           </div>
           <DialogFooter>
             <Button type="submit">Save Habit</Button>
