@@ -22,7 +22,6 @@ export type Workout = {
 export type Habit = {
   id: string;
   name: string;
-  icon: LucideIcon;
   goal?: string; // e.g., "3 lessons", "10 minutes"
   completed: boolean;
   days?: Day[];

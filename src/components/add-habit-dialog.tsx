@@ -20,7 +20,6 @@ import { z } from 'zod';
 import type { Habit, Day } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { BrainCircuit } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -58,7 +57,6 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
       id: `hb${Date.now()}`,
       name: data.name,
       goal: data.goal,
-      icon: BrainCircuit, // Default icon for now
       completed: false,
       days: data.days as Day[],
     };

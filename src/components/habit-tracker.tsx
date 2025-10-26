@@ -42,7 +42,6 @@ export function HabitTracker() {
       </CardHeader>
       <CardContent className="space-y-2">
         {sortedHabits.map((habit) => {
-          const Icon = habit.icon;
           return (
             <div 
               key={habit.id} 
@@ -69,7 +68,6 @@ export function HabitTracker() {
                 <p className="text-xs text-muted-foreground">{habit.goal}</p>
               </div>
               {habit.pomodoro && <PomodoroTimer cycles={habit.pomodoro.cycles} />}
-              <Icon className="h-5 w-5 text-muted-foreground" />
             </div>
           );
         })}

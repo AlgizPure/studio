@@ -56,9 +56,9 @@ export const workouts: Workout[] = [
 ];
 
 export const habits: Habit[] = [
-    { id: 'h1', name: 'Mindfulness', icon: BrainCircuit, goal: '15 minutes', completed: true, pomodoro: { cycles: 1 } },
-    { id: 'h2', name: 'Study Lessons', icon: BookOpen, goal: '2 lessons', completed: false, pomodoro: { cycles: 2 } },
-    { id: 'h3', name: 'Morning Run', icon: HeartPulse, goal: '8 km', completed: true },
+    { id: 'h1', name: 'Mindfulness', goal: '15 minutes', completed: true, pomodoro: { cycles: 1 } },
+    { id: 'h2', name: 'Study Lessons', goal: '2 lessons', completed: false, pomodoro: { cycles: 2 } },
+    { id: 'h3', name: 'Morning Run', goal: '8 km', completed: true },
 ];
 
 const scheduleTemplate: { [key in Day]: DailySchedule } = {
