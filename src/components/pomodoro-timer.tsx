@@ -7,6 +7,7 @@ import { Button } from './ui/button';
 
 interface PomodoroTimerProps {
   cycles: number;
+  disabled?: boolean;
 }
 
 const DEFAULT_WORK_MINUTES = 25;
@@ -15,7 +16,7 @@ const DEFAULT_REST_MINUTES = 5;
 const CIRCLE_RADIUS = 20;
 const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
-export function PomodoroTimer({ cycles }: PomodoroTimerProps) {
+export function PomodoroTimer({ cycles, disabled = false }: PomodoroTimerProps) {
   const [workDuration, setWorkDuration] = useState(DEFAULT_WORK_MINUTES * 60);
   const [restDuration, setRestDuration] = useState(DEFAULT_REST_MINUTES * 60);
 
@@ -42,6 +43,12 @@ export function PomodoroTimer({ cycles }: PomodoroTimerProps) {
     setCompletedCycles(0);
   }, [workDuration]);
 
+  useEffect(() => {
+    if (disabled) {
+        setIsActive(false);
+    }
+  }, [disabled]);
+  
   useEffect(() => {
     // When workDuration changes (e.g. from settings), reset the timer
     setTimeLeft(workDuration);
@@ -82,6 +89,7 @@ export function PomodoroTimer({ cycles }: PomodoroTimerProps) {
   }, [isActive, timeLeft, isWorkSession, workDuration, restDuration, resetTimer, completedCycles, cycles]);
 
   const toggleTimer = () => {
+    if (disabled) return;
     if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
       Notification.requestPermission();
     }
@@ -130,7 +138,7 @@ export function PomodoroTimer({ cycles }: PomodoroTimerProps) {
       <span className="text-sm font-mono text-muted-foreground">
         {completedCycles}
       </span>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleTimer}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleTimer} disabled={disabled}>
         {isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
       </Button>
     </div>

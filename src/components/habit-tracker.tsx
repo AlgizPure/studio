@@ -67,7 +67,7 @@ export function HabitTracker() {
                 </Label>
                 <p className="text-xs text-muted-foreground">{habit.goal}</p>
               </div>
-              {habit.pomodoro && <PomodoroTimer cycles={habit.pomodoro.cycles} />}
+              {habit.pomodoro && <PomodoroTimer cycles={habit.pomodoro.cycles} disabled={habit.completed} />}
             </div>
           );
         })}
