@@ -178,7 +178,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle className="font-headline">{isEditMode ? 'Edit Habit' : 'Add Custom Habit'}</DialogTitle>
+            <DialogTitle>{isEditMode ? 'Edit Habit' : 'Add Custom Habit'}</DialogTitle>
             <DialogDescription>
               {isEditMode ? 'Update the details for your habit.' : "Add a new habit to your personal list. Click save when you're done."}
             </DialogDescription>

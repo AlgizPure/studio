@@ -99,13 +99,13 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-headline font-bold tracking-tight">{program.name}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{program.name}</h1>
         <p className="text-muted-foreground mt-2 max-w-2xl">{program.description}</p>
       </div>
 
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-headline font-semibold tracking-tight">Workouts</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">Workouts</h2>
           {!program.isTemplate && <AddWorkoutToProgramDialog onWorkoutAdd={handleAddWorkout} />}
         </div>
         

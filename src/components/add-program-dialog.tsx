@@ -91,7 +91,7 @@ export function AddProgramDialog({ onProgramAdd, programToEdit, trigger }: AddPr
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle className="font-headline">{isEditMode ? 'Edit Program' : 'Add New Program'}</DialogTitle>
+            <DialogTitle>{isEditMode ? 'Edit Program' : 'Add New Program'}</DialogTitle>
             <DialogDescription>
               {isEditMode ? 'Update the details of your program.' : "Create a new workout program. You can add workouts to it later."}
             </DialogDescription>

@@ -114,7 +114,7 @@ export default function ProgramsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-headline font-bold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight">
             Workout Programs
           </h1>
           <p className="text-muted-foreground">
@@ -125,7 +125,7 @@ export default function ProgramsPage() {
       </div>
 
       <div>
-        <h2 className="text-2xl font-headline font-semibold tracking-tight mb-4">My Programs</h2>
+        <h2 className="text-2xl font-semibold tracking-tight mb-4">My Programs</h2>
         {isLoading ? (
           <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <Skeleton className="h-56 w-full" />
@@ -149,7 +149,7 @@ export default function ProgramsPage() {
       </div>
 
        <div>
-        <h2 className="text-2xl font-headline font-semibold tracking-tight my-4">Templates</h2>
+        <h2 className="text-2xl font-semibold tracking-tight my-4">Templates</h2>
         {isLoading ? (
           <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <Skeleton className="h-56 w-full" />

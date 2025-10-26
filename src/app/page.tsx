@@ -120,7 +120,7 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center h-full">
           <div className="text-center p-8 border rounded-lg glass">
-              <h2 className="text-2xl font-headline font-bold mb-2">Welcome to Zenith Trainer</h2>
+              <h2 className="text-2xl font-bold mb-2">Welcome to Zenith Trainer</h2>
               <p className="text-muted-foreground mb-6">Your personal AI-powered fitness and habit tracker.</p>
               <div className="flex gap-4 justify-center">
                 <Button asChild>
@@ -139,7 +139,7 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h1 className="text-3xl font-headline font-bold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight">
             Dashboard
           </h1>
           <p className="text-muted-foreground">

@@ -120,7 +120,7 @@ export function HabitTracker() {
       <>
         <Card className="glass">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="font-headline">Daily Habits</CardTitle>
+            <CardTitle>Daily Habits</CardTitle>
             <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => setIsManageCategoriesOpen(true)} categories={habitCategories || []} />
           </CardHeader>
           <CardContent className="space-y-2">

@@ -4,7 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Dumbbell, Target, BookOpenCheck } from 'lucide-react';
+import { Dumbbell, Target } from 'lucide-react';
 import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import type { Exercise, Habit, Day, ExerciseLog } from '@/lib/types';
 import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
@@ -123,7 +123,7 @@ export function TodaySchedule() {
         activityType: 'Workout' as const,
         activityName: ex.name,
         duration: 'Exercise',
-        icon: hasParams ? BookOpenCheck : Dumbbell,
+        icon: Dumbbell,
         raw: ex,
         completed: isCompleted,
         onToggle: () => handleExerciseToggle(ex),
@@ -144,7 +144,7 @@ export function TodaySchedule() {
     return (
         <Card className="glass">
             <CardHeader>
-                <CardTitle className="font-headline">Today's Activities</CardTitle>
+                <CardTitle>Today's Activities</CardTitle>
             </CardHeader>
             <CardContent>
                 <p className="text-muted-foreground">Loading schedule...</p>
@@ -156,7 +156,7 @@ export function TodaySchedule() {
   return (
     <Card className="glass">
       <CardHeader>
-        <CardTitle className="font-headline">Today's Activities</CardTitle>
+        <CardTitle>Today's Activities</CardTitle>
       </CardHeader>
       <CardContent>
         {allItems.length > 0 ? (

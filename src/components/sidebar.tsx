@@ -8,6 +8,7 @@ import {
 import { Button } from './ui/button';
 import { Settings } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
+import { UserNav } from './user-nav';
 
 const Logo = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
@@ -25,7 +26,7 @@ export function Sidebar() {
         <SidebarHeader className="p-4">
             <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
               <Logo />
-              <span className="font-bold font-headline text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">Zenith</span>
+              <span className="font-bold text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">Zenith</span>
             </div>
         </SidebarHeader>
         <div className="flex-1 px-2">
@@ -33,10 +34,9 @@ export function Sidebar() {
         </div>
         <SidebarFooter className="p-4 flex flex-col gap-2">
             <ThemeToggle />
-            <Button variant="ghost" className="w-full justify-start gap-2 p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8">
-                <Settings className="h-4 w-4" />
-                <span className="group-data-[collapsible=icon]:hidden">Settings</span>
-            </Button>
+            <div className="group-data-[collapsible=icon]:hidden">
+              <UserNav />
+            </div>
         </SidebarFooter>
       </SidebarContent>
     </SidebarPrimitive>

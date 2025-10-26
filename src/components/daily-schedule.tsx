@@ -15,6 +15,8 @@ import { AddHabitDialog } from './add-habit-dialog';
 import { Button } from './ui/button';
 import { PomodoroIcon } from './pomodoro-icon';
 
+type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+
 const weeklySchedule: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 interface DailyScheduleProps {
@@ -52,7 +54,7 @@ export function DailySchedule({
     <>
       <Card className="glass">
         <CardHeader>
-          <CardTitle className="font-headline">Weekly Schedule</CardTitle>
+          <CardTitle>Weekly Schedule</CardTitle>
         </CardHeader>
         <CardContent>
           <Accordion type="single" collapsible defaultValue={today} className="w-full">

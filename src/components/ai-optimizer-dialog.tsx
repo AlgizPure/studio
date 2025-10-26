@@ -170,7 +170,7 @@ export function AiOptimizerDialog() {
       </DialogTrigger>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle className="font-headline flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2">
             <Wand2 className="text-primary"/>
             AI Routine Optimizer
             </DialogTitle>

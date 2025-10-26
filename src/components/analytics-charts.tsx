@@ -129,7 +129,7 @@ export function AnalyticsCharts() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="glass">
           <CardHeader>
-            <CardTitle className="font-headline">Weekly Workout Frequency</CardTitle>
+            <CardTitle>Weekly Workout Frequency</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -155,7 +155,7 @@ export function AnalyticsCharts() {
 
         <Card className="glass">
           <CardHeader>
-            <CardTitle className="font-headline">Today's Habit Completion</CardTitle>
+            <CardTitle>Today's Habit Completion</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (
@@ -188,7 +188,7 @@ export function AnalyticsCharts() {
 
        <Card className="glass">
         <CardHeader>
-          <CardTitle className="font-headline">Exercise Progress</CardTitle>
+          <CardTitle>Exercise Progress</CardTitle>
           <div className="flex gap-4 pt-4">
               <Select value={selectedExerciseId || ''} onValueChange={setSelectedExerciseId}>
                   <SelectTrigger className="w-[200px]">

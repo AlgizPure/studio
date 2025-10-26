@@ -26,7 +26,7 @@ export function ProgramCard({ program, onAddTemplate }: ProgramCardProps) {
     <Card className="flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-start">
-            <CardTitle className="font-headline text-2xl">{program.name}</CardTitle>
+            <CardTitle className="text-2xl">{program.name}</CardTitle>
             {program.isTemplate && <Badge variant="secondary">Template</Badge>}
         </div>
         <CardDescription className="h-10 text-ellipsis overflow-hidden">{program.description}</CardDescription>
