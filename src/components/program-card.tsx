@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import type { Program } from '@/lib/types';
 import { Badge } from './ui/badge';
 import { Plus } from 'lucide-react';
+import Link from 'next/link';
 
 interface ProgramCardProps {
   program: Program;
@@ -34,7 +35,9 @@ export function ProgramCard({ program }: ProgramCardProps) {
                 Add to My Programs
             </Button>
         ) : (
-            <Button variant="outline" className="w-full">View Program</Button>
+            <Button variant="outline" className="w-full" asChild>
+                <Link href={`/programs/${program.id}`}>View Program</Link>
+            </Button>
         )}
       </CardFooter>
     </Card>
