@@ -14,12 +14,14 @@ interface CustomThemeContextType {
 const CustomThemeContext = createContext<CustomThemeContextType | undefined>(undefined)
 
 function CustomThemeProvider({ children }: { children: React.ReactNode }) {
-  const [japandiTheme, setJapandiTheme] = useState<JapandiTheme>('setdey');
+  const [japandiTheme, setJapandiTheme] = useState<JapandiTheme>('soft');
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('japandi-theme') as JapandiTheme | null;
     if (storedTheme) {
       setJapandiTheme(storedTheme);
+    } else {
+      document.body.classList.add('theme-soft');
     }
   }, []);
 
