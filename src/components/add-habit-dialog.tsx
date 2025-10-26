@@ -143,7 +143,7 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
                         <Label htmlFor={`day-habit-${day}`} className="text-sm font-normal">{day.substring(0,3)}</Label>
                       </div>
                     ))}
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2">
                       <Checkbox
                         id="all-days-habit"
                         checked={watchedDays.length === daysOfWeek.length}
