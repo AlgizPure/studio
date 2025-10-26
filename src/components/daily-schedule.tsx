@@ -75,7 +75,8 @@ export function DailySchedule({
                     activityName: ex.name,
                     duration: exerciseCategories.find(c => c.id === ex.categoryId)?.name || 'Workout',
                     icon: Dumbbell,
-                    raw: ex
+                    raw: ex,
+                    custom: ex.custom
                 }))
               ].sort((a, b) => {
                 if (!a.time || a.time === 'Habit' || a.time === 'Any time') return 1;
@@ -99,6 +100,7 @@ export function DailySchedule({
                         {allItems.map((item) => {
                             const Icon = item.icon as LucideIcon;
                             const isDefaultItem = (item as any).isDefault;
+                            const isCustomItem = !isDefaultItem;
 
                             const editTrigger = (
                               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -116,7 +118,7 @@ export function DailySchedule({
                                     <p className="text-sm text-muted-foreground">{item.time}</p>
                                 </div>
                                 <Badge variant={item.activityType === 'Habit' ? 'secondary' : 'outline'} className="mr-2">{item.duration}</Badge>
-                                {!isDefaultItem && (
+                                {isCustomItem && (
                                   item.activityType === 'Habit' ? (
                                       <AddHabitDialog
                                           habitToEdit={item.raw as Habit}
