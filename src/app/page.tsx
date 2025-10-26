@@ -7,16 +7,37 @@ import { HabitTracker } from '@/components/habit-tracker';
 import { AiOptimizerDialog } from '@/components/ai-optimizer-dialog';
 import { PlanTomorrowDialog } from '@/components/plan-tomorrow-dialog';
 import { useUser } from '@/firebase';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
+
+  if (isUserLoading) {
+    return (
+       <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+              <h2 className="text-2xl font-semibold mb-2">Loading...</h2>
+              <p className="text-muted-foreground">Preparing your dashboard.</p>
+          </div>
+      </div>
+    )
+  }
 
   if (!user) {
     return (
       <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-              <h2 className="text-2xl font-semibold mb-2">Welcome to Zenith Trainer</h2>
-              <p className="text-muted-foreground">Please sign in to continue.</p>
+          <div className="text-center p-8 border rounded-lg glass">
+              <h2 className="text-2xl font-headline font-bold mb-2">Welcome to Zenith Trainer</h2>
+              <p className="text-muted-foreground mb-6">Your personal AI-powered fitness and habit tracker.</p>
+              <div className="flex gap-4 justify-center">
+                <Button asChild>
+                    <Link href="/login">Login</Link>
+                </Button>
+                 <Button asChild variant="outline">
+                    <Link href="/signup">Sign Up</Link>
+                </Button>
+              </div>
           </div>
       </div>
     )
@@ -100,3 +121,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

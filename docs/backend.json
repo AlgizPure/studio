@@ -230,8 +230,8 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "google.com",
+      "password"
     ]
   },
   "firestore": {
@@ -360,3 +360,4 @@
     "reasoning": "The Firestore data structure is designed to support Zenith Trainer's core features, focusing on user-specific data and collaborative elements while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling.  The structure prioritizes path-based ownership for user-generated content and employs denormalization where needed to avoid hierarchical authorization dependencies.  All `list` operations will be secure, ensuring that rules are not filters (QAPs).  \n\n*   **User Profiles:** User profiles are stored in a private collection using path-based ownership (`/users/{userId}/profile`). This ensures that only the authenticated user can access their profile data.\n*   **Workout Routines and Exercises:** Workout routines and exercises are nested under the user's profile (`/users/{userId}/workoutRoutines/{workoutRoutineId}` and `/users/{userId}/workoutRoutines/{workoutRoutineId}/workoutExercises/{workoutExerciseId}`). This structure continues the hierarchical path-based ownership model. The `Exercise` entity itself lives as a global entity so that users can reference it and re-organize it within their workout routines.\n*   **Habit Tracking:** Habits and habit completion records are stored under the user's profile, again using path-based ownership (`/users/{userId}/habits/{habitId}` and `/users/{userId}/habits/{habitId}/habitCompletions/{habitCompletionId}`).\n\n**Authorization Independence & QAPs:**\n\nAuthorization independence is achieved through path-based ownership and avoiding `get()` calls in security rules.  Since all workout routines, exercises, habits, and habit completions are stored under the user's profile, security rules can simply check if `request.auth.uid == userId` to grant access. This eliminates the need to fetch parent documents to determine authorization.\n\nThe data structure will support QAPs as all `list` operations will be scoped to the user's data via the path-based ownership. Rules will not act as filters, as unauthorized documents will not be accessible in the first place."
   }
 }
+    

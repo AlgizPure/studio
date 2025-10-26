@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { useUser, useFirestore } from '@/firebase';
+import { useAuth, useUser, useFirestore } from '@/firebase';
+import { signOut } from '@/firebase/auth';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,14 +21,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { HabitCategory, ExerciseCategory } from '@/lib/types';
 import { useCollection } from '@/firebase';
-import { CreditCard, LogOut, Settings, User, Timer, FolderKanban, Dumbbell } from 'lucide-react';
+import { CreditCard, LogOut, Settings, User, Timer, FolderKanban, Dumbbell, LogIn } from 'lucide-react';
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
 import { ManageExerciseCategoriesDialog } from './manage-exercise-categories-dialog';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export function UserNav() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const firestore = useFirestore();
+  const router = useRouter();
 
   const { data: habitCategories } = useCollection<HabitCategory>(user ? `users/${user.uid}/habitCategories` : null);
   const { data: exerciseCategories } = useCollection<ExerciseCategory>(user ? `users/${user.uid}/exerciseCategories` : null);
@@ -62,6 +67,28 @@ export function UserNav() {
     await deleteDoc(doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId));
   };
 
+  const handleSignOut = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/');
+    }
+  };
+
+  if (isUserLoading) {
+    return <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />;
+  }
+
+  if (!user) {
+    return (
+      <Button asChild variant="outline">
+        <Link href="/login">
+          <LogIn className="mr-2 h-4 w-4"/>
+          Login
+        </Link>
+      </Button>
+    )
+  }
+
   return (
     <>
       <DropdownMenu>
@@ -69,14 +96,14 @@ export function UserNav() {
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
               <AvatarImage src={user?.photoURL || ''} alt={user?.displayName || ''} />
-              <AvatarFallback>{user?.displayName?.charAt(0) || 'U'}</AvatarFallback>
+              <AvatarFallback>{user?.displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user?.displayName}</p>
+              <p className="text-sm font-medium leading-none">{user?.displayName || 'Zenith User'}</p>
               <p className="text-xs leading-none text-muted-foreground">
                 {user?.email}
               </p>
@@ -116,7 +143,7 @@ export function UserNav() {
             </DropdownMenuSub>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
           </DropdownMenuItem>
