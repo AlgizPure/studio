@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { ThemeProvider as NextThemesProvider, useTheme as useNextTheme } from 'next-themes'
 import { type ThemeProviderProps } from 'next-themes/dist/types'
 
-type JapandiTheme = 'setdey' | 'olive' | 'soft' | 'terracoot';
+type JapandiTheme = 'setdey' | 'olive' | 'soft' | 'terracoot' | 'mizu' | 'sakura' | 'mori' | 'kuro';
 
 interface CustomThemeContextType {
   japandiTheme: JapandiTheme
@@ -14,14 +14,14 @@ interface CustomThemeContextType {
 const CustomThemeContext = createContext<CustomThemeContextType | undefined>(undefined)
 
 function CustomThemeProvider({ children }: { children: React.ReactNode }) {
-  const [japandiTheme, setJapandiTheme] = useState<JapandiTheme>('setdey');
+  const [japandiTheme, setJapandiTheme] = useState<JapandiTheme>('soft');
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('japandi-theme') as JapandiTheme | null;
     if (storedTheme) {
       setJapandiTheme(storedTheme);
     } else {
-      document.body.classList.add('theme-setdey');
+      document.body.classList.add('theme-soft');
     }
   }, []);
 
@@ -29,7 +29,7 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
     setJapandiTheme(theme);
     localStorage.setItem('japandi-theme', theme);
     // Remove other theme classes
-    document.body.classList.remove('theme-setdey', 'theme-olive', 'theme-soft', 'theme-terracoot');
+    document.body.classList.remove('theme-setdey', 'theme-olive', 'theme-soft', 'theme-terracoot', 'theme-mizu', 'theme-sakura', 'theme-mori', 'theme-kuro');
     // Add the new theme class
     document.body.classList.add(`theme-${theme}`);
   }, []);

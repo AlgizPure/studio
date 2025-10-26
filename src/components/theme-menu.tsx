@@ -24,6 +24,10 @@ const themes: { name: JapandiTheme, label: string, color: string }[] = [
     { name: 'terracoot', label: 'Terracoot', color: 'hsl(16 66% 60%)' },
     { name: 'setdey', label: 'Setdey', color: 'hsl(210 5% 55%)' },
     { name: 'olive', label: 'Olive', color: 'hsl(80 15% 45%)' },
+    { name: 'mizu', label: 'Mizu', color: 'hsl(210 40% 55%)' },
+    { name: 'sakura', label: 'Sakura', color: 'hsl(340 50% 70%)' },
+    { name: 'mori', label: 'Mori', color: 'hsl(140 25% 40%)' },
+    { name: 'kuro', label: 'Kuro', color: 'hsl(220 5% 40%)' },
 ];
 
 export function ThemeMenu() {
