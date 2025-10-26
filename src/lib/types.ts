@@ -22,6 +22,7 @@ export type Workout = {
   id: string;
   name:string;
   exercises: { exerciseId: string; sets?: number; reps?: number; duration?: string }[];
+  level?: number;
 };
 
 export type HabitCategory = {
@@ -60,3 +61,11 @@ export type UserProfile = {
   email: string;
   avatarUrl: string;
 };
+
+export type Program = {
+    id: string;
+    name: string;
+    description: string;
+    isTemplate: boolean;
+    authorId?: string;
+}
