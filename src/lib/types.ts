@@ -1,4 +1,3 @@
-
 import type { LucideIcon } from "lucide-react";
 
 export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
@@ -27,6 +26,9 @@ export type Habit = {
   goal?: string; // e.g., "3 lessons", "10 minutes"
   completed: boolean;
   days?: Day[];
+  pomodoro?: {
+    cycles: number;
+  };
 };
 
 export type ScheduleItem = {
