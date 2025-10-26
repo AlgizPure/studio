@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from './ui/button';
 import { Settings } from 'lucide-react';
-import { ThemeToggle } from './theme-toggle';
+import { ThemeMenu } from './theme-menu';
 import { UserNav } from './user-nav';
 
 const Logo = () => (
@@ -33,7 +33,7 @@ export function Sidebar() {
             <MainNav />
         </div>
         <SidebarFooter className="p-4 flex flex-col gap-2">
-            <ThemeToggle />
+            <ThemeMenu />
             <div className="group-data-[collapsible=icon]:hidden">
               <UserNav />
             </div>

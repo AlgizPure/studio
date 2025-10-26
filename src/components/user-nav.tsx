@@ -18,25 +18,21 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuPortal,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import type { HabitCategory, ExerciseCategory } from '@/lib/types';
 import { useCollection } from '@/firebase';
-import { CreditCard, LogOut, Settings, User, Timer, FolderKanban, Dumbbell, LogIn, Palette, Check } from 'lucide-react';
+import { CreditCard, LogOut, Settings, User, Timer, FolderKanban, Dumbbell, LogIn, Palette } from 'lucide-react';
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
-import { useTheme } from '@/components/theme-provider';
 
 export function UserNav() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
-  const { japandiTheme, setJapandiTheme } = useTheme();
 
   const habitCategoriesQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/habitCategories`) : null),
@@ -179,22 +175,6 @@ export function UserNav() {
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Palette className="mr-2 h-4 w-4" />
-                      <span>Theme</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                            <DropdownMenuRadioGroup value={japandiTheme} onValueChange={(value) => setJapandiTheme(value as any)}>
-                                <DropdownMenuRadioItem value="setdey">Setdey</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="olive">Olive</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="soft">Soft</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="terracoot">Terracoot</DropdownMenuRadioItem>
-                            </DropdownMenuRadioGroup>
-                        </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
                   <DropdownMenuItem onSelect={() => setIsPomodoroSettingsOpen(true)}>
                     <Timer className="mr-2 h-4 w-4" />
                     <span>Pomodoro</span>
