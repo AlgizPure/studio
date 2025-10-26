@@ -11,12 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from './ui/badge';
 import type { LucideIcon } from 'lucide-react';
 import type { Exercise, Habit } from '@/lib/types';
-import { Target, Pencil, Dumbbell, Timer } from 'lucide-react';
+import { Target, Pencil, Dumbbell } from 'lucide-react';
 import { AddExerciseDialog } from './add-exercise-dialog';
 import { AddHabitDialog } from './add-habit-dialog';
 import { Button } from './ui/button';
 import { ManageExerciseCategoriesDialog } from './manage-exercise-categories-dialog';
 import { useState } from 'react';
+import { PomodoroTimer } from './pomodoro-timer';
 
 interface DailyScheduleProps {
     exercises: Exercise[];
@@ -117,7 +118,7 @@ export function DailySchedule({
                                     <p className="font-semibold">{item.activityName}</p>
                                     <p className="text-sm text-muted-foreground">{item.time}</p>
                                 </div>
-                                {(item as any).isPomodoro && <Timer className="mr-2 h-4 w-4 text-muted-foreground" />}
+                                {(item as any).isPomodoro && <PomodoroTimer cycles={(item.raw as Habit).pomodoro!.cycles} />}
                                 <Badge variant={item.activityType === 'Habit' ? 'secondary' : 'outline'} className="mr-2">{item.duration}</Badge>
                                 {isCustomItem && (
                                   item.activityType === 'Habit' ? (
@@ -153,7 +154,7 @@ export function DailySchedule({
             })}
           </Accordion>
         </CardContent>
-      </Card>
+      </Card>>
       <ManageExerciseCategoriesDialog open={isManageExerciseCategoriesOpen} onOpenChange={setIsManageExerciseCategoriesOpen} />
     </>
   );
