@@ -128,7 +128,7 @@ export function PomodoroTimer({ cycles }: PomodoroTimerProps) {
         </div>
       </div>
       <span className="text-sm font-mono text-muted-foreground">
-        {completedCycles}/{cycles}
+        {completedCycles}
       </span>
       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleTimer}>
         {isActive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
