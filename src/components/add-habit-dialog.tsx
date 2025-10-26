@@ -58,8 +58,8 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
 
   const watchedDays = watch('days') || [];
 
-  const handleAllDaysChange = (checked: boolean) => {
-    if (checked) {
+  const handleAllDaysChange = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
       setValue('days', daysOfWeek, { shouldValidate: true });
     } else {
       setValue('days', [], { shouldValidate: true });
@@ -121,41 +121,39 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
               <Label className="text-right pt-2">
                 Days
               </Label>
-              <div className="col-span-3 grid grid-cols-3 gap-y-2">
-                <Controller
-                  name="days"
-                  control={control}
-                  render={({ field }) => (
-                    <>
-                      {daysOfWeek.map((day) => (
-                        <div key={day} className="flex items-center gap-2">
-                          <Checkbox
-                            id={`day-habit-${day}`}
-                            checked={field.value?.includes(day)}
-                            onCheckedChange={(checked) => {
-                              const currentDays = field.value || [];
-                              if (checked) {
-                                field.onChange([...currentDays, day]);
-                              } else {
-                                field.onChange(currentDays.filter(d => d !== day));
-                              }
-                            }}
-                          />
-                          <Label htmlFor={`day-habit-${day}`} className="text-sm font-normal">{day.substring(0,3)}</Label>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                />
-                 <div className="flex items-center gap-2 mt-2 col-span-3">
-                  <Checkbox
-                    id="all-days-habit"
-                    checked={watchedDays.length === daysOfWeek.length}
-                    onCheckedChange={handleAllDaysChange}
-                  />
-                  <Label htmlFor="all-days-habit" className="text-sm font-normal">All Days</Label>
-                </div>
-              </div>
+              <Controller
+                name="days"
+                control={control}
+                render={({ field }) => (
+                  <div className="col-span-3 grid grid-cols-3 gap-y-2">
+                    {daysOfWeek.map((day) => (
+                      <div key={day} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`day-habit-${day}`}
+                          checked={field.value?.includes(day)}
+                          onCheckedChange={(checked) => {
+                            const currentDays = field.value || [];
+                            if (checked) {
+                              field.onChange([...currentDays, day]);
+                            } else {
+                              field.onChange(currentDays.filter(d => d !== day));
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`day-habit-${day}`} className="text-sm font-normal">{day.substring(0,3)}</Label>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2 mt-2">
+                      <Checkbox
+                        id="all-days-habit"
+                        checked={watchedDays.length === daysOfWeek.length}
+                        onCheckedChange={handleAllDaysChange}
+                      />
+                      <Label htmlFor="all-days-habit" className="text-sm font-normal">All Days</Label>
+                    </div>
+                  </div>
+                )}
+              />
             </div>
              {errors.days && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.days.message}</p>}
 
