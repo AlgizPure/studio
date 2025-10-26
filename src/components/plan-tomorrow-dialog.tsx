@@ -9,8 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog';
-import { PlusSquare, GripVertical } from 'lucide-react';
+import { PlusSquare, GripVertical, Plus } from 'lucide-react';
 import { habits as initialHabits, exercises as initialExercises } from '@/lib/data';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';

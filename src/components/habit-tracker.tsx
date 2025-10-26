@@ -1,3 +1,4 @@
+
 'use client';
 
 import { habits } from '@/lib/data';
@@ -8,6 +9,7 @@ import { PomodoroTimer } from './pomodoro-timer';
 import type { Habit } from '@/lib/types';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { AddHabitDialog } from './add-habit-dialog';
 
 export function HabitTracker() {
   const [trackedHabits, setTrackedHabits] = useState<Habit[]>(habits);
@@ -18,6 +20,10 @@ export function HabitTracker() {
         h.id === habitId ? { ...h, completed: !h.completed } : h
       )
     );
+  };
+
+  const handleAddHabit = (newHabit: Habit) => {
+    setTrackedHabits(prev => [...prev, newHabit]);
   };
   
   const sortedHabits = useMemo(() => {
@@ -30,8 +36,9 @@ export function HabitTracker() {
 
   return (
     <Card className="glass">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-headline">Daily Habits</CardTitle>
+        <AddHabitDialog onHabitAdd={handleAddHabit} />
       </CardHeader>
       <CardContent className="space-y-2">
         {sortedHabits.map((habit) => {
