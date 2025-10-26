@@ -13,7 +13,6 @@ import { Target, Pencil, Dumbbell } from 'lucide-react';
 import { AddExerciseDialog } from './add-exercise-dialog';
 import { AddHabitDialog } from './add-habit-dialog';
 import { Button } from './ui/button';
-import { useState } from 'react';
 import { PomodoroIcon } from './pomodoro-icon';
 
 const weeklySchedule: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -23,12 +22,12 @@ interface DailyScheduleProps {
     habits: Habit[];
     habitCategories: HabitCategory[];
     exerciseCategories: ExerciseCategory[];
-    onExerciseAdd: (exercise: Omit<Exercise, 'id' | 'authorId'>) => Promise<void>;
-    onHabitAdd: (habit: Omit<Habit, 'id' | 'authorId'>) => Promise<void>;
-    onExerciseUpdate: (exercise: Exercise) => Promise<void>;
-    onHabitUpdate: (habit: Habit) => Promise<void>;
-    onExerciseDelete: (exerciseId: string) => Promise<void>;
-    onHabitDelete: (habitId: string) => Promise<void>;
+    onExerciseAdd: (exercise: Omit<Exercise, 'id' | 'authorId'>) => void;
+    onHabitAdd: (habit: Omit<Habit, 'id' | 'authorId'>) => void;
+    onExerciseUpdate: (exercise: Exercise) => void;
+    onHabitUpdate: (habit: Habit) => void;
+    onExerciseDelete: (exerciseId: string) => void;
+    onHabitDelete: (habitId: string) => void;
     openManageHabitCategories: () => void;
     openManageExerciseCategories: () => void;
 }

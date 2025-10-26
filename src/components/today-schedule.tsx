@@ -4,12 +4,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Dumbbell, Target } from 'lucide-react';
+import { Dumbbell, Target, BookOpenCheck } from 'lucide-react';
 import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import type { Exercise, Habit, Day } from '@/lib/types';
-import { doc, updateDoc, collection } from 'firebase/firestore';
-import { isToday } from 'date-fns';
+import type { Exercise, Habit, Day, ExerciseLog } from '@/lib/types';
+import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { isToday, formatISO } from 'date-fns';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
+import { LogExerciseDialog } from './log-exercise-dialog';
 
 export function TodaySchedule() {
   const [today, setToday] = useState('');
@@ -27,6 +28,13 @@ export function TodaySchedule() {
     [user, firestore]
   );
   const { data: habits, loading: habitsLoading } = useCollection<Habit>(habitsQuery);
+  
+  const exerciseLogsQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/exerciseLogs`) : null),
+    [user, firestore]
+  );
+  const { data: exerciseLogs, loading: logsLoading } = useCollection<ExerciseLog>(exerciseLogsQuery);
+
 
   useEffect(() => {
     setToday(new Date().toLocaleString('en-US', { weekday: 'long' }));
@@ -62,6 +70,34 @@ export function TodaySchedule() {
       });
   };
 
+  const handleLogExercise = (exercise: Exercise, values: { [key: string]: number }) => {
+    if (!user || !firestore || !exercise.id) return;
+    const logsCollection = collection(firestore, `users/${user.uid}/exerciseLogs`);
+    const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
+    const todayStr = formatISO(new Date(), { representation: 'date' });
+    
+    addDoc(logsCollection, {
+      exerciseId: exercise.id,
+      userId: user.uid,
+      date: todayStr,
+      values,
+    }).catch(err => {
+       errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'create',
+        path: logsCollection.path,
+        requestResourceData: { exerciseId: exercise.id, date: todayStr, values },
+      }));
+    });
+
+    updateDoc(exerciseDoc, { lastCompleted: new Date().toISOString() }).catch(err => {
+       errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'update',
+        path: exerciseDoc.path,
+        requestResourceData: { lastCompleted: new Date().toISOString() },
+      }));
+    });
+  };
+
   const dailyHabits = (habits || []).filter(habit => habit.days?.includes(today as Day));
   const dailyExercises = (exercises || []).filter(ex => ex.days?.includes(today as Day));
 
@@ -76,18 +112,24 @@ export function TodaySchedule() {
       raw: habit,
       completed: !!habit.completed,
       onToggle: () => handleHabitToggle(habit),
+      hasParameters: false,
     })),
-    ...dailyExercises.map(ex => ({
+    ...dailyExercises.map(ex => {
+       const hasParams = !!ex.parameters && ex.parameters.length > 0;
+       const isCompleted = ex.lastCompleted ? isToday(new Date(ex.lastCompleted)) : false;
+       return {
         id: ex.id,
         time: ex.time || 'Any time',
         activityType: 'Workout' as const,
         activityName: ex.name,
         duration: 'Exercise',
-        icon: Dumbbell,
+        icon: hasParams ? BookOpenCheck : Dumbbell,
         raw: ex,
-        completed: ex.lastCompleted ? isToday(new Date(ex.lastCompleted)) : false,
+        completed: isCompleted,
         onToggle: () => handleExerciseToggle(ex),
-    }))
+        hasParameters: hasParams,
+      }
+    })
   ].sort((a, b) => {
     const aTime = (a.time || '99:99').split(' ')[0];
     const bTime = (b.time || '99:99').split(' ')[0];
@@ -96,7 +138,7 @@ export function TodaySchedule() {
     return 0;
   });
 
-  const isLoading = exercisesLoading || habitsLoading;
+  const isLoading = exercisesLoading || habitsLoading || logsLoading;
 
   if (isLoading || !today) {
     return (
@@ -124,12 +166,20 @@ export function TodaySchedule() {
               const itemId = `today-${item.id}`;
               return (
                 <div key={item.id} className="flex items-center p-3 rounded-lg hover:bg-accent/50 transition-colors">
-                  <Checkbox 
-                    id={itemId} 
-                    className="mr-4" 
-                    checked={item.completed}
-                    onCheckedChange={() => item.onToggle()}
-                  />
+                  {item.activityType === 'Workout' && item.hasParameters ? (
+                     <LogExerciseDialog
+                        exercise={item.raw as Exercise}
+                        onLog={handleLogExercise}
+                        isCompleted={item.completed}
+                      />
+                  ) : (
+                    <Checkbox 
+                        id={itemId} 
+                        className="mr-4" 
+                        checked={item.completed}
+                        onCheckedChange={() => item.onToggle()}
+                    />
+                  )}
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 mr-4">
                     <Icon className="h-5 w-5 text-primary" />
                   </div>

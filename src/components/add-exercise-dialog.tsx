@@ -13,20 +13,29 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Plus } from 'lucide-react';
+import { PlusCircle, Plus, X, Trash2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, SubmitHandler, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Exercise, Day, ExerciseCategory } from '@/lib/types';
+import type { Exercise, Day, ExerciseCategory, ExerciseParameter } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { nanoid } from 'nanoid';
+import { Separator } from './ui/separator';
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const hoursOfDay = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+
+const parameterSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, "Parameter name can't be empty"),
+  unit: z.string().min(1, "Parameter unit can't be empty"),
+  defaultValue: z.preprocess((val) => Number(val), z.number()),
+});
 
 const exerciseSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -35,10 +44,7 @@ const exerciseSchema = z.object({
   image: z.string().url().optional().or(z.literal('')),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format.').optional(),
   days: z.array(z.string()).optional(),
-  distance: z.preprocess(
-    (val) => (val === '' ? undefined : Number(val)),
-    z.number().positive('Distance must be a positive number.').optional()
-  ),
+  parameters: z.array(parameterSchema).optional(),
 });
 
 type ExerciseFormValues = z.infer<typeof exerciseSchema>;
@@ -69,23 +75,28 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
     formState: { errors },
   } = useForm<ExerciseFormValues>({
     resolver: zodResolver(exerciseSchema),
+    defaultValues: {
+      parameters: [],
+    }
   });
-  
-  const watchedCategoryId = watch('categoryId');
-  const isCardio = categories.find(c => c.id === watchedCategoryId)?.name.toLowerCase().includes('cardio') 
-    || categories.find(c => c.id === watchedCategoryId)?.name.toLowerCase().includes('running');
 
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'parameters',
+  });
 
   useEffect(() => {
     if (isOpen) {
       if (isEditMode && exerciseToEdit) {
-        setValue('name', exerciseToEdit.name);
-        setValue('categoryId', exerciseToEdit.categoryId);
-        setValue('description', exerciseToEdit.description);
-        setValue('image', exerciseToEdit.image);
-        setValue('time', exerciseToEdit.time || '00:00');
-        setValue('days', exerciseToEdit.days || []);
-        setValue('distance', exerciseToEdit.distance);
+        reset({
+            name: exerciseToEdit.name,
+            categoryId: exerciseToEdit.categoryId,
+            description: exerciseToEdit.description,
+            image: exerciseToEdit.image,
+            time: exerciseToEdit.time || '00:00',
+            days: exerciseToEdit.days || [],
+            parameters: exerciseToEdit.parameters || [],
+        });
       } else {
         reset({
           name: '',
@@ -94,11 +105,11 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
           image: customImage,
           time: '00:00',
           days: [],
-          distance: undefined,
+          parameters: [],
         });
       }
     }
-  }, [isEditMode, exerciseToEdit, setValue, reset, isOpen, customImage]);
+  }, [isEditMode, exerciseToEdit, reset, isOpen, customImage]);
 
 
   const onSubmit: SubmitHandler<ExerciseFormValues> = (data) => {
@@ -106,8 +117,8 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
       const finalData = {
         ...data,
         image: data.image || customImage,
-        distance: data.distance || undefined,
-      }
+        parameters: data.parameters && data.parameters.length > 0 ? data.parameters : undefined,
+      };
       if (isEditMode && exerciseToEdit && onExerciseUpdate) {
           const updatedExercise: Exercise = {
               ...exerciseToEdit,
@@ -199,7 +210,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
       <DialogTrigger asChild>
         {dialogTrigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle className="font-headline">{isEditMode ? 'Edit Exercise' : 'Add Custom Exercise'}</DialogTitle>
@@ -207,25 +218,21 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
               {isEditMode ? 'Update the details of your exercise.' : "Add a new exercise to your personal library. Click save when you're done."}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input id="name" placeholder="e.g., Kettlebell Swings" className="col-span-3" {...register('name')} />
+          <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" placeholder="e.g., Kettlebell Swings" {...register('name')} />
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
-            {errors.name && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.name.message}</p>}
             
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="categoryId" className="text-right">
-                Category
-              </Label>
+            <div className="space-y-2">
+              <Label htmlFor="categoryId">Category</Label>
               <Controller
                 name="categoryId"
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={handleCategoryChange} value={field.value}>
-                    <SelectTrigger className="col-span-3">
+                    <SelectTrigger>
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -244,38 +251,22 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
                   </Select>
                 )}
               />
+              {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
             </div>
-             {errors.categoryId && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.categoryId.message}</p>}
 
-            {isCardio && (
-                <>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="distance" className="text-right">
-                    Distance (km)
-                    </Label>
-                    <Input id="distance" type="number" step="0.1" placeholder="e.g., 5" className="col-span-3" {...register('distance')} />
-                </div>
-                {errors.distance && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.distance.message}</p>}
-                </>
-            )}
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Description
-              </Label>
-              <Textarea id="description" placeholder="Describe the exercise briefly." className="col-span-3" {...register('description')} />
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea id="description" placeholder="Describe the exercise briefly." {...register('description')} />
+              {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
             </div>
-             {errors.description && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.description.message}</p>}
 
-             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="time" className="text-right">
-                    Start Time
-                </Label>
+             <div className="space-y-2">
+                <Label htmlFor="time">Start Time</Label>
                 <Controller
                   name="time"
                   control={control}
                   render={({ field }) => (
-                    <div className="col-span-3 grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                        <Select
                         value={field.value?.split(':')[0] || '00'}
                         onValueChange={(hour) => {
@@ -314,14 +305,12 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
                     </div>
                   )}
                 />
+                {errors.time && <p className="text-sm text-destructive">{errors.time.message}</p>}
              </div>
-             {errors.time && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.time.message}</p>}
 
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right pt-2">
-                Days
-              </Label>
-              <div className="col-span-3 grid grid-cols-3 gap-2">
+            <div className="space-y-2">
+              <Label>Days</Label>
+              <div className="grid grid-cols-4 gap-2">
                 <Controller
                   name="days"
                   control={control}
@@ -348,14 +337,50 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
                   )}
                 />
               </div>
+              {errors.days && <p className="text-sm text-destructive">{errors.days.message}</p>}
             </div>
-             {errors.days && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.days.message}</p>}
+
+            <Separator />
+            
+            <div className="space-y-2">
+              <Label>Trackable Parameters</Label>
+               {fields.map((field, index) => (
+                <div key={field.id} className="p-2 border rounded-md space-y-2">
+                    <div className="grid grid-cols-10 gap-2">
+                        <Input
+                            {...register(`parameters.${index}.name`)}
+                            placeholder="Name"
+                            className="col-span-4 h-8"
+                        />
+                         <Input
+                            {...register(`parameters.${index}.unit`)}
+                            placeholder="Unit"
+                            className="col-span-2 h-8"
+                        />
+                        <Input
+                            {...register(`parameters.${index}.defaultValue`)}
+                            type="number"
+                            placeholder="Default"
+                            className="col-span-3 h-8"
+                        />
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => remove(index)}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                     {errors.parameters?.[index]?.name && <p className="text-sm text-destructive">{errors.parameters[index]?.name?.message}</p>}
+                     {errors.parameters?.[index]?.unit && <p className="text-sm text-destructive">{errors.parameters[index]?.unit?.message}</p>}
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={() => append({ id: nanoid(5), name: '', unit: '', defaultValue: 0 })}>
+                <Plus className="mr-2 h-4 w-4" /> Add Parameter
+              </Button>
+            </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="pt-4">
             {isEditMode && onExerciseDelete && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                    <Button type="button" variant="destructive">Delete</Button>
+                    <Button type="button" variant="destructive" className="mr-auto">Delete</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>

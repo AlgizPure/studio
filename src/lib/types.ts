@@ -2,6 +2,13 @@ import type { LucideIcon } from "lucide-react";
 
 export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 
+export type ExerciseParameter = {
+  id: string; // e.g., 'distance'
+  name: string; // e.g., 'Distance'
+  unit: string; // e.g., 'km'
+  defaultValue: number;
+}
+
 export type ExerciseCategory = {
   id: string;
   name: string;
@@ -20,7 +27,18 @@ export type Exercise = {
   authorId?: string;
   lastCompleted?: string; // ISO date string
   distance?: number; // in kilometers
+  parameters?: ExerciseParameter[];
 };
+
+export type ExerciseLog = {
+    id: string;
+    exerciseId: string;
+    userId: string;
+    date: string; // ISO date string YYYY-MM-DD
+    values: {
+      [parameterId: string]: number;
+    }
+}
 
 export type Workout = {
   id: string;

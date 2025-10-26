@@ -111,9 +111,40 @@
         "distance": {
             "type": "number",
             "description": "Distance covered in kilometers, for cardio exercises."
+        },
+        "parameters": {
+          "type": "array",
+          "description": "User-defined parameters for logging exercise metrics.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "name": {"type": "string"},
+              "unit": {"type": "string"},
+              "defaultValue": {"type": "number"}
+            },
+            "required": ["id", "name", "unit", "defaultValue"]
+          }
         }
       },
       "required": ["id", "name", "categoryId", "description"]
+    },
+     "ExerciseLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ExerciseLog",
+      "type": "object",
+      "description": "A log entry for a completed exercise instance with specific parameter values.",
+      "properties": {
+        "id": {"type": "string"},
+        "exerciseId": {"type": "string"},
+        "userId": {"type": "string"},
+        "date": {"type": "string", "format": "date"},
+        "values": {
+          "type": "object",
+          "description": "A map of parameter IDs to their logged numeric values."
+        }
+      },
+      "required": ["id", "exerciseId", "userId", "date", "values"]
     },
     "HabitCategory": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -271,6 +302,14 @@
             "entityName": "Exercise",
             "schema": { "$ref": "#/backend/entities/Exercise"},
             "description": "Stores custom exercises created by the user."
+        }
+      },
+       {
+        "path": "/users/{userId}/exerciseLogs/{logId}",
+        "definition": {
+            "entityName": "ExerciseLog",
+            "schema": { "$ref": "#/backend/entities/ExerciseLog"},
+            "description": "Stores instances of completed exercises with their specific parameter values."
         }
       },
       {
