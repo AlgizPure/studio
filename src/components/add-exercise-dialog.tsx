@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Plus } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Exercise } from '@/lib/types';
@@ -62,14 +62,24 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
     setIsOpen(false);
     reset();
   };
+  
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isLibraryPage = currentPath.includes('/library');
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Exercise
-        </Button>
+        {isLibraryPage ? (
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Exercise
+            </Button>
+        ) : (
+            <Button variant="ghost" size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                New
+            </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit(onSubmit)}>

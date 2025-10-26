@@ -6,19 +6,27 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { PlusSquare, GripVertical, Plus } from 'lucide-react';
-import { habits, exercises } from '@/lib/data';
+import { habits, exercises as initialExercises } from '@/lib/data';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
-import { Separator } from './ui/separator';
+import { AddExerciseDialog } from './add-exercise-dialog';
+import { useState }from 'react';
+import type { Exercise } from '@/lib/types';
+
 
 export function PlanTomorrowDialog() {
+    const [exercises, setExercises] = useState<Exercise[]>(initialExercises);
+
+    const handleAddExercise = (newExercise: Exercise) => {
+        setExercises(prev => [...prev, newExercise]);
+    };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -34,14 +42,11 @@ export function PlanTomorrowDialog() {
             Select your exercises and habits for tomorrow. Your changes will be saved automatically.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 max-h-[60vh]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 max-h-[60vh] overflow-y-auto">
           <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center pr-4">
               <h3 className="font-semibold text-lg">Exercises</h3>
-              <Button variant="ghost" size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                New
-              </Button>
+               <AddExerciseDialog onExerciseAdd={handleAddExercise} />
             </div>
             <ScrollArea className="h-full pr-4">
               <div className="space-y-3">
