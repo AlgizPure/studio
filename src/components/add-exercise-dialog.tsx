@@ -31,7 +31,7 @@ const exerciseSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   categoryId: z.string().min(1, 'Category is required'),
   description: z.string().min(1, 'Description is required'),
-  image: z.string().url().optional(),
+  image: z.string().url().optional().or(z.literal('')),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format.').optional(),
   days: z.array(z.string()).optional(),
 });
@@ -89,10 +89,14 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
 
   const onSubmit: SubmitHandler<ExerciseFormValues> = (data) => {
     try {
+      const finalData = {
+        ...data,
+        image: data.image || 'https://picsum.photos/seed/custom/600/400'
+      }
       if (isEditMode && exerciseToEdit && onExerciseUpdate) {
           const updatedExercise: Exercise = {
               ...exerciseToEdit,
-              ...data,
+              ...finalData,
               days: data.days as Day[],
           };
           onExerciseUpdate(updatedExercise);
@@ -102,7 +106,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
           });
       } else {
           const newExercise: Omit<Exercise, 'id'> = {
-              ...data,
+              ...finalData,
               custom: true,
               days: data.days as Day[],
           };

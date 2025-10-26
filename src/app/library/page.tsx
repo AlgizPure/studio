@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { AddExerciseDialog } from '@/components/add-exercise-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Exercise, ExerciseCategory } from '@/lib/types';
-import { ManageExerciseCategoriesDialog } from '@/components/manage-exercise-categories-dialog';
+import { ManageCategoriesDialog } from '@/components/manage-categories-dialog';
 import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -21,13 +21,13 @@ export default function LibraryPage() {
     () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
     [user, firestore]
   );
-  const { data: exercises, loading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
+  const { data: exercises, isLoading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
   
   const categoriesQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
     [user, firestore]
   );
-  const { data: exerciseCategories, loading: categoriesLoading } = useCollection<ExerciseCategory>(categoriesQuery);
+  const { data: exerciseCategories, isLoading: categoriesLoading } = useCollection<ExerciseCategory>(categoriesQuery);
 
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -151,7 +151,7 @@ export default function LibraryPage() {
         </div>
       ) : (
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8">
             {categories.map((category) => (
               <TabsTrigger key={category.id} value={category.id}>{category.name}</TabsTrigger>
             ))}
@@ -183,13 +183,14 @@ export default function LibraryPage() {
         </Tabs>
       )}
     </div>
-    <ManageExerciseCategoriesDialog 
+    <ManageCategoriesDialog 
       open={isManageCategoriesOpen} 
       onOpenChange={setIsManageCategoriesOpen}
       categories={exerciseCategories || []}
       onAdd={handleAddCategory}
       onUpdate={handleUpdateCategory}
       onDelete={handleDeleteCategory}
+      categoryType='Exercise'
     />
     </>
   );

@@ -24,7 +24,6 @@ import { useCollection } from '@/firebase';
 import { CreditCard, LogOut, Settings, User, Timer, FolderKanban, Dumbbell, LogIn } from 'lucide-react';
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
-import { ManageExerciseCategoriesDialog } from './manage-exercise-categories-dialog';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -207,14 +206,16 @@ export function UserNav() {
         onAdd={handleAddHabitCategory}
         onUpdate={handleUpdateHabitCategory}
         onDelete={handleDeleteHabitCategory}
+        categoryType="Habit"
       />
-      <ManageExerciseCategoriesDialog 
+      <ManageCategoriesDialog 
         open={isManageExerciseCategoriesOpen} 
         onOpenChange={setIsManageExerciseCategoriesOpen}
         categories={exerciseCategories || []}
         onAdd={handleAddExerciseCategory}
         onUpdate={handleUpdateExerciseCategory}
         onDelete={handleDeleteExerciseCategory}
+        categoryType="Exercise"
       />
     </>
   );

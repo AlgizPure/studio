@@ -10,8 +10,8 @@ import type { Exercise, Habit, HabitCategory, ExerciseCategory } from '@/lib/typ
 import { ManageCategoriesDialog } from '@/components/manage-categories-dialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { ManageExerciseCategoriesDialog } from '@/components/manage-exercise-categories-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
 export default function SchedulePage() {
@@ -23,25 +23,25 @@ export default function SchedulePage() {
     () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
     [user, firestore]
   );
-  const { data: exercises, loading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
+  const { data: exercises, isLoading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
 
   const habitsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
     [user, firestore]
   );
-  const { data: habits, loading: habitsLoading } = useCollection<Habit>(habitsQuery);
+  const { data: habits, isLoading: habitsLoading } = useCollection<Habit>(habitsQuery);
 
   const habitCatQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/habitCategories`) : null),
     [user, firestore]
   );
-  const { data: habitCategories, loading: habitCatLoading } = useCollection<HabitCategory>(habitCatQuery);
+  const { data: habitCategories, isLoading: habitCatLoading } = useCollection<HabitCategory>(habitCatQuery);
   
   const exerciseCatQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
     [user, firestore]
   );
-  const { data: exerciseCategories, loading: exerciseCatLoading } = useCollection<ExerciseCategory>(exerciseCatQuery);
+  const { data: exerciseCategories, isLoading: exerciseCatLoading } = useCollection<ExerciseCategory>(exerciseCatQuery);
 
 
   const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
@@ -256,14 +256,16 @@ export default function SchedulePage() {
         onAdd={handleAddHabitCategory}
         onUpdate={handleUpdateHabitCategory}
         onDelete={handleDeleteHabitCategory}
+        categoryType="Habit"
       />
-      <ManageExerciseCategoriesDialog 
+      <ManageCategoriesDialog 
         open={isManageExerciseCategoriesOpen} 
         onOpenChange={setIsManageExerciseCategoriesOpen}
         categories={exerciseCategories || []}
         onAdd={handleAddExerciseCategory}
         onUpdate={handleUpdateExerciseCategory}
         onDelete={handleDeleteExerciseCategory}
+        categoryType="Exercise"
       />
     </>
   );
