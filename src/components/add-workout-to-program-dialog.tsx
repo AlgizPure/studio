@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from './ui/textarea';
 import { PlusCircle, ArrowLeft, ArrowRight, Search } from 'lucide-react';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Workout, Exercise } from '@/lib/types';
@@ -32,7 +32,18 @@ const workoutDetailsSchema = z.object({
   level: z.string().optional(),
 });
 
+const workoutExercisesSchema = z.object({
+  exercises: z.array(z.object({
+    exerciseId: z.string(),
+    name: z.string(),
+    sets: z.preprocess((val) => Number(val), z.number().min(0).optional()),
+    reps: z.preprocess((val) => Number(val), z.number().min(0).optional()),
+    duration: z.string().optional(),
+  }))
+});
+
 type WorkoutDetailsValues = z.infer<typeof workoutDetailsSchema>;
+type WorkoutExercisesValues = z.infer<typeof workoutExercisesSchema>;
 
 interface AddWorkoutToProgramDialogProps {
   onWorkoutAdd: (workout: Omit<Workout, 'id'>) => Promise<void>;
@@ -57,15 +68,32 @@ export function AddWorkoutToProgramDialog({ onWorkoutAdd }: AddWorkoutToProgramD
 
 
   const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
+    register: registerDetails,
+    handleSubmit: handleDetailsSubmit,
+    reset: resetDetails,
+    formState: { errors: detailsErrors },
   } = useForm<WorkoutDetailsValues>({
     resolver: zodResolver(workoutDetailsSchema),
   });
+  
+  const {
+    register: registerExercises,
+    control: exercisesControl,
+    handleSubmit: handleExercisesSubmit,
+    reset: resetExercises,
+  } = useForm<WorkoutExercisesValues>({
+      defaultValues: {
+        exercises: [],
+      }
+  });
 
-  const handleDetailsSubmit: SubmitHandler<WorkoutDetailsValues> = (data) => {
+  const { fields, replace } = useFieldArray({
+    control: exercisesControl,
+    name: "exercises"
+  });
+
+
+  const onDetailsSubmit: SubmitHandler<WorkoutDetailsValues> = (data) => {
     setWorkoutDetails({
       name: data.name,
       description: data.description || '',
@@ -74,14 +102,6 @@ export function AddWorkoutToProgramDialog({ onWorkoutAdd }: AddWorkoutToProgramD
     setStep(2);
   };
 
-  const handleExerciseToggle = (exerciseId: string) => {
-    setSelectedExercises(prev => 
-        prev.includes(exerciseId) 
-            ? prev.filter(id => id !== exerciseId)
-            : [...prev, exerciseId]
-    );
-  };
-  
   const handleNextToConfigure = async () => {
     if (selectedExercises.length === 0) {
         toast({
@@ -91,41 +111,57 @@ export function AddWorkoutToProgramDialog({ onWorkoutAdd }: AddWorkoutToProgramD
         });
         return;
     }
-    
-    const newWorkout: Omit<Workout, 'id'> = {
+    const exercisesToConfigure = selectedExercises.map(id => {
+      const exercise = allExercises?.find(ex => ex.id === id);
+      return { exerciseId: id, name: exercise?.name || 'Unknown', sets: undefined, reps: undefined, duration: '' };
+    })
+    replace(exercisesToConfigure);
+    setStep(3);
+  };
+
+  const onFinalSubmit: SubmitHandler<WorkoutExercisesValues> = async (data) => {
+    const finalWorkout: Omit<Workout, 'id'> = {
+      ...workoutDetails,
       name: workoutDetails.name || 'Unnamed Workout',
-      description: workoutDetails.description || '',
-      level: workoutDetails.level,
-      exercises: selectedExercises.map(exId => ({ exerciseId: exId })),
-    };
-    
+      exercises: data.exercises.map(ex => ({
+        exerciseId: ex.exerciseId,
+        sets: ex.sets,
+        reps: ex.reps,
+        duration: ex.duration,
+      })),
+    }
+
     try {
-      await onWorkoutAdd(newWorkout);
+      await onWorkoutAdd(finalWorkout);
       toast({
           title: 'Workout Added',
-          description: `${newWorkout.name} has been added to the program.`,
+          description: `${finalWorkout.name} has been added to the program.`,
       });
-      
-      // Reset and close
-      setIsOpen(false);
-      setStep(1);
-      reset();
-      setSelectedExercises([]);
-      setSearchTerm('');
+      handleOpenChange(false); // This will trigger the reset
     } catch (e) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to add workout.'
-      })
+        toast({
+            variant: 'destructive',
+            title: 'Error Adding Workout',
+            description: 'Failed to add the workout to the program.'
+        });
     }
+  }
+
+
+  const handleExerciseToggle = (exerciseId: string) => {
+    setSelectedExercises(prev => 
+        prev.includes(exerciseId) 
+            ? prev.filter(id => id !== exerciseId)
+            : [...prev, exerciseId]
+    );
   };
   
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       // Reset state on close
       setStep(1);
-      reset();
+      resetDetails();
+      resetExercises();
       setSelectedExercises([]);
       setSearchTerm('');
     }
@@ -146,24 +182,24 @@ export function AddWorkoutToProgramDialog({ onWorkoutAdd }: AddWorkoutToProgramD
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         {step === 1 && (
-          <form onSubmit={handleSubmit(handleDetailsSubmit)}>
+          <form onSubmit={handleDetailsSubmit(onDetailsSubmit)}>
             <DialogHeader>
-              <DialogTitle>Add New Workout (Step 1 of 2)</DialogTitle>
+              <DialogTitle>Add New Workout (Step 1 of 3)</DialogTitle>
               <DialogDescription>Define the details for your new workout.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Workout Name</Label>
-                <Input id="name" {...register('name')} placeholder="e.g., Upper Body Strength" />
-                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                <Input id="name" {...registerDetails('name')} placeholder="e.g., Upper Body Strength" />
+                {detailsErrors.name && <p className="text-sm text-destructive">{detailsErrors.name.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <Textarea id="description" {...register('description')} placeholder="Describe the focus of this workout." />
+                <Textarea id="description" {...registerDetails('description')} placeholder="Describe the focus of this workout." />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="level">Difficulty Level</Label>
-                 <Select onValueChange={(value) => register('level').onChange({ target: { value } })} name={register('level').name}>
+                 <Select onValueChange={(value) => registerDetails('level').onChange({ target: { value } })} name={registerDetails('level').name}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a level (optional)" />
                   </SelectTrigger>
@@ -187,7 +223,7 @@ export function AddWorkoutToProgramDialog({ onWorkoutAdd }: AddWorkoutToProgramD
         {step === 2 && (
           <>
             <DialogHeader>
-              <DialogTitle>Select Exercises (Step 2 of 2)</DialogTitle>
+              <DialogTitle>Select Exercises (Step 2 of 3)</DialogTitle>
               <DialogDescription>Choose exercises from your library to include in this workout.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -224,10 +260,51 @@ export function AddWorkoutToProgramDialog({ onWorkoutAdd }: AddWorkoutToProgramD
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
               <Button onClick={handleNextToConfigure}>
-                Finish & Add Workout
+                Next <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </DialogFooter>
           </>
+        )}
+        {step === 3 && (
+            <form onSubmit={handleExercisesSubmit(onFinalSubmit)}>
+                 <DialogHeader>
+                    <DialogTitle>Configure Exercises (Step 3 of 3)</DialogTitle>
+                    <DialogDescription>Set the sets, reps, and duration for each exercise.</DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <ScrollArea className="h-96 w-full">
+                        <div className="space-y-4 pr-4">
+                            {fields.map((field, index) => (
+                                <div key={field.id} className="p-4 border rounded-lg space-y-3 glass">
+                                    <h4 className="font-semibold">{field.name}</h4>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div>
+                                            <Label htmlFor={`exercises[${index}].sets`} className="text-xs">Sets</Label>
+                                            <Input id={`exercises[${index}].sets`} type="number" placeholder="3" {...registerExercises(`exercises.${index}.sets`)} />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor={`exercises[${index}].reps`} className="text-xs">Reps</Label>
+                                            <Input id={`exercises[${index}].reps`} type="number" placeholder="10" {...registerExercises(`exercises.${index}.reps`)} />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor={`exercises[${index}].duration`} className="text-xs">Duration</Label>
+                                            <Input id={`exercises[${index}].duration`} placeholder="60s" {...registerExercises(`exercises.${index}.duration`)} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </div>
+                 <DialogFooter className="justify-between sm:justify-between">
+                    <Button variant="ghost" type="button" onClick={() => setStep(2)}>
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                    </Button>
+                    <Button type="submit">
+                        Finish & Add Workout
+                    </Button>
+                </DialogFooter>
+            </form>
         )}
       </DialogContent>
     </Dialog>
