@@ -1,9 +1,9 @@
-import { Activity, BarChart3, Dumbbell, HeartPulse, Target, PlusSquare } from 'lucide-react';
+import { Activity, BarChart3, Dumbbell, HeartPulse, Target } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TodaySchedule } from '@/components/today-schedule';
 import { HabitTracker } from '@/components/habit-tracker';
 import { AiOptimizerDialog } from '@/components/ai-optimizer-dialog';
-import { Button } from '@/components/ui/button';
+import { PlanTomorrowDialog } from '@/components/plan-tomorrow-dialog';
 
 export default function DashboardPage() {
   return (
@@ -18,10 +18,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline">
-            <PlusSquare className="mr-2 h-4 w-4" />
-            Plan for Tomorrow
-          </Button>
+          <PlanTomorrowDialog />
           <AiOptimizerDialog />
         </div>
       </div>

@@ -103,7 +103,7 @@ const scheduleTemplate: { [key in Day]: DailySchedule } = {
     day: 'Saturday',
     items: [
       { id: 's13', time: '08:00', activityType: 'Workout', activityName: 'Bio-dynamics & Mobility', duration: '60min', icon: Wind },
-      { id: 's14', time: '10:00', activityType: 'Workout', activityName: 'Static Strength (Zass)', duration: '20min', icon: CheckCircle }
+      { id: 's14', time: '14:00', activityType: 'Workout', activityName: 'Static Strength (Zass)', duration: '20min', icon: CheckCircle }
     ],
   },
   Sunday: {
