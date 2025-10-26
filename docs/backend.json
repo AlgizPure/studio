@@ -1,317 +1,362 @@
 {
   "entities": {
     "UserProfile": {
-      "title": "User Profile",
-      "description": "Represents a user's profile information.",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
       "type": "object",
+      "description": "Represents a user's profile with personal information and preferences.",
       "properties": {
-        "displayName": {
+        "id": {
           "type": "string",
-          "description": "The user's display name."
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "username": {
+          "type": "string",
+          "description": "User's chosen username."
         },
         "email": {
           "type": "string",
-          "format": "email",
-          "description": "The user's email address."
+          "description": "User's email address.",
+          "format": "email"
         },
-        "avatarUrl": {
+        "firstName": {
           "type": "string",
-          "format": "uri",
-          "description": "URL of the user's profile picture."
-        }
-      }
-    },
-    "Program": {
-      "title": "Workout Program",
-      "description": "A structured collection of workouts designed to achieve a specific fitness goal.",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name of the program."
+          "description": "User's first name."
         },
-        "description": {
+        "lastName": {
           "type": "string",
-          "description": "A detailed description of the program."
+          "description": "User's last name."
         },
-        "isTemplate": {
-          "type": "boolean",
-          "description": "Whether this program is a template for others to use."
-        },
-        "authorId": {
+        "primaryGoal": {
           "type": "string",
-          "description": "The ID of the user who created this program (if not a template)."
+          "description": "User's primary fitness goal (e.g., muscle definition, fat loss)."
+        },
+        "weeklyTrainingFrequency": {
+          "type": "number",
+          "description": "Number of times the user trains per week."
         }
       },
       "required": [
-        "name"
+        "id",
+        "username",
+        "email",
+        "firstName",
+        "lastName",
+        "primaryGoal",
+        "weeklyTrainingFrequency"
       ]
     },
-    "Workout": {
-      "title": "Workout",
-      "description": "A single workout session, which is part of a program and consists of multiple exercises.",
+    "WorkoutRoutine": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "WorkoutRoutine",
       "type": "object",
+      "description": "Represents a workout routine created by the user.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the WorkoutRoutine entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N WorkoutRoutine)"
+        },
         "name": {
           "type": "string",
-          "description": "The name of the workout (e.g., 'Leg Day', 'Cardio Blast')."
+          "description": "Name of the workout routine."
         },
         "description": {
           "type": "string",
-          "description": "A description of the workout."
+          "description": "Description of the workout routine."
         },
-        "level": {
-          "type": "number",
-          "description": "The difficulty level of the workout."
+        "type": {
+          "type": "string",
+          "description": "Type of workout routine (e.g., strength, bio-dynamics, TRX)."
+        },
+        "dayOfWeek": {
+          "type": "string",
+          "description": "Day of the week for which the workout routine is scheduled."
         }
       },
       "required": [
-        "name"
+        "id",
+        "userId",
+        "name",
+        "type",
+        "dayOfWeek"
       ]
     },
     "Exercise": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Exercise",
-      "description": "A single exercise activity.",
       "type": "object",
+      "description": "Represents a single exercise within a workout routine.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Exercise entity."
+        },
         "name": {
           "type": "string",
-          "description": "The name of the exercise."
+          "description": "Name of the exercise."
         },
         "description": {
           "type": "string",
-          "description": "A description of the exercise."
+          "description": "Description of how to perform the exercise."
         },
-        "categoryId": {
+        "videoUrl": {
           "type": "string",
-          "description": "Reference to the exercise category."
-        },
-        "authorId": {
-          "type": "string"
-        },
-        "image": {
-          "type": "string",
+          "description": "URL of a video demonstrating the exercise.",
           "format": "uri"
         },
-        "custom": {
-            "type": "boolean"
-        },
-        "time": {
-            "type": "string"
-        },
-        "days": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
+        "exerciseType": {
+          "type": "string",
+          "description": "The kind of exercise (e.g., strength, mobility, static)."
         }
       },
       "required": [
-        "name"
+        "id",
+        "name",
+        "description"
       ]
     },
     "WorkoutExercise": {
-      "title": "Workout Exercise",
-      "description": "Defines an exercise within a workout, including sets, reps, or duration.",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "WorkoutExercise",
       "type": "object",
+      "description": "Represents the relationship between a workout routine and an exercise, including sets and reps.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the WorkoutExercise entity."
+        },
+        "workoutRoutineId": {
+          "type": "string",
+          "description": "Reference to WorkoutRoutine. (Relationship: WorkoutRoutine 1:N WorkoutExercise)"
+        },
         "exerciseId": {
-          "$ref": "#/backend/entities/Exercise"
+          "type": "string",
+          "description": "Reference to Exercise. (Relationship: Exercise 1:N WorkoutExercise)"
         },
         "sets": {
-          "type": "number"
+          "type": "number",
+          "description": "Number of sets for the exercise."
         },
         "reps": {
-          "type": "number"
-        },
-        "duration": {
-          "type": "string",
-          "description": "Duration of the exercise (e.g., '30min', '5min cycle')."
+          "type": "number",
+          "description": "Number of repetitions for each set."
         }
-      }
-    },
-    "ProgramWorkout": {
-      "title": "Program Workout",
-      "description": "Links a workout to a program and defines its schedule.",
-      "type": "object",
-      "properties": {
-        "workoutId": {
-          "$ref": "#/backend/entities/Workout"
-        },
-        "schedule": {
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": [
-                "repeating",
-                "fixed_times"
-              ]
-            },
-            "days": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "repeatCount": {
-              "type": "number"
-            },
-            "endDate": {
-              "type": "string",
-              "format": "date"
-            }
-          }
-        }
-      }
-    },
-    "WorkoutLog": {
-      "title": "Workout Log",
-      "description": "A log of a completed workout session by a user.",
-      "type": "object",
-      "properties": {
-        "userId": {
-          "type": "string"
-        },
-        "programId": {
-          "type": "string"
-        },
-        "workoutId": {
-          "type": "string"
-        },
-        "date": {
-          "type": "string",
-          "format": "date"
-        },
-        "completionPercentage": {
-          "type": "number"
-        },
-        "completedExercises": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
+      },
+      "required": [
+        "id",
+        "workoutRoutineId",
+        "exerciseId",
+        "sets",
+        "reps"
+      ]
     },
     "Habit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Habit",
-      "description": "A user's habit to track.",
       "type": "object",
+      "description": "Represents a habit that the user wants to track.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Habit entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Habit)"
+        },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the habit."
         },
-        "categoryId": {
-          "type": "string"
+        "description": {
+          "type": "string",
+          "description": "Description of the habit."
         },
-        "goal": {
-          "type": "string"
+        "type": {
+          "type": "string",
+          "description": "Type of habit (e.g., mindfulness, study)."
         },
-        "days": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+        "programName": {
+          "type": "string",
+          "description": "The name of the program that the habit is associated with."
         },
-        "pomodoro": {
-          "type": "object",
-          "properties": {
-            "cycles": {
-              "type": "number"
-            }
-          }
-        },
-        "authorId": {
-            "type": "string"
-        },
-        "completed": {
-            "type": "boolean"
+        "lessons": {
+          "type": "number",
+          "description": "The number of lessons the habit requires."
         }
-      }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "type"
+      ]
     },
-    "HabitCategory": {
-        "title": "Habit Category",
-        "type": "object",
-        "properties": {
-            "name": {
-                "type": "string"
-            },
-            "authorId": {
-                "type": "string"
-            }
+    "HabitCompletion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HabitCompletion",
+      "type": "object",
+      "description": "Represents the completion status of a habit for a specific date.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the HabitCompletion entity."
+        },
+        "habitId": {
+          "type": "string",
+          "description": "Reference to Habit. (Relationship: Habit 1:N HabitCompletion)"
+        },
+        "completionDate": {
+          "type": "string",
+          "description": "Date on which the habit was completed.",
+          "format": "date-time"
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Indicates whether the habit was completed on the given date."
         }
-    },
-    "ExerciseCategory": {
-        "title": "Exercise Category",
-        "type": "object",
-        "properties": {
-            "name": {
-                "type": "string"
-            },
-            "authorId": {
-                "type": "string"
-            }
-        }
+      },
+      "required": [
+        "id",
+        "habitId",
+        "completionDate",
+        "isCompleted"
+      ]
     }
   },
   "auth": {
-    "providers": []
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/backend/entities/UserProfile"
+    "structure": [
+      {
+        "path": "/users/{userId}/profile",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile data.  Accessible only by the authenticated user.  `userId` must match `request.auth.uid`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            }
+          ]
+        }
       },
-      "description": "Stores public information about a user."
-    },
-    "/programs": {
-      "schema": {
-        "$ref": "#/backend/entities/Program"
+      {
+        "path": "/users/{userId}/workoutRoutines/{workoutRoutineId}",
+        "definition": {
+          "entityName": "WorkoutRoutine",
+          "schema": {
+            "$ref": "#/backend/entities/WorkoutRoutine"
+          },
+          "description": "Stores workout routines created by the user. Accessible only by the authenticated user. `userId` must match `request.auth.uid`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "workoutRoutineId",
+              "description": "The unique ID of the workout routine."
+            }
+          ]
+        }
       },
-      "description": "Collection of all workout programs, including templates."
-    },
-    "/programs/{programId}/workouts": {
-      "schema": {
-        "$ref": "#/backend/entities/ProgramWorkout"
+      {
+        "path": "/users/{userId}/workoutRoutines/{workoutRoutineId}/workoutExercises/{workoutExerciseId}",
+        "definition": {
+          "entityName": "WorkoutExercise",
+          "schema": {
+            "$ref": "#/backend/entities/WorkoutExercise"
+          },
+          "description": "Stores the relationship between a workout routine and an exercise. Accessible only by the authenticated user. `userId` must match `request.auth.uid`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "workoutRoutineId",
+              "description": "The unique ID of the workout routine."
+            },
+            {
+              "name": "workoutExerciseId",
+              "description": "The unique ID of the workout exercise."
+            }
+          ]
+        }
       },
-      "description": "Defines the workouts and their schedule within a program."
-    },
-    "/workouts/{workoutId}/exercises": {
-      "schema": {
-        "$ref": "#/backend/entities/WorkoutExercise"
+      {
+        "path": "/exercises/{exerciseId}",
+        "definition": {
+          "entityName": "Exercise",
+          "schema": {
+            "$ref": "#/backend/entities/Exercise"
+          },
+          "description": "Stores a library of exercises.",
+          "params": [
+            {
+              "name": "exerciseId",
+              "description": "The unique ID of the exercise."
+            }
+          ]
+        }
       },
-      "description": "The specific exercises that make up a workout."
-    },
-    "/users/{userId}/workoutLogs": {
-      "schema": {
-        "$ref": "#/backend/entities/WorkoutLog"
+      {
+        "path": "/users/{userId}/habits/{habitId}",
+        "definition": {
+          "entityName": "Habit",
+          "schema": {
+            "$ref": "#/backend/entities/Habit"
+          },
+          "description": "Stores habits tracked by the user. Accessible only by the authenticated user. `userId` must match `request.auth.uid`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "habitId",
+              "description": "The unique ID of the habit."
+            }
+          ]
+        }
       },
-      "description": "Logs of completed workouts for a user."
-    },
-    "/users/{userId}/habits": {
-      "schema": {
-        "$ref": "#/backend/entities/Habit"
-      },
-      "description": "Habits for a specific user."
-    },
-    "/users/{userId}/programs": {
-      "schema": {
-        "$ref": "#/backend/entities/Program"
-      },
-      "description": "Programs a user is currently participating in."
-    },
-    "/users/{userId}/exercises": {
-        "schema": { "$ref": "#/backend/entities/Exercise" },
-        "description": "Custom exercises created by a specific user."
-    },
-    "/users/{userId}/habitCategories": {
-        "schema": { "$ref": "#/backend/entities/HabitCategory" },
-        "description": "Custom habit categories for a user."
-    },
-    "/users/{userId}/exerciseCategories": {
-        "schema": { "$ref": "#/backend/entities/ExerciseCategory" },
-        "description": "Custom exercise categories for a user."
-    }
+      {
+        "path": "/users/{userId}/habits/{habitId}/habitCompletions/{habitCompletionId}",
+        "definition": {
+          "entityName": "HabitCompletion",
+          "schema": {
+            "$ref": "#/backend/entities/HabitCompletion"
+          },
+          "description": "Stores habit completion status for a specific date. Accessible only by the authenticated user. `userId` must match `request.auth.uid`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "habitId",
+              "description": "The unique ID of the habit."
+            },
+            {
+              "name": "habitCompletionId",
+              "description": "The unique ID of the habit completion record."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support Zenith Trainer's core features, focusing on user-specific data and collaborative elements while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling.  The structure prioritizes path-based ownership for user-generated content and employs denormalization where needed to avoid hierarchical authorization dependencies.  All `list` operations will be secure, ensuring that rules are not filters (QAPs).  \n\n*   **User Profiles:** User profiles are stored in a private collection using path-based ownership (`/users/{userId}/profile`). This ensures that only the authenticated user can access their profile data.\n*   **Workout Routines and Exercises:** Workout routines and exercises are nested under the user's profile (`/users/{userId}/workoutRoutines/{workoutRoutineId}` and `/users/{userId}/workoutRoutines/{workoutRoutineId}/workoutExercises/{workoutExerciseId}`). This structure continues the hierarchical path-based ownership model. The `Exercise` entity itself lives as a global entity so that users can reference it and re-organize it within their workout routines.\n*   **Habit Tracking:** Habits and habit completion records are stored under the user's profile, again using path-based ownership (`/users/{userId}/habits/{habitId}` and `/users/{userId}/habits/{habitId}/habitCompletions/{habitCompletionId}`).\n\n**Authorization Independence & QAPs:**\n\nAuthorization independence is achieved through path-based ownership and avoiding `get()` calls in security rules.  Since all workout routines, exercises, habits, and habit completions are stored under the user's profile, security rules can simply check if `request.auth.uid == userId` to grant access. This eliminates the need to fetch parent documents to determine authorization.\n\nThe data structure will support QAPs as all `list` operations will be scoped to the user's data via the path-based ownership. Rules will not act as filters, as unauthorized documents will not be accessible in the first place."
   }
 }
