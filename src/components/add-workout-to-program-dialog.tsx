@@ -21,7 +21,7 @@ import { z } from 'zod';
 import type { Workout, Exercise } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { useCollection, useUser, useFirestore } from '@/firebase';
+import { useCollection, useUser } from '@/firebase';
 import { ScrollArea } from './ui/scroll-area';
 import { Checkbox } from './ui/checkbox';
 
@@ -34,11 +34,10 @@ const workoutDetailsSchema = z.object({
 type WorkoutDetailsValues = z.infer<typeof workoutDetailsSchema>;
 
 interface AddWorkoutToProgramDialogProps {
-  programId: string;
-  onWorkoutAdd: (workout: Omit<Workout, 'id'>) => void;
+  onWorkoutAdd: (workout: Omit<Workout, 'id'>) => Promise<void>;
 }
 
-export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkoutToProgramDialogProps) {
+export function AddWorkoutToProgramDialog({ onWorkoutAdd }: AddWorkoutToProgramDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [workoutDetails, setWorkoutDetails] = useState<Partial<Omit<Workout, 'id'>>>({});
@@ -76,7 +75,7 @@ export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkou
     );
   };
   
-  const handleNextToConfigure = () => {
+  const handleNextToConfigure = async () => {
     if (selectedExercises.length === 0) {
         toast({
             variant: 'destructive',
@@ -85,25 +84,34 @@ export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkou
         });
         return;
     }
-    // In the future, this will go to step 3 (configure sets/reps)
-    // For now, we'll just create the workout
-     const newWorkout: Omit<Workout, 'id'> = {
-      ...workoutDetails,
+    
+    const newWorkout: Omit<Workout, 'id'> = {
+      name: workoutDetails.name || 'Unnamed Workout',
+      description: workoutDetails.description || '',
+      level: workoutDetails.level,
       exercises: selectedExercises.map(exId => ({ exerciseId: exId })),
-    } as Omit<Workout, 'id'>;
+    };
     
-    onWorkoutAdd(newWorkout);
-    toast({
-        title: 'Workout Added',
-        description: `${newWorkout.name} has been added to the program.`,
-    });
-    
-    // Reset and close
-    setIsOpen(false);
-    setStep(1);
-    reset();
-    setSelectedExercises([]);
-    setSearchTerm('');
+    try {
+      await onWorkoutAdd(newWorkout);
+      toast({
+          title: 'Workout Added',
+          description: `${newWorkout.name} has been added to the program.`,
+      });
+      
+      // Reset and close
+      setIsOpen(false);
+      setStep(1);
+      reset();
+      setSelectedExercises([]);
+      setSearchTerm('');
+    } catch (e) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to add workout.'
+      })
+    }
   };
   
   const handleOpenChange = (open: boolean) => {
