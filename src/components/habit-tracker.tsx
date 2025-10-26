@@ -6,7 +6,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { PomodoroTimer } from './pomodoro-timer';
 import type { Habit } from '@/lib/types';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 
 export function HabitTracker() {
   const [trackedHabits, setTrackedHabits] = useState<Habit[]>(habits);
@@ -19,23 +20,43 @@ export function HabitTracker() {
     );
   };
   
+  const sortedHabits = useMemo(() => {
+    return [...trackedHabits].sort((a, b) => {
+      if (a.completed && !b.completed) return 1;
+      if (!a.completed && b.completed) return -1;
+      return 0;
+    });
+  }, [trackedHabits]);
+
   return (
     <Card className="glass">
       <CardHeader>
         <CardTitle className="font-headline">Daily Habits</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {trackedHabits.map((habit) => {
+        {sortedHabits.map((habit) => {
           const Icon = habit.icon;
           return (
-            <div key={habit.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
+            <div 
+              key={habit.id} 
+              className={cn(
+                "flex items-center space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-all",
+                habit.completed && "opacity-50"
+              )}
+            >
               <Checkbox 
                 id={habit.id} 
                 checked={habit.completed}
                 onCheckedChange={() => handleToggleCompletion(habit.id)}
               />
               <div className="flex-1">
-                <Label htmlFor={habit.id} className="font-medium cursor-pointer">
+                <Label 
+                  htmlFor={habit.id} 
+                  className={cn(
+                    "font-medium cursor-pointer",
+                    habit.completed && "line-through"
+                  )}
+                >
                   {habit.name}
                 </Label>
                 <p className="text-xs text-muted-foreground">{habit.goal}</p>
