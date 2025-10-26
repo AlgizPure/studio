@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%; /* Off White - gần như trắng */
+    --background: 210 20% 98%; /* Off White */
     --foreground: 224 10% 15%;
 
     --card: 210 20% 96%;
@@ -93,6 +93,65 @@
     --sidebar-accent-foreground: 210 20% 96%;
     --sidebar-border: 224 10% 20%;
     --sidebar-ring: 16 66% 60%;
+  }
+}
+
+@layer base {
+  .theme-setdey {
+    --primary: 210 5% 55%;
+    --primary-foreground: 210 20% 98%;
+    --accent: 16 66% 60%;
+    --ring: 210 5% 55%;
+    --sidebar-primary: 16 66% 60%;
+  }
+  .dark.theme-setdey {
+    --primary: 210 5% 65%;
+    --primary-foreground: 224 10% 10%;
+    --accent: 16 66% 60%;
+    --ring: 210 5% 65%;
+    --sidebar-primary: 16 66% 60%;
+  }
+  .theme-olive {
+    --primary: 80 15% 45%;
+    --primary-foreground: 80 10% 95%;
+    --accent: 80 20% 85%;
+    --ring: 80 15% 45%;
+    --sidebar-primary: 80 20% 85%;
+  }
+  .dark.theme-olive {
+    --primary: 80 15% 55%;
+    --primary-foreground: 80 10% 5%;
+    --accent: 80 15% 25%;
+    --ring: 80 15% 55%;
+    --sidebar-primary: 80 15% 55%;
+  }
+  .theme-soft {
+    --primary: 25 50% 70%;
+    --primary-foreground: 25 20% 10%;
+    --accent: 25 50% 85%;
+    --ring: 25 50% 70%;
+    --sidebar-primary: 25 50% 85%;
+  }
+  .dark.theme-soft {
+    --primary: 25 50% 60%;
+    --primary-foreground: 25 20% 5%;
+    --accent: 25 40% 30%;
+    --ring: 25 50% 60%;
+    --sidebar-primary: 25 50% 60%;
+  }
+  .theme-terracoot {
+    --primary: 16 66% 60%;
+    --primary-foreground: 16 20% 98%;
+    --accent: 16 60% 85%;
+    --ring: 16 66% 60%;
+    --sidebar-primary: 16 60% 85%;
+  }
+  .dark.theme-terracoot {
+    --primary: 16 66% 60%;
+    --primary-foreground: 16 20% 10%;
+    --accent: 16 50% 30%;
+    --ring: 16 66% 60%;
+    --sidebar-primary: 16 66% 60%;
   }
 }
 
