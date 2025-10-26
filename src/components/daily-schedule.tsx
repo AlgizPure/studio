@@ -11,16 +11,32 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from './ui/badge';
 import type { LucideIcon } from 'lucide-react';
 import type { Exercise, Habit } from '@/lib/types';
-import { Target } from 'lucide-react';
+import { Target, Pencil } from 'lucide-react';
 import { AddExerciseDialog } from './add-exercise-dialog';
+import { AddHabitDialog } from './add-habit-dialog';
+import { Button } from './ui/button';
 
 interface DailyScheduleProps {
     exercises: Exercise[];
     habits: Habit[];
     onExerciseAdd: (exercise: Exercise) => void;
+    onHabitAdd: (habit: Habit) => void;
+    onExerciseUpdate: (exercise: Exercise) => void;
+    onHabitUpdate: (habit: Habit) => void;
+    onExerciseDelete: (exerciseId: string) => void;
+    onHabitDelete: (habitId: string) => void;
 }
 
-export function DailySchedule({ exercises, habits, onExerciseAdd }: DailyScheduleProps) {
+export function DailySchedule({ 
+    exercises, 
+    habits, 
+    onExerciseAdd, 
+    onHabitAdd,
+    onExerciseUpdate,
+    onHabitUpdate,
+    onExerciseDelete,
+    onHabitDelete
+}: DailyScheduleProps) {
   const today = new Date().toLocaleString('en-US', { weekday: 'long' });
 
   return (
@@ -36,14 +52,15 @@ export function DailySchedule({ exercises, habits, onExerciseAdd }: DailySchedul
             const dailyExercises = exercises.filter(ex => ex.days?.includes(day));
             
             const allItems = [
-              ...items,
+              ...items.map(item => ({...item, isDefault: true})), // Mark default items
               ...dailyHabits.map(habit => ({
                 id: habit.id,
                 time: 'Habit',
                 activityType: 'Habit',
                 activityName: habit.name,
                 duration: habit.goal || '',
-                icon: Target
+                icon: Target,
+                raw: habit
               })),
               ...dailyExercises.map(ex => ({
                   id: ex.id,
@@ -51,7 +68,8 @@ export function DailySchedule({ exercises, habits, onExerciseAdd }: DailySchedul
                   activityType: 'Workout',
                   activityName: ex.name,
                   duration: ex.category,
-                  icon: Dumbbell
+                  icon: Dumbbell,
+                  raw: ex
               }))
             ].sort((a, b) => {
               if (a.time === 'Habit') return 1;
@@ -72,6 +90,14 @@ export function DailySchedule({ exercises, habits, onExerciseAdd }: DailySchedul
                     <div className="space-y-4 pt-2">
                       {allItems.map((item) => {
                           const Icon = item.icon as LucideIcon;
+                          const isDefaultItem = (item as any).isDefault;
+
+                          const editTrigger = (
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                          );
+
                           return (
                             <div key={item.id} className="flex items-center">
                               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 mr-4">
@@ -81,7 +107,26 @@ export function DailySchedule({ exercises, habits, onExerciseAdd }: DailySchedul
                                   <p className="font-semibold">{item.activityName}</p>
                                   <p className="text-sm text-muted-foreground">{item.time}</p>
                               </div>
-                              <Badge variant={item.activityType === 'Habit' ? 'secondary' : 'outline'}>{item.duration}</Badge>
+                              <Badge variant={item.activityType === 'Habit' ? 'secondary' : 'outline'} className="mr-2">{item.duration}</Badge>
+                              {!isDefaultItem && (
+                                item.activityType === 'Habit' ? (
+                                    <AddHabitDialog
+                                        habitToEdit={item.raw as Habit}
+                                        onHabitUpdate={onHabitUpdate}
+                                        onHabitDelete={onHabitDelete}
+                                        onHabitAdd={onHabitAdd}
+                                        trigger={editTrigger}
+                                    />
+                                ) : (
+                                    <AddExerciseDialog
+                                        exerciseToEdit={item.raw as Exercise}
+                                        onExerciseUpdate={onExerciseUpdate}
+                                        onExerciseDelete={onExerciseDelete}
+                                        onExerciseAdd={onExerciseAdd}
+                                        trigger={editTrigger}
+                                    />
+                                )
+                              )}
                             </div>
                           )
                       })}
@@ -109,3 +154,5 @@ const Dumbbell = ({ className }: { className?: string }) => (
     <path d="m2.5 2.5 1.4 1.4" />
   </svg>
 );
+
+    

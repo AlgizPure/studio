@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Plus } from 'lucide-react';
+import { PlusCircle, Plus, Pencil } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
@@ -23,6 +23,7 @@ import { z } from 'zod';
 import type { Exercise, Day } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from './ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const hoursOfDay = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -39,44 +40,94 @@ type ExerciseFormValues = z.infer<typeof exerciseSchema>;
 
 interface AddExerciseDialogProps {
   onExerciseAdd: (exercise: Exercise) => void;
+  onExerciseUpdate?: (exercise: Exercise) => void;
+  onExerciseDelete?: (exerciseId: string) => void;
+  exerciseToEdit?: Exercise;
+  trigger?: React.ReactNode;
 }
 
-export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
+export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseDelete, exerciseToEdit, trigger }: AddExerciseDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const isEditMode = !!exerciseToEdit;
+
   const {
     register,
     handleSubmit,
     reset,
     control,
+    setValue,
     formState: { errors },
   } = useForm<ExerciseFormValues>({
     resolver: zodResolver(exerciseSchema),
-    defaultValues: {
-      time: '00:00',
-      days: [],
-    },
   });
 
+  useEffect(() => {
+    if (isEditMode && exerciseToEdit) {
+      setValue('name', exerciseToEdit.name);
+      setValue('category', exerciseToEdit.category);
+      setValue('description', exerciseToEdit.description);
+      setValue('time', exerciseToEdit.time || '00:00');
+      setValue('days', exerciseToEdit.days || []);
+    } else {
+      reset({
+        name: '',
+        description: '',
+        time: '00:00',
+        days: [],
+      });
+    }
+  }, [isEditMode, exerciseToEdit, setValue, reset]);
+
+
   const onSubmit: SubmitHandler<ExerciseFormValues> = (data) => {
-    const newExercise: Exercise = {
-      id: `ex${Date.now()}`,
-      name: data.name,
-      category: data.category,
-      description: data.description,
-      time: data.time,
-      days: data.days as Day[],
-      image: 'https://picsum.photos/seed/custom/600/400',
-      custom: true,
-    };
-    onExerciseAdd(newExercise);
-    toast({
-      title: 'Exercise Added',
-      description: `${data.name} has been added to your library.`,
-    });
+    if (isEditMode && exerciseToEdit && onExerciseUpdate) {
+        const updatedExercise: Exercise = {
+            ...exerciseToEdit,
+            name: data.name,
+            category: data.category,
+            description: data.description,
+            time: data.time,
+            days: data.days as Day[],
+        };
+        onExerciseUpdate(updatedExercise);
+        toast({
+            title: 'Exercise Updated',
+            description: `${data.name} has been updated.`,
+        });
+    } else {
+        const newExercise: Exercise = {
+            id: `ex${Date.now()}`,
+            name: data.name,
+            category: data.category,
+            description: data.description,
+            time: data.time,
+            days: data.days as Day[],
+            image: 'https://picsum.photos/seed/custom/600/400',
+            custom: true,
+        };
+        onExerciseAdd(newExercise);
+        toast({
+            title: 'Exercise Added',
+            description: `${data.name} has been added to your library.`,
+        });
+    }
+    
     setIsOpen(false);
     reset();
   };
+
+  const handleDelete = () => {
+    if (isEditMode && exerciseToEdit && onExerciseDelete) {
+        onExerciseDelete(exerciseToEdit.id);
+        toast({
+            title: 'Exercise Deleted',
+            description: `${exerciseToEdit.name} has been removed.`,
+            variant: 'destructive'
+        });
+        setIsOpen(false);
+    }
+  }
   
   const [currentPath, setCurrentPath] = useState('');
   
@@ -86,10 +137,8 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
 
   const isLibraryPage = currentPath.includes('/library');
 
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {isLibraryPage ? (
+  const dialogTrigger = trigger ? trigger : (
+     isLibraryPage ? (
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Exercise
@@ -99,14 +148,20 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
                 <Plus className="mr-2 h-4 w-4" />
                 New
             </Button>
-        )}
+        )
+  );
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        {dialogTrigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle className="font-headline">Add Custom Exercise</DialogTitle>
+            <DialogTitle className="font-headline">{isEditMode ? 'Edit Exercise' : 'Add Custom Exercise'}</DialogTitle>
             <DialogDescription>
-              Add a new exercise to your personal library. Click save when you're done.
+              {isEditMode ? 'Update the details of your exercise.' : "Add a new exercise to your personal library. Click save when you're done."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -126,7 +181,7 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
                 name="category"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
@@ -162,7 +217,7 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
                   render={({ field }) => (
                     <div className="col-span-3 grid grid-cols-2 gap-2">
                        <Select
-                        defaultValue={field.value?.split(':')[0] || '00'}
+                        value={field.value?.split(':')[0] || '00'}
                         onValueChange={(hour) => {
                           const minute = field.value?.split(':')[1] || '00';
                           field.onChange(`${hour}:${minute}`);
@@ -180,7 +235,7 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
                         </SelectContent>
                       </Select>
                       <Select
-                        defaultValue={field.value?.split(':')[1] || '00'}
+                        value={field.value?.split(':')[1] || '00'}
                         onValueChange={(minute) => {
                           const hour = field.value?.split(':')[0] || '00';
                           field.onChange(`${hour}:${minute}`);
@@ -215,7 +270,7 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
                       {daysOfWeek.map((day) => (
                         <div key={day} className="flex items-center gap-2">
                           <Checkbox
-                            id={`day-${day}`}
+                            id={`day-${day}-${exerciseToEdit?.id || 'new'}`}
                             checked={field.value?.includes(day)}
                             onCheckedChange={(checked) => {
                               const currentDays = field.value || [];
@@ -226,7 +281,7 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
                               }
                             }}
                           />
-                          <Label htmlFor={`day-${day}`} className="text-sm font-normal">{day.substring(0,3)}</Label>
+                          <Label htmlFor={`day-${day}-${exerciseToEdit?.id || 'new'}`} className="text-sm font-normal">{day.substring(0,3)}</Label>
                         </div>
                       ))}
                     </>
@@ -237,10 +292,31 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
              {errors.days && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.days.message}</p>}
           </div>
           <DialogFooter>
-            <Button type="submit">Save Exercise</Button>
+            {isEditMode && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button type="button" variant="destructive">Delete</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your exercise.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Button type="submit">{isEditMode ? 'Save Changes' : 'Save Exercise'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
+
+    

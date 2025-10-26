@@ -21,6 +21,8 @@ import type { Habit, Day } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { Checkbox } from './ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -35,11 +37,17 @@ type HabitFormValues = z.infer<typeof habitSchema>;
 
 interface AddHabitDialogProps {
   onHabitAdd: (habit: Habit) => void;
+  onHabitUpdate?: (habit: Habit) => void;
+  onHabitDelete?: (habitId: string) => void;
+  habitToEdit?: Habit;
+  trigger?: React.ReactNode;
 }
 
-export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
+export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habitToEdit, trigger }: AddHabitDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const isEditMode = !!habitToEdit;
+
   const {
     register,
     handleSubmit,
@@ -50,11 +58,24 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
     formState: { errors },
   } = useForm<HabitFormValues>({
     resolver: zodResolver(habitSchema),
-    defaultValues: {
-      days: [],
-      usePomodoro: false,
-    },
   });
+
+  useEffect(() => {
+    if (isEditMode && habitToEdit) {
+      setValue('name', habitToEdit.name);
+      setValue('goal', habitToEdit.goal);
+      setValue('days', habitToEdit.days || []);
+      setValue('usePomodoro', !!habitToEdit.pomodoro);
+    } else {
+        reset({
+            name: '',
+            goal: '',
+            days: [],
+            usePomodoro: false,
+        });
+    }
+  }, [isEditMode, habitToEdit, setValue, reset]);
+
 
   const watchedDays = watch('days') || [];
 
@@ -67,37 +88,68 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
   };
 
   const onSubmit: SubmitHandler<HabitFormValues> = (data) => {
-    const newHabit: Habit = {
-      id: `hb${Date.now()}`,
-      name: data.name,
-      goal: data.goal,
-      completed: false,
-      days: data.days as Day[],
-      ...(data.usePomodoro && { pomodoro: { cycles: 1 } }),
-    };
-    onHabitAdd(newHabit);
-    toast({
-      title: 'Habit Added',
-      description: `${data.name} has been added to your list.`,
-    });
+    if(isEditMode && habitToEdit && onHabitUpdate) {
+        const updatedHabit: Habit = {
+            ...habitToEdit,
+            name: data.name,
+            goal: data.goal,
+            days: data.days as Day[],
+            pomodoro: data.usePomodoro ? (habitToEdit.pomodoro || { cycles: 1 }) : undefined,
+        };
+        onHabitUpdate(updatedHabit);
+        toast({
+            title: 'Habit Updated',
+            description: `${data.name} has been updated.`,
+        });
+    } else {
+        const newHabit: Habit = {
+          id: `hb${Date.now()}`,
+          name: data.name,
+          goal: data.goal,
+          completed: false,
+          days: data.days as Day[],
+          ...(data.usePomodoro && { pomodoro: { cycles: 1 } }),
+        };
+        onHabitAdd(newHabit);
+        toast({
+          title: 'Habit Added',
+          description: `${data.name} has been added to your list.`,
+        });
+    }
     setIsOpen(false);
     reset();
   };
 
+  const handleDelete = () => {
+    if(isEditMode && habitToEdit && onHabitDelete) {
+        onHabitDelete(habitToEdit.id);
+        toast({
+            title: 'Habit Deleted',
+            description: `${habitToEdit.name} has been removed.`,
+            variant: 'destructive',
+        });
+        setIsOpen(false);
+    }
+  };
+
+  const dialogTrigger = trigger ? trigger : (
+    <Button variant="ghost" size="sm">
+      <Plus className="mr-2 h-4 w-4" />
+      New
+    </Button>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Plus className="mr-2 h-4 w-4" />
-          New
-        </Button>
+        {dialogTrigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle className="font-headline">Add Custom Habit</DialogTitle>
+            <DialogTitle className="font-headline">{isEditMode ? 'Edit Habit' : 'Add Custom Habit'}</DialogTitle>
             <DialogDescription>
-              Add a new habit to your personal list. Click save when you're done.
+              {isEditMode ? 'Update the details for your habit.' : "Add a new habit to your personal list. Click save when you're done."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -129,7 +181,7 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
                     {daysOfWeek.map((day) => (
                       <div key={day} className="flex items-center gap-2">
                         <Checkbox
-                          id={`day-habit-${day}`}
+                          id={`day-habit-${day}-${habitToEdit?.id || 'new'}`}
                           checked={field.value?.includes(day)}
                           onCheckedChange={(checked) => {
                             const currentDays = field.value || [];
@@ -140,16 +192,16 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
                             }
                           }}
                         />
-                        <Label htmlFor={`day-habit-${day}`} className="text-sm font-normal">{day.substring(0,3)}</Label>
+                        <Label htmlFor={`day-habit-${day}-${habitToEdit?.id || 'new'}`} className="text-sm font-normal">{day.substring(0,3)}</Label>
                       </div>
                     ))}
                     <div className="flex items-center gap-2">
                       <Checkbox
-                        id="all-days-habit"
+                        id={`all-days-habit-${habitToEdit?.id || 'new'}`}
                         checked={watchedDays.length === daysOfWeek.length}
                         onCheckedChange={handleAllDaysChange}
                       />
-                      <Label htmlFor="all-days-habit" className="text-sm font-normal">All Days</Label>
+                      <Label htmlFor={`all-days-habit-${habitToEdit?.id || 'new'}`} className="text-sm font-normal">All Days</Label>
                     </div>
                   </div>
                 )}
@@ -165,21 +217,42 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
                     render={({ field }) => (
                         <div className="col-span-3 flex items-center gap-2">
                             <Checkbox
-                                id="usePomodoro"
+                                id={`usePomodoro-${habitToEdit?.id || 'new'}`}
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
                             />
-                            <Label htmlFor="usePomodoro" className="text-sm font-normal">Enable Pomodoro Timer</Label>
+                            <Label htmlFor={`usePomodoro-${habitToEdit?.id || 'new'}`} className="text-sm font-normal">Enable Pomodoro Timer</Label>
                         </div>
                     )}
                 />
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Save Habit</Button>
+            {isEditMode && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button type="button" variant="destructive">Delete</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your habit.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+            <Button type="submit">{isEditMode ? 'Save Changes' : 'Save Habit'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
+
+    

@@ -17,9 +17,26 @@ export default function SchedulePage() {
     setExercises((prev) => [...prev, newExercise]);
   };
 
+  const handleUpdateExercise = (updatedExercise: Exercise) => {
+    setExercises((prev) => prev.map(ex => ex.id === updatedExercise.id ? updatedExercise : ex));
+  };
+
+  const handleDeleteExercise = (exerciseId: string) => {
+    setExercises((prev) => prev.filter(ex => ex.id !== exerciseId));
+  }
+
   const handleAddHabit = (newHabit: Habit) => {
     setHabits((prev) => [...prev, newHabit]);
   };
+
+  const handleUpdateHabit = (updatedHabit: Habit) => {
+    setHabits((prev) => prev.map(h => h.id === updatedHabit.id ? updatedHabit : h));
+  };
+
+  const handleDeleteHabit = (habitId: string) => {
+    setHabits((prev) => prev.filter(h => h.id !== habitId));
+  }
+
 
   return (
     <div className="space-y-6">
@@ -39,12 +56,28 @@ export default function SchedulePage() {
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-10">
         <div className="lg:col-span-6">
-          <DailySchedule exercises={exercises} habits={habits} onExerciseAdd={handleAddExercise} />
+          <DailySchedule 
+            exercises={exercises} 
+            habits={habits} 
+            onExerciseAdd={handleAddExercise} 
+            onHabitAdd={handleAddHabit}
+            onExerciseUpdate={handleUpdateExercise}
+            onHabitUpdate={handleUpdateHabit}
+            onExerciseDelete={handleDeleteExercise}
+            onHabitDelete={handleDeleteHabit}
+            />
         </div>
         <div className="lg:col-span-4">
-          <HabitList habits={habits} onHabitAdd={handleAddHabit} setHabits={setHabits} />
+          <HabitList 
+            habits={habits} 
+            onHabitAdd={handleAddHabit}
+            onHabitUpdate={handleUpdateHabit}
+            onHabitDelete={handleDeleteHabit}
+            setHabits={setHabits} />
         </div>
       </div>
     </div>
   );
 }
+
+    
