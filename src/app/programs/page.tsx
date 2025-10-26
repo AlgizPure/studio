@@ -1,13 +1,12 @@
 'use client';
 
 import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, query, where, writeBatch, doc } from 'firebase/firestore';
+import { collection, addDoc, query, where, writeBatch, doc, getDoc, getDocs } from 'firebase/firestore';
 import { AddProgramDialog } from '@/components/add-program-dialog';
 import { ProgramCard } from '@/components/program-card';
-import type { Program } from '@/lib/types';
+import type { Program, Workout } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
-import { getTemplateProgramData } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -47,7 +46,7 @@ export default function ProgramsPage() {
     });
   };
 
-  const handleAddTemplate = async (program: Program) => {
+  const handleAddTemplate = async (templateProgram: Program) => {
     if (!user || !firestore) {
       toast({
         variant: 'destructive',
@@ -57,54 +56,80 @@ export default function ProgramsPage() {
       return;
     }
 
-    const { success, programData, workouts } = await getTemplateProgramData(program.id);
-
-    if (!success || !programData) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to fetch the program template.',
-      });
-      return;
-    }
-
     try {
-      const batch = writeBatch(firestore);
-      
-      const newProgramRef = doc(collection(firestore, `users/${user.uid}/programs`));
-      batch.set(newProgramRef, {
-        ...programData,
-        authorId: user.uid,
-        isTemplate: false,
-      });
+        // 1. Get the template program
+        const templateProgramRef = doc(firestore, `programs/${templateProgram.id}`);
+        const templateProgramSnap = await getDoc(templateProgramRef);
 
-      if (workouts) {
-        workouts.forEach(workout => {
-            const newWorkoutRef = doc(collection(firestore, `users/${user.uid}/workouts`));
-            batch.set(newWorkoutRef, workout);
-
-            const programWorkoutRef = doc(collection(newProgramRef, 'workouts'));
-            batch.set(programWorkoutRef, {
-                workoutId: newWorkoutRef.id,
-                schedule: { type: 'repeating', days: ['Monday'] } // Default schedule
+        if (!templateProgramSnap.exists()) {
+             toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to fetch the program template.',
             });
+            return;
+        }
+        const programData = templateProgramSnap.data() as Program;
+        
+        // 2. Get the workouts from the template's subcollection
+        const templateWorkoutsRef = collection(templateProgramRef, 'workouts');
+        const templateWorkoutsSnap = await getDocs(templateWorkoutsRef);
+        
+        const workouts: Omit<Workout, 'id'>[] = [];
+        if (!templateWorkoutsSnap.empty) {
+          templateWorkoutsSnap.forEach(workoutDoc => {
+            workouts.push(workoutDoc.data() as Omit<Workout, 'id'>);
+          });
+        }
+      
+        // 3. Write all data to the user's collections in a batch
+        const batch = writeBatch(firestore);
+        
+        const newProgramRef = doc(collection(firestore, `users/${user.uid}/programs`));
+        batch.set(newProgramRef, {
+            ...programData,
+            authorId: user.uid,
+            isTemplate: false, // It's no longer a template for the user
         });
-      }
 
-      await batch.commit();
+        if (workouts) {
+            workouts.forEach(workout => {
+                // Create a new workout in the user's main workouts collection
+                const newWorkoutRef = doc(collection(firestore, `users/${user.uid}/workouts`));
+                batch.set(newWorkoutRef, workout);
 
-      toast({
-        title: 'Program Added!',
-        description: `${program.name} has been added to your programs.`,
-      });
-      router.push(`/programs/${newProgramRef.id}`);
-    } catch (e) {
+                // Link this new workout to the user's new program
+                const programWorkoutRef = doc(collection(newProgramRef, 'workouts'));
+                batch.set(programWorkoutRef, {
+                    workoutId: newWorkoutRef.id,
+                    schedule: { type: 'repeating', days: ['Monday'] } // Default schedule
+                });
+            });
+        }
+
+        await batch.commit();
+
+        toast({
+            title: 'Program Added!',
+            description: `${templateProgram.name} has been added to your programs.`,
+        });
+        router.push(`/programs/${newProgramRef.id}`);
+
+    } catch (e: any) {
       console.error(e);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to add program.',
+        title: 'Error Adding Program',
+        description: e.message || 'Could not copy the program template.',
       });
+      // Optionally emit a permission error if that's the likely cause
+      if (e.code === 'permission-denied') {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            operation: 'write',
+            path: `users/${user.uid}/programs`,
+            requestResourceData: templateProgram,
+        }));
+      }
     }
   };
 
