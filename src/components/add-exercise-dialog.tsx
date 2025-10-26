@@ -27,7 +27,7 @@ const exerciseSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   category: z.enum(['Strength', 'Cardio', 'Bio-dynamics', 'TRX', 'Bodyweight', 'Static']),
   description: z.string().min(1, 'Description is required'),
-  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)'),
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):(00|15|30|45)$/, 'Invalid time format. Minutes must be 00, 15, 30, or 45.'),
 });
 
 type ExerciseFormValues = z.infer<typeof exerciseSchema>;
@@ -141,7 +141,7 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
                 <Label htmlFor="time" className="text-right">
                     Start Time
                 </Label>
-                <Input id="time" type="time" className="col-span-3" {...register('time')} />
+                <Input id="time" type="time" className="col-span-3" {...register('time')} step="900" />
              </div>
              {errors.time && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.time.message}</p>}
           </div>
