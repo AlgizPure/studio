@@ -27,7 +27,7 @@ const exerciseSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   category: z.enum(['Strength', 'Cardio', 'Bio-dynamics', 'TRX', 'Bodyweight', 'Static']),
   description: z.string().min(1, 'Description is required'),
-  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):(00|15|30|45)$/, 'Invalid time format. Minutes must be 00, 15, 30, or 45.'),
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format.').optional(),
 });
 
 type ExerciseFormValues = z.infer<typeof exerciseSchema>;
@@ -55,7 +55,10 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
   const onSubmit: SubmitHandler<ExerciseFormValues> = (data) => {
     const newExercise: Exercise = {
       id: `ex${Date.now()}`,
-      ...data,
+      name: data.name,
+      category: data.category,
+      description: data.description,
+      time: data.time,
       image: 'https://picsum.photos/seed/custom/600/400',
       custom: true,
     };
@@ -141,7 +144,42 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
                 <Label htmlFor="time" className="text-right">
                     Start Time
                 </Label>
-                <Input id="time" type="time" className="col-span-3" {...register('time')} step="900" />
+                <Controller
+                  name="time"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="col-span-3 grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="23"
+                        defaultValue={field.value?.split(':')[0] || '00'}
+                        onChange={(e) => {
+                          const hour = e.target.value.padStart(2, '0');
+                          const minute = field.value?.split(':')[1] || '00';
+                          field.onChange(`${hour}:${minute}`);
+                        }}
+                      />
+                      <Select
+                        defaultValue={field.value?.split(':')[1] || '00'}
+                        onValueChange={(minute) => {
+                          const hour = field.value?.split(':')[0] || '00';
+                          field.onChange(`${hour}:${minute}`);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="00">00</SelectItem>
+                          <SelectItem value="15">15</SelectItem>
+                          <SelectItem value="30">30</SelectItem>
+                          <SelectItem value="45">45</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                />
              </div>
              {errors.time && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.time.message}</p>}
           </div>

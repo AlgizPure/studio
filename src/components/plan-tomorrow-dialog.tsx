@@ -66,10 +66,6 @@ export function PlanTomorrowDialog() {
           <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center pr-4">
                 <h3 className="font-semibold text-lg">Habits</h3>
-                <Button variant="ghost" size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    New
-                </Button>
             </div>
             <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">
