@@ -19,11 +19,16 @@ import { AddExerciseDialog } from './add-exercise-dialog';
 import { AddHabitDialog } from './add-habit-dialog';
 import { useState }from 'react';
 import type { Exercise, Habit } from '@/lib/types';
+import { ManageCategoriesDialog } from './manage-categories-dialog';
+import { ManageExerciseCategoriesDialog } from './manage-exercise-categories-dialog';
 
 
 export function PlanTomorrowDialog() {
     const [exercises, setExercises] = useState<Exercise[]>(initialExercises);
     const [habits, setHabits] = useState<Habit[]>(initialHabits);
+    const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
+    const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);
+
 
     const handleAddExercise = (newExercise: Exercise) => {
         setExercises(prev => [...prev, newExercise]);
@@ -34,6 +39,7 @@ export function PlanTomorrowDialog() {
     };
 
   return (
+    <>
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline">
@@ -52,7 +58,7 @@ export function PlanTomorrowDialog() {
           <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center pr-4">
               <h3 className="font-semibold text-lg">Exercises</h3>
-               <AddExerciseDialog onExerciseAdd={handleAddExercise} />
+               <AddExerciseDialog onExerciseAdd={handleAddExercise} openManageCategories={() => setIsManageExerciseCategoriesOpen(true)} />
             </div>
             <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">
@@ -72,7 +78,7 @@ export function PlanTomorrowDialog() {
           <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center pr-4">
                 <h3 className="font-semibold text-lg">Habits</h3>
-                <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => {}} />
+                <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => setIsManageHabitCategoriesOpen(true)} />
             </div>
             <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">
@@ -92,5 +98,8 @@ export function PlanTomorrowDialog() {
         </div>
       </DialogContent>
     </Dialog>
+    <ManageCategoriesDialog open={isManageHabitCategoriesOpen} onOpenChange={setIsManageHabitCategoriesOpen} />
+    <ManageExerciseCategoriesDialog open={isManageExerciseCategoriesOpen} onOpenChange={setIsManageExerciseCategoriesOpen} />
+    </>
   );
 }

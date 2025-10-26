@@ -36,7 +36,7 @@ export type Habit = {
   name: string;
   categoryId: string;
   goal?: string; // e.g., "3 lessons", "10 minutes"
-  completed: boolean;
+  completed?: boolean;
   days?: Day[];
   pomodoro?: {
     cycles: number;
