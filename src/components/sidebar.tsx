@@ -6,7 +6,8 @@ import {
   SidebarFooter
 } from '@/components/ui/sidebar';
 import { Button } from './ui/button';
-import { Settings, Sun, Moon } from 'lucide-react';
+import { Settings } from 'lucide-react';
+import { ThemeToggle } from './theme-toggle';
 
 const Logo = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
@@ -31,12 +32,7 @@ export function Sidebar() {
             <MainNav />
         </div>
         <SidebarFooter className="p-4 flex flex-col gap-2">
-            {/* Dark mode toggle can be implemented here */}
-            {/* For now, just a placeholder */}
-            <Button variant="ghost" className="w-full justify-start gap-2 p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8">
-                <Moon className="h-4 w-4" />
-                <span className="group-data-[collapsible=icon]:hidden">Theme</span>
-            </Button>
+            <ThemeToggle />
             <Button variant="ghost" className="w-full justify-start gap-2 p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8">
                 <Settings className="h-4 w-4" />
                 <span className="group-data-[collapsible=icon]:hidden">Settings</span>
