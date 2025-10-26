@@ -29,7 +29,7 @@ const programSchema = z.object({
 type ProgramFormValues = z.infer<typeof programSchema>;
 
 interface AddProgramDialogProps {
-  onProgramAdd: (program: Program) => void;
+  onProgramAdd: (program: Omit<Program, 'id' | 'isTemplate' | 'authorId'>) => Promise<void>;
   programToEdit?: Program;
   trigger?: React.ReactNode;
 }
@@ -52,26 +52,28 @@ export function AddProgramDialog({ onProgramAdd, programToEdit, trigger }: AddPr
     }
   });
 
-  const onSubmit: SubmitHandler<ProgramFormValues> = (data) => {
-    if (isEditMode && programToEdit) {
-      // Update logic here
-    } else {
-        const newProgram: Program = {
-            id: `prog${Date.now()}`,
-            name: data.name,
-            description: data.description,
-            isTemplate: false,
-            authorId: 'user123', // Replace with actual user ID
-        };
-        onProgramAdd(newProgram);
-        toast({
-            title: 'Program Added',
-            description: `${data.name} has been added to your programs.`,
-        });
+  const onSubmit: SubmitHandler<ProgramFormValues> = async (data) => {
+    try {
+      if (isEditMode && programToEdit) {
+        // Update logic here
+      } else {
+          await onProgramAdd(data);
+          toast({
+              title: 'Program Added',
+              description: `${data.name} has been added to your programs.`,
+          });
+      }
+      
+      setIsOpen(false);
+      reset();
+
+    } catch (e) {
+       toast({
+          title: 'Error',
+          description: 'Failed to add program.',
+          variant: 'destructive',
+      });
     }
-    
-    setIsOpen(false);
-    reset();
   };
   
   const dialogTrigger = trigger ? trigger : (

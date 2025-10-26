@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Plus, Pencil } from 'lucide-react';
+import { PlusCircle, Plus } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
@@ -23,7 +23,6 @@ import type { Exercise, Day, ExerciseCategory } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
-import { exerciseCategories as initialExerciseCategories } from '@/lib/data';
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const hoursOfDay = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -32,6 +31,7 @@ const exerciseSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   categoryId: z.string().min(1, 'Category is required'),
   description: z.string().min(1, 'Description is required'),
+  image: z.string().url().optional(),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format.').optional(),
   days: z.array(z.string()).optional(),
 });
@@ -39,19 +39,19 @@ const exerciseSchema = z.object({
 type ExerciseFormValues = z.infer<typeof exerciseSchema>;
 
 interface AddExerciseDialogProps {
-  onExerciseAdd: (exercise: Exercise) => void;
-  onExerciseUpdate?: (exercise: Exercise) => void;
-  onExerciseDelete?: (exerciseId: string) => void;
+  onExerciseAdd: (exercise: Omit<Exercise, 'id'>) => Promise<void>;
+  onExerciseUpdate?: (exercise: Exercise) => Promise<void>;
+  onExerciseDelete?: (exerciseId: string) => Promise<void>;
   exerciseToEdit?: Exercise;
   trigger?: React.ReactNode;
   openManageCategories?: () => void;
+  categories: ExerciseCategory[];
 }
 
-export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseDelete, exerciseToEdit, trigger, openManageCategories }: AddExerciseDialogProps) {
+export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseDelete, exerciseToEdit, trigger, openManageCategories, categories }: AddExerciseDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const isEditMode = !!exerciseToEdit;
-  const [exerciseCategories, setExerciseCategories] = useState<ExerciseCategory[]>(initialExerciseCategories);
 
   const {
     register,
@@ -65,70 +65,80 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
   });
 
   useEffect(() => {
-    if (isEditMode && exerciseToEdit) {
-      setValue('name', exerciseToEdit.name);
-      setValue('categoryId', exerciseToEdit.categoryId);
-      setValue('description', exerciseToEdit.description);
-      setValue('time', exerciseToEdit.time || '00:00');
-      setValue('days', exerciseToEdit.days || []);
-    } else {
-      reset({
-        name: '',
-        categoryId: '',
-        description: '',
-        time: '00:00',
-        days: [],
-      });
+    if (isOpen) {
+      if (isEditMode && exerciseToEdit) {
+        setValue('name', exerciseToEdit.name);
+        setValue('categoryId', exerciseToEdit.categoryId);
+        setValue('description', exerciseToEdit.description);
+        setValue('image', exerciseToEdit.image);
+        setValue('time', exerciseToEdit.time || '00:00');
+        setValue('days', exerciseToEdit.days || []);
+      } else {
+        reset({
+          name: '',
+          categoryId: '',
+          description: '',
+          image: 'https://picsum.photos/seed/custom/600/400',
+          time: '00:00',
+          days: [],
+        });
+      }
     }
   }, [isEditMode, exerciseToEdit, setValue, reset, isOpen]);
 
 
-  const onSubmit: SubmitHandler<ExerciseFormValues> = (data) => {
-    if (isEditMode && exerciseToEdit && onExerciseUpdate) {
-        const updatedExercise: Exercise = {
-            ...exerciseToEdit,
-            name: data.name,
-            categoryId: data.categoryId,
-            description: data.description,
-            time: data.time,
-            days: data.days as Day[],
-        };
-        onExerciseUpdate(updatedExercise);
+  const onSubmit: SubmitHandler<ExerciseFormValues> = async (data) => {
+    try {
+      if (isEditMode && exerciseToEdit && onExerciseUpdate) {
+          const updatedExercise: Exercise = {
+              ...exerciseToEdit,
+              ...data,
+              days: data.days as Day[],
+          };
+          await onExerciseUpdate(updatedExercise);
+          toast({
+              title: 'Exercise Updated',
+              description: `${data.name} has been updated.`,
+          });
+      } else {
+          const newExercise: Omit<Exercise, 'id'> = {
+              ...data,
+              custom: true,
+              days: data.days as Day[],
+          };
+          await onExerciseAdd(newExercise);
+          toast({
+              title: 'Exercise Added',
+              description: `${data.name} has been added to your library.`,
+          });
+      }
+      setIsOpen(false);
+    } catch (e) {
         toast({
-            title: 'Exercise Updated',
-            description: `${data.name} has been updated.`,
-        });
-    } else {
-        const newExercise: Exercise = {
-            id: `ex${Date.now()}`,
-            name: data.name,
-            categoryId: data.categoryId,
-            description: data.description,
-            time: data.time,
-            days: data.days as Day[],
-            image: 'https://picsum.photos/seed/custom/600/400',
-            custom: true,
-        };
-        onExerciseAdd(newExercise);
-        toast({
-            title: 'Exercise Added',
-            description: `${data.name} has been added to your library.`,
-        });
+            variant: 'destructive',
+            title: 'Error',
+            description: 'There was an error saving the exercise.'
+        })
     }
-    
-    setIsOpen(false);
-    reset();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (isEditMode && exerciseToEdit && onExerciseDelete) {
-        onExerciseDelete(exerciseToEdit.id);
-        toast({
-            title: 'Exercise Deleted',
-            description: `${exerciseToEdit.name} has been removed.`,
-            variant: 'destructive'
-        });
-        setIsOpen(false);
+        try {
+            await onExerciseDelete(exerciseToEdit.id);
+            toast({
+                title: 'Exercise Deleted',
+                description: `${exerciseToEdit.name} has been removed.`,
+                variant: 'destructive'
+            });
+            setIsOpen(false);
+        } catch (e) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'There was an error deleting the exercise.'
+            })
+        }
     }
   }
 
@@ -195,7 +205,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
                 name="categoryId"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={openManageCategories ? handleCategoryChange : field.onChange} value={field.value}>
+                  <Select onValueChange={handleCategoryChange} value={field.value}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
@@ -207,7 +217,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
                               <span className="flex items-center"><Plus className="mr-2 h-4 w-4" /> Add new category...</span>
                           </SelectItem>
                         )}
-                        {exerciseCategories.map(cat => (
+                        {categories.map(cat => (
                             <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                         ))}
                       </SelectGroup>

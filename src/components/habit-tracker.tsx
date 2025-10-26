@@ -1,22 +1,26 @@
-
 'use client';
 
-import { habits as initialHabits } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { PomodoroTimer } from './pomodoro-timer';
-import type { Habit, Day } from '@/lib/types';
+import type { Habit, Day, HabitCategory } from '@/lib/types';
 import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { AddHabitDialog } from './add-habit-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
+import { useCollection, useUser, useFirestore } from '@/firebase';
+import { doc, updateDoc, addDoc, deleteDoc, collection } from 'firebase/firestore';
+import { Skeleton } from './ui/skeleton';
 
 export function HabitTracker() {
-  const [trackedHabits, setTrackedHabits] = useState<Habit[]>(initialHabits);
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { data: trackedHabits, loading: habitsLoading } = useCollection<Habit>(user ? `users/${user.uid}/habits` : null);
+  const { data: habitCategories, loading: categoriesLoading } = useCollection<HabitCategory>(user ? `users/${user.uid}/habitCategories` : null);
+
   const [today, setToday] = useState<Day | null>(null);
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
-
 
   useEffect(() => {
     const date = new Date();
@@ -24,22 +28,36 @@ export function HabitTracker() {
     setToday(dayOfWeek);
   }, []);
 
-  const handleToggleCompletion = (habitId: string) => {
-    setTrackedHabits(prevHabits =>
-      prevHabits.map(h =>
-        h.id === habitId ? { ...h, completed: !h.completed } : h
-      )
-    );
+  const handleToggleCompletion = async (habit: Habit) => {
+    if (!user || !firestore || !habit.id) return;
+    const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
+    await updateDoc(habitDoc, { completed: !habit.completed });
   };
 
-  const handleAddHabit = (newHabit: Habit) => {
-    setTrackedHabits(prev => [...prev, newHabit]);
+  const handleAddHabit = async (newHabit: Omit<Habit, 'id'>) => {
+    if (!user || !firestore) return;
+    const habitsCollection = collection(firestore, `users/${user.uid}/habits`);
+    await addDoc(habitsCollection, newHabit);
   };
-  
+
+  const handleAddCategory = async (name: string) => {
+    if (!user || !firestore) return;
+    await addDoc(collection(firestore, `users/${user.uid}/habitCategories`), { name });
+  };
+
+  const handleUpdateCategory = async (category: HabitCategory) => {
+    if (!user || !firestore || !category.id) return;
+    await updateDoc(doc(firestore, `users/${user.uid}/habitCategories`, category.id), { name: category.name });
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!user || !firestore) return;
+    await deleteDoc(doc(firestore, `users/${user.uid}/habitCategories`, categoryId));
+  };
+
   const todaysHabits = useMemo(() => {
-    if (!today) return [];
+    if (!today || !trackedHabits) return [];
     return trackedHabits.filter(habit => {
-      // Show if days are not specified (all days) or if today is in the days array
       return !habit.days || habit.days.length === 0 || habit.days.includes(today);
     });
   }, [trackedHabits, today]);
@@ -51,16 +69,24 @@ export function HabitTracker() {
       return 0;
     });
   }, [todaysHabits]);
+  
+  const isLoading = habitsLoading || categoriesLoading;
 
   return (
       <>
         <Card className="glass">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="font-headline">Daily Habits</CardTitle>
-            <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => setIsManageCategoriesOpen(true)}/>
+            <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => setIsManageCategoriesOpen(true)} categories={habitCategories || []} />
           </CardHeader>
           <CardContent className="space-y-2">
-            {sortedHabits.map((habit) => {
+            {isLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : sortedHabits.map((habit) => {
               return (
                 <div 
                   key={habit.id} 
@@ -71,8 +97,8 @@ export function HabitTracker() {
                 >
                   <Checkbox 
                     id={habit.id} 
-                    checked={habit.completed}
-                    onCheckedChange={() => handleToggleCompletion(habit.id)}
+                    checked={!!habit.completed}
+                    onCheckedChange={() => handleToggleCompletion(habit)}
                   />
                   <div className="flex-1">
                     <Label 
@@ -86,18 +112,25 @@ export function HabitTracker() {
                     </Label>
                     <p className="text-xs text-muted-foreground">{habit.goal}</p>
                   </div>
-                  {habit.pomodoro && <PomodoroTimer cycles={habit.pomodoro.cycles} disabled={habit.completed} />}
+                  {habit.pomodoro && <PomodoroTimer cycles={habit.pomodoro.cycles} disabled={!!habit.completed} />}
                 </div>
               );
             })}
-             {sortedHabits.length === 0 && (
+             {!isLoading && sortedHabits.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <p>No habits scheduled for today.</p>
               </div>
             )}
           </CardContent>
         </Card>
-        <ManageCategoriesDialog open={isManageCategoriesOpen} onOpenChange={setIsManageCategoriesOpen} />
+        <ManageCategoriesDialog 
+            open={isManageCategoriesOpen} 
+            onOpenChange={setIsManageCategoriesOpen} 
+            categories={habitCategories || []}
+            onAdd={handleAddCategory}
+            onUpdate={handleUpdateCategory}
+            onDelete={handleDeleteCategory}
+        />
     </>
   );
 }

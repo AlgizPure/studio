@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,38 +13,33 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { exerciseCategories as initialCategories } from '@/lib/data';
 import type { ExerciseCategory } from '@/lib/types';
 import { X, Plus, Pencil, Check } from 'lucide-react';
 
 interface ManageExerciseCategoriesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  setCategories?: React.Dispatch<React.SetStateAction<ExerciseCategory[]>>;
+  categories: ExerciseCategory[];
+  onAdd: (name: string) => Promise<void>;
+  onUpdate: (category: ExerciseCategory) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-export function ManageExerciseCategoriesDialog({ open, onOpenChange, setCategories: setExternalCategories }: ManageExerciseCategoriesDialogProps) {
-  const [categories, setCategories] = useState<ExerciseCategory[]>(initialCategories);
+export function ManageExerciseCategoriesDialog({ open, onOpenChange, categories, onAdd, onUpdate, onDelete }: ManageExerciseCategoriesDialogProps) {
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
   const { toast } = useToast();
-  
-  useEffect(() => {
-    if (setExternalCategories) {
-      setExternalCategories(categories);
-    }
-  }, [categories, setExternalCategories]);
 
-  const handleAddNewCategory = () => {
+  const handleAddNewCategory = async () => {
     if (newCategoryName.trim()) {
-      const newCategory: ExerciseCategory = {
-        id: `excat${Date.now()}`,
-        name: newCategoryName.trim(),
-      };
-      setCategories([...categories, newCategory]);
-      setNewCategoryName('');
-      toast({ title: 'Category Added', description: `${newCategory.name} has been added.` });
+      try {
+        await onAdd(newCategoryName.trim());
+        setNewCategoryName('');
+        toast({ title: 'Category Added', description: `${newCategoryName.trim()} has been added.` });
+      } catch (e) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to add category.' });
+      }
     }
   };
   
@@ -53,18 +48,26 @@ export function ManageExerciseCategoriesDialog({ open, onOpenChange, setCategori
     setEditingCategoryName(category.name);
   };
   
-  const handleSaveEdit = (categoryId: string) => {
+  const handleSaveEdit = async (categoryId: string) => {
     if(editingCategoryName.trim()) {
-      setCategories(categories.map(c => c.id === categoryId ? { ...c, name: editingCategoryName.trim() } : c));
-      setEditingCategoryId(null);
-      toast({ title: 'Category Updated', description: `Category has been updated to ${editingCategoryName.trim()}.` });
+      try {
+        await onUpdate({ id: categoryId, name: editingCategoryName.trim() });
+        setEditingCategoryId(null);
+        toast({ title: 'Category Updated', description: `Category has been updated to ${editingCategoryName.trim()}.` });
+      } catch (e) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to update category.' });
+      }
     }
   };
 
-  const handleDelete = (categoryId: string) => {
+  const handleDelete = async (categoryId: string) => {
     const categoryName = categories.find(c => c.id === categoryId)?.name;
-    setCategories(categories.filter(c => c.id !== categoryId));
-    toast({ variant: 'destructive', title: 'Category Deleted', description: `${categoryName} has been deleted.` });
+    try {
+      await onDelete(categoryId);
+      toast({ variant: 'destructive', title: 'Category Deleted', description: `${categoryName} has been deleted.` });
+    } catch(e) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete category.' });
+    }
   }
 
   return (

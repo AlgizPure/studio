@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { SiteHeader } from '@/components/site-header';
 import { Sidebar } from '@/components/sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { FirebaseProvider } from '@/firebase/provider';
+import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'Zenith Trainer',
@@ -32,7 +32,7 @@ export default function RootLayout({
           'min-h-screen bg-background font-body antialiased'
         )}
       >
-        <FirebaseProvider>
+        <FirebaseClientProvider>
           <SidebarProvider>
             <Sidebar />
             <div className="flex flex-col flex-1 md:pl-[3rem]">
@@ -42,7 +42,7 @@ export default function RootLayout({
               </main>
             </div>
           </SidebarProvider>
-        </FirebaseProvider>
+        </FirebaseClientProvider>
         <Toaster />
       </body>
     </html>

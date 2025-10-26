@@ -1,6 +1,5 @@
-
 'use client';
-import { weeklySchedule, habitCategories, exerciseCategories } from '@/lib/data';
+import { weeklySchedule } from '@/lib/data';
 import {
   Accordion,
   AccordionContent,
@@ -10,41 +9,45 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from './ui/badge';
 import type { LucideIcon } from 'lucide-react';
-import type { Exercise, Habit } from '@/lib/types';
+import type { Exercise, Habit, HabitCategory, ExerciseCategory } from '@/lib/types';
 import { Target, Pencil, Dumbbell } from 'lucide-react';
 import { AddExerciseDialog } from './add-exercise-dialog';
 import { AddHabitDialog } from './add-habit-dialog';
 import { Button } from './ui/button';
-import { ManageExerciseCategoriesDialog } from './manage-exercise-categories-dialog';
 import { useState } from 'react';
 import { PomodoroIcon } from './pomodoro-icon';
 
 interface DailyScheduleProps {
     exercises: Exercise[];
     habits: Habit[];
-    onExerciseAdd: (exercise: Exercise) => void;
-    onHabitAdd: (habit: Habit) => void;
-    onExerciseUpdate: (exercise: Exercise) => void;
-    onHabitUpdate: (habit: Habit) => void;
-    onExerciseDelete: (exerciseId: string) => void;
-    onHabitDelete: (habitId: string) => void;
-    openManageCategories: () => void;
+    habitCategories: HabitCategory[];
+    exerciseCategories: ExerciseCategory[];
+    onExerciseAdd: (exercise: Omit<Exercise, 'id'>) => Promise<void>;
+    onHabitAdd: (habit: Omit<Habit, 'id'>) => Promise<void>;
+    onExerciseUpdate: (exercise: Exercise) => Promise<void>;
+    onHabitUpdate: (habit: Habit) => Promise<void>;
+    onExerciseDelete: (exerciseId: string) => Promise<void>;
+    onHabitDelete: (habitId: string) => Promise<void>;
+    openManageHabitCategories: () => void;
+    openManageExerciseCategories: () => void;
 }
 
 export function DailySchedule({ 
     exercises, 
     habits, 
+    habitCategories,
+    exerciseCategories,
     onExerciseAdd, 
     onHabitAdd,
     onExerciseUpdate,
     onHabitUpdate,
     onExerciseDelete,
     onHabitDelete,
-    openManageCategories
+    openManageHabitCategories,
+    openManageExerciseCategories,
 }: DailyScheduleProps) {
   const today = new Date().toLocaleString('en-US', { weekday: 'long' });
-  const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);
-
+  
   return (
     <>
       <Card className="glass">
@@ -122,7 +125,8 @@ export function DailySchedule({
                                         onHabitDelete={onHabitDelete}
                                         onHabitAdd={onHabitAdd}
                                         trigger={editTrigger}
-                                        openManageCategories={openManageCategories}
+                                        openManageCategories={openManageHabitCategories}
+                                        categories={habitCategories}
                                     />
                                 ) : (
                                     <AddExerciseDialog
@@ -131,7 +135,8 @@ export function DailySchedule({
                                         onExerciseDelete={onExerciseDelete}
                                         onExerciseAdd={onExerciseAdd}
                                         trigger={editTrigger}
-                                        openManageCategories={() => setIsManageExerciseCategoriesOpen(true)}
+                                        openManageCategories={openManageExerciseCategories}
+                                        categories={exerciseCategories}
                                     />
                                 )}
                               </div>
@@ -148,7 +153,6 @@ export function DailySchedule({
           </Accordion>
         </CardContent>
       </Card>
-      <ManageExerciseCategoriesDialog open={isManageExerciseCategoriesOpen} onOpenChange={setIsManageExerciseCategoriesOpen} />
     </>
   );
 }

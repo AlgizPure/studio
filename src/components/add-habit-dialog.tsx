@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -23,8 +22,6 @@ import { useState, useEffect } from 'react';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from './ui/select';
-import { habitCategories as initialHabitCategories } from '@/lib/data';
-
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -39,19 +36,19 @@ const habitSchema = z.object({
 type HabitFormValues = z.infer<typeof habitSchema>;
 
 interface AddHabitDialogProps {
-  onHabitAdd: (habit: Habit) => void;
-  onHabitUpdate?: (habit: Habit) => void;
-  onHabitDelete?: (habitId: string) => void;
+  onHabitAdd: (habit: Omit<Habit, 'id'>) => Promise<void>;
+  onHabitUpdate?: (habit: Habit) => Promise<void>;
+  onHabitDelete?: (habitId: string) => Promise<void>;
   habitToEdit?: Habit;
   trigger?: React.ReactNode;
   openManageCategories: () => void;
+  categories: HabitCategory[];
 }
 
-export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habitToEdit, trigger, openManageCategories }: AddHabitDialogProps) {
+export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habitToEdit, trigger, openManageCategories, categories }: AddHabitDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const isEditMode = !!habitToEdit;
-  const [habitCategories, setHabitCategories] = useState<HabitCategory[]>(initialHabitCategories);
 
   const {
     register,
@@ -66,22 +63,24 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
   });
 
   useEffect(() => {
-    if (isEditMode && habitToEdit) {
-      setValue('name', habitToEdit.name);
-      setValue('categoryId', habitToEdit.categoryId);
-      setValue('goal', habitToEdit.goal);
-      setValue('days', habitToEdit.days || []);
-      setValue('usePomodoro', !!habitToEdit.pomodoro);
-    } else {
-        reset({
-            name: '',
-            categoryId: '',
-            goal: '',
-            days: [],
-            usePomodoro: false,
-        });
+    if (isOpen) {
+      if (isEditMode && habitToEdit) {
+        setValue('name', habitToEdit.name);
+        setValue('categoryId', habitToEdit.categoryId);
+        setValue('goal', habitToEdit.goal);
+        setValue('days', habitToEdit.days || []);
+        setValue('usePomodoro', !!habitToEdit.pomodoro);
+      } else {
+          reset({
+              name: '',
+              categoryId: '',
+              goal: '',
+              days: [],
+              usePomodoro: false,
+          });
+      }
     }
-  }, [isEditMode, habitToEdit, setValue, reset]);
+  }, [isEditMode, habitToEdit, setValue, reset, isOpen]);
 
 
   const watchedDays = watch('days') || [];
@@ -94,50 +93,64 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
     }
   };
 
-  const onSubmit: SubmitHandler<HabitFormValues> = (data) => {
-    if(isEditMode && habitToEdit && onHabitUpdate) {
-        const updatedHabit: Habit = {
-            ...habitToEdit,
+  const onSubmit: SubmitHandler<HabitFormValues> = async (data) => {
+    try {
+      if(isEditMode && habitToEdit && onHabitUpdate) {
+          const updatedHabit: Habit = {
+              ...habitToEdit,
+              name: data.name,
+              categoryId: data.categoryId,
+              goal: data.goal,
+              days: data.days as Day[],
+              pomodoro: data.usePomodoro ? (habitToEdit.pomodoro || { cycles: 1 }) : undefined,
+          };
+          await onHabitUpdate(updatedHabit);
+          toast({
+              title: 'Habit Updated',
+              description: `${data.name} has been updated.`,
+          });
+      } else {
+          const newHabit: Omit<Habit, 'id'> = {
             name: data.name,
             categoryId: data.categoryId,
             goal: data.goal,
+            completed: false,
             days: data.days as Day[],
-            pomodoro: data.usePomodoro ? (habitToEdit.pomodoro || { cycles: 1 }) : undefined,
-        };
-        onHabitUpdate(updatedHabit);
-        toast({
-            title: 'Habit Updated',
-            description: `${data.name} has been updated.`,
-        });
-    } else {
-        const newHabit: Habit = {
-          id: `hb${Date.now()}`,
-          name: data.name,
-          categoryId: data.categoryId,
-          goal: data.goal,
-          completed: false,
-          days: data.days as Day[],
-          ...(data.usePomodoro && { pomodoro: { cycles: 1 } }),
-        };
-        onHabitAdd(newHabit);
-        toast({
-          title: 'Habit Added',
-          description: `${data.name} has been added to your list.`,
-        });
+            ...(data.usePomodoro && { pomodoro: { cycles: 1 } }),
+          };
+          await onHabitAdd(newHabit);
+          toast({
+            title: 'Habit Added',
+            description: `${data.name} has been added to your list.`,
+          });
+      }
+      setIsOpen(false);
+    } catch (e) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'There was an error saving the habit.'
+      });
     }
-    setIsOpen(false);
-    reset();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if(isEditMode && habitToEdit && onHabitDelete) {
-        onHabitDelete(habitToEdit.id);
+      try {
+        await onHabitDelete(habitToEdit.id);
         toast({
             title: 'Habit Deleted',
             description: `${habitToEdit.name} has been removed.`,
             variant: 'destructive',
         });
         setIsOpen(false);
+      } catch (e) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'There was an error deleting the habit.'
+        });
+      }
     }
   };
 
@@ -197,7 +210,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
                                     <SelectItem value="add-new">
                                         <span className="flex items-center"><Plus className="mr-2 h-4 w-4" /> Add new category...</span>
                                     </SelectItem>
-                                    {habitCategories.map(cat => (
+                                    {categories.map(cat => (
                                         <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                                     ))}
                                 </SelectGroup>

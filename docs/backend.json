@@ -43,7 +43,9 @@
           "description": "The ID of the user who created this program (if not a template)."
         }
       },
-      "required": ["name"]
+      "required": [
+        "name"
+      ]
     },
     "Workout": {
       "title": "Workout",
@@ -63,7 +65,9 @@
           "description": "The difficulty level of the workout."
         }
       },
-      "required": ["name"]
+      "required": [
+        "name"
+      ]
     },
     "Exercise": {
       "title": "Exercise",
@@ -81,9 +85,30 @@
         "categoryId": {
           "type": "string",
           "description": "Reference to the exercise category."
+        },
+        "authorId": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string",
+          "format": "uri"
+        },
+        "custom": {
+            "type": "boolean"
+        },
+        "time": {
+            "type": "string"
+        },
+        "days": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         }
       },
-      "required": ["name"]
+      "required": [
+        "name"
+      ]
     },
     "WorkoutExercise": {
       "title": "Workout Exercise",
@@ -118,7 +143,10 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["repeating", "fixed_times"]
+              "enum": [
+                "repeating",
+                "fixed_times"
+              ]
             },
             "days": {
               "type": "array",
@@ -138,33 +166,33 @@
       }
     },
     "WorkoutLog": {
-        "title": "Workout Log",
-        "description": "A log of a completed workout session by a user.",
-        "type": "object",
-        "properties": {
-            "userId": {
-                "type": "string"
-            },
-            "programId": {
-                "type": "string"
-            },
-            "workoutId": {
-                "type": "string"
-            },
-            "date": {
-                "type": "string",
-                "format": "date"
-            },
-            "completionPercentage": {
-                "type": "number"
-            },
-            "completedExercises": {
-                "type": "array",
-                "items": {
-                    "type": "string"
-                }
-            }
+      "title": "Workout Log",
+      "description": "A log of a completed workout session by a user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "programId": {
+          "type": "string"
+        },
+        "workoutId": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "completionPercentage": {
+          "type": "number"
+        },
+        "completedExercises": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
+      }
     },
     "Habit": {
       "title": "Habit",
@@ -187,14 +215,44 @@
           }
         },
         "pomodoro": {
-            "type": "object",
-            "properties": {
-                "cycles": {
-                    "type": "number"
-                }
+          "type": "object",
+          "properties": {
+            "cycles": {
+              "type": "number"
             }
+          }
+        },
+        "authorId": {
+            "type": "string"
+        },
+        "completed": {
+            "type": "boolean"
         }
       }
+    },
+    "HabitCategory": {
+        "title": "Habit Category",
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string"
+            },
+            "authorId": {
+                "type": "string"
+            }
+        }
+    },
+    "ExerciseCategory": {
+        "title": "Exercise Category",
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string"
+            },
+            "authorId": {
+                "type": "string"
+            }
+        }
     }
   },
   "auth": {
@@ -202,40 +260,58 @@
   },
   "firestore": {
     "/users/{userId}": {
-      "schema": { "$ref": "#/backend/entities/UserProfile" },
+      "schema": {
+        "$ref": "#/backend/entities/UserProfile"
+      },
       "description": "Stores public information about a user."
     },
     "/programs": {
-      "schema": { "$ref": "#/backend/entities/Program" },
+      "schema": {
+        "$ref": "#/backend/entities/Program"
+      },
       "description": "Collection of all workout programs, including templates."
     },
     "/programs/{programId}/workouts": {
-      "schema": { "$ref": "#/backend/entities/ProgramWorkout" },
+      "schema": {
+        "$ref": "#/backend/entities/ProgramWorkout"
+      },
       "description": "Defines the workouts and their schedule within a program."
     },
-    "/workouts": {
-      "schema": { "$ref": "#/backend/entities/Workout" },
-      "description": "Global collection of all available workouts."
-    },
     "/workouts/{workoutId}/exercises": {
-      "schema": { "$ref": "#/backend/entities/WorkoutExercise" },
+      "schema": {
+        "$ref": "#/backend/entities/WorkoutExercise"
+      },
       "description": "The specific exercises that make up a workout."
     },
-    "/exercises": {
-      "schema": { "$ref": "#/backend/entities/Exercise" },
-      "description": "Global collection of all available exercises."
-    },
     "/users/{userId}/workoutLogs": {
-      "schema": { "$ref": "#/backend/entities/WorkoutLog" },
+      "schema": {
+        "$ref": "#/backend/entities/WorkoutLog"
+      },
       "description": "Logs of completed workouts for a user."
     },
     "/users/{userId}/habits": {
-      "schema": { "$ref": "#/backend/entities/Habit" },
+      "schema": {
+        "$ref": "#/backend/entities/Habit"
+      },
       "description": "Habits for a specific user."
     },
     "/users/{userId}/programs": {
-        "schema": { "$ref": "#/backend/entities/Program" },
-        "description": "Programs a user is currently participating in."
+      "schema": {
+        "$ref": "#/backend/entities/Program"
+      },
+      "description": "Programs a user is currently participating in."
+    },
+    "/users/{userId}/exercises": {
+        "schema": { "$ref": "#/backend/entities/Exercise" },
+        "description": "Custom exercises created by a specific user."
+    },
+    "/users/{userId}/habitCategories": {
+        "schema": { "$ref": "#/backend/entities/HabitCategory" },
+        "description": "Custom habit categories for a user."
+    },
+    "/users/{userId}/exerciseCategories": {
+        "schema": { "$ref": "#/backend/entities/ExerciseCategory" },
+        "description": "Custom exercise categories for a user."
     }
   }
 }

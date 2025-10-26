@@ -13,9 +13,11 @@ export interface FirebaseContext {
   firestore: Firestore | null;
 }
 
-export const FirebaseContext = createContext<FirebaseContext | undefined>(
-  undefined
-);
+export const FirebaseContext = createContext<FirebaseContext>({
+  app: null,
+  auth: null,
+  firestore: null,
+});
 
 export const useFirebase = () => {
   const context = useContext(FirebaseContext);
@@ -25,9 +27,9 @@ export const useFirebase = () => {
   return context;
 };
 
-export const useFirebaseApp = () => useFirebase().app;
-export const useAuth = () => useFirebase().auth;
-export const useFirestore = () => useFirebase().firestore;
+export const useFirebaseApp = () => useFirebase()?.app;
+export const useAuth = () => useFirebase()?.auth;
+export const useFirestore = () => useFirebase()?.firestore;
 
 interface FirebaseProviderProps {
   children: ReactNode;

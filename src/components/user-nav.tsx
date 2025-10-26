@@ -1,5 +1,7 @@
 'use client';
 import { useState } from 'react';
+import { useUser, useFirestore } from '@/firebase';
+import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -17,15 +19,49 @@ import {
   DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { userProfile } from '@/lib/data';
+import type { HabitCategory, ExerciseCategory } from '@/lib/types';
+import { useCollection } from '@/firebase';
 import { CreditCard, LogOut, Settings, User, Timer, FolderKanban, Dumbbell } from 'lucide-react';
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
 import { ManageExerciseCategoriesDialog } from './manage-exercise-categories-dialog';
 
 export function UserNav() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const { data: habitCategories } = useCollection<HabitCategory>(user ? `users/${user.uid}/habitCategories` : null);
+  const { data: exerciseCategories } = useCollection<ExerciseCategory>(user ? `users/${user.uid}/exerciseCategories` : null);
+
   const [isPomodoroSettingsOpen, setIsPomodoroSettingsOpen] = useState(false);
   const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
   const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);
+
+  const handleAddHabitCategory = async (name: string) => {
+    if (!user || !firestore) return;
+    await addDoc(collection(firestore, `users/${user.uid}/habitCategories`), { name });
+  };
+  const handleUpdateHabitCategory = async (category: HabitCategory) => {
+    if (!user || !firestore || !category.id) return;
+    await updateDoc(doc(firestore, `users/${user.uid}/habitCategories`, category.id), { name: category.name });
+  };
+  const handleDeleteHabitCategory = async (categoryId: string) => {
+    if (!user || !firestore) return;
+    await deleteDoc(doc(firestore, `users/${user.uid}/habitCategories`, categoryId));
+  };
+  
+  const handleAddExerciseCategory = async (name: string) => {
+    if (!user || !firestore) return;
+    await addDoc(collection(firestore, `users/${user.uid}/exerciseCategories`), { name });
+  };
+  const handleUpdateExerciseCategory = async (category: ExerciseCategory) => {
+    if (!user || !firestore || !category.id) return;
+    await updateDoc(doc(firestore, `users/${user.uid}/exerciseCategories`, category.id), { name: category.name });
+  };
+  const handleDeleteExerciseCategory = async (categoryId: string) => {
+     if (!user || !firestore) return;
+    await deleteDoc(doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId));
+  };
 
   return (
     <>
@@ -88,8 +124,22 @@ export function UserNav() {
         </DropdownMenuContent>
       </DropdownMenu>
       <PomodoroSettingsDialog open={isPomodoroSettingsOpen} onOpenChange={setIsPomodoroSettingsOpen} />
-      <ManageCategoriesDialog open={isManageHabitCategoriesOpen} onOpenChange={setIsManageHabitCategoriesOpen} />
-      <ManageExerciseCategoriesDialog open={isManageExerciseCategoriesOpen} onOpenChange={setIsManageExerciseCategoriesOpen} />
+      <ManageCategoriesDialog 
+        open={isManageHabitCategoriesOpen} 
+        onOpenChange={setIsManageHabitCategoriesOpen}
+        categories={habitCategories || []}
+        onAdd={handleAddHabitCategory}
+        onUpdate={handleUpdateHabitCategory}
+        onDelete={handleDeleteHabitCategory}
+      />
+      <ManageExerciseCategoriesDialog 
+        open={isManageExerciseCategoriesOpen} 
+        onOpenChange={setIsManageExerciseCategoriesOpen}
+        categories={exerciseCategories || []}
+        onAdd={handleAddExerciseCategory}
+        onUpdate={handleUpdateExerciseCategory}
+        onDelete={handleDeleteExerciseCategory}
+      />
     </>
   );
 }

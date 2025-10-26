@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -10,33 +9,39 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { PlusSquare, GripVertical, Plus } from 'lucide-react';
-import { habits as initialHabits, exercises as initialExercises, exerciseCategories } from '@/lib/data';
+import { PlusSquare, GripVertical } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import { AddExerciseDialog } from './add-exercise-dialog';
 import { AddHabitDialog } from './add-habit-dialog';
 import { useState }from 'react';
-import type { Exercise, Habit } from '@/lib/types';
+import type { Exercise, Habit, ExerciseCategory, HabitCategory } from '@/lib/types';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
 import { ManageExerciseCategoriesDialog } from './manage-exercise-categories-dialog';
-
+import { useCollection, useUser } from '@/firebase';
 
 export function PlanTomorrowDialog() {
-    const [exercises, setExercises] = useState<Exercise[]>(initialExercises);
-    const [habits, setHabits] = useState<Habit[]>(initialHabits);
+    const { user } = useUser();
+    const { data: exercises } = useCollection<Exercise>(user ? `users/${user.uid}/exercises` : null);
+    const { data: habits } = useCollection<Habit>(user ? `users/${user.uid}/habits` : null);
+    const { data: exerciseCategories } = useCollection<ExerciseCategory>(user ? `users/${user.uid}/exerciseCategories` : null);
+    const { data: habitCategories } = useCollection<HabitCategory>(user ? `users/${user.uid}/habitCategories` : null);
+    
     const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
     const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);
 
+    // This component will be refactored to actually plan for tomorrow.
+    // For now, it just lists existing items.
 
-    const handleAddExercise = (newExercise: Exercise) => {
-        setExercises(prev => [...prev, newExercise]);
-    };
-    
-    const handleAddHabit = (newHabit: Habit) => {
-        setHabits(prev => [...prev, newHabit]);
-    };
+    const handleAddExercise = async () => {};
+    const handleAddHabit = async () => {};
+    const handleAddHabitCategory = async () => {};
+    const handleUpdateHabitCategory = async () => {};
+    const handleDeleteHabitCategory = async () => {};
+    const handleAddExerciseCategory = async () => {};
+    const handleUpdateExerciseCategory = async () => {};
+    const handleDeleteExerciseCategory = async () => {};
 
   return (
     <>
@@ -58,17 +63,21 @@ export function PlanTomorrowDialog() {
           <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center pr-4">
               <h3 className="font-semibold text-lg">Exercises</h3>
-               <AddExerciseDialog onExerciseAdd={handleAddExercise} onExerciseUpdate={(ex) => setExercises(prev => prev.map(e => e.id === ex.id ? ex : e))} onExerciseDelete={(id) => setExercises(prev => prev.filter(e => e.id !== id))} openManageCategories={() => setIsManageExerciseCategoriesOpen(true)} />
+               <AddExerciseDialog 
+                onExerciseAdd={handleAddExercise} 
+                categories={exerciseCategories || []} 
+                openManageCategories={() => setIsManageExerciseCategoriesOpen(true)} 
+              />
             </div>
             <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">
-                {exercises.map((exercise) => (
+                {(exercises || []).map((exercise) => (
                   <div key={exercise.id} className="flex items-center p-3 rounded-lg border bg-card/50">
                      <GripVertical className="h-5 w-5 text-muted-foreground mr-2 cursor-grab" />
                     <Checkbox id={`ex-${exercise.id}`} className="mr-4" />
                     <div className="flex-1">
                       <Label htmlFor={`ex-${exercise.id}`} className="font-medium cursor-pointer">{exercise.name}</Label>
-                      <p className="text-xs text-muted-foreground">{exerciseCategories.find(c => c.id === exercise.categoryId)?.name}</p>
+                      <p className="text-xs text-muted-foreground">{(exerciseCategories || []).find(c => c.id === exercise.categoryId)?.name}</p>
                     </div>
                   </div>
                 ))}
@@ -78,11 +87,11 @@ export function PlanTomorrowDialog() {
           <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center pr-4">
                 <h3 className="font-semibold text-lg">Habits</h3>
-                <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => setIsManageHabitCategoriesOpen(true)} />
+                <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => setIsManageHabitCategoriesOpen(true)} categories={habitCategories || []} />
             </div>
             <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">
-                {habits.map((habit) => (
+                {(habits || []).map((habit) => (
                    <div key={habit.id} className="flex items-center p-3 rounded-lg border bg-card/50">
                      <GripVertical className="h-5 w-5 text-muted-foreground mr-2 cursor-grab" />
                     <Checkbox id={`hb-${habit.id}`} className="mr-4" />
@@ -98,8 +107,22 @@ export function PlanTomorrowDialog() {
         </div>
       </DialogContent>
     </Dialog>
-    <ManageCategoriesDialog open={isManageHabitCategoriesOpen} onOpenChange={setIsManageHabitCategoriesOpen} />
-    <ManageExerciseCategoriesDialog open={isManageExerciseCategoriesOpen} onOpenChange={setIsManageExerciseCategoriesOpen} />
+    <ManageCategoriesDialog 
+      open={isManageHabitCategoriesOpen} 
+      onOpenChange={setIsManageHabitCategoriesOpen} 
+      categories={habitCategories || []} 
+      onAdd={handleAddHabitCategory}
+      onUpdate={handleUpdateHabitCategory}
+      onDelete={handleDeleteHabitCategory}
+    />
+    <ManageExerciseCategoriesDialog 
+      open={isManageExerciseCategoriesOpen} 
+      onOpenChange={setIsManageExerciseCategoriesOpen}
+      categories={exerciseCategories || []}
+      onAdd={handleAddExerciseCategory}
+      onUpdate={handleUpdateExerciseCategory}
+      onDelete={handleDeleteExerciseCategory}
+    />
     </>
   );
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -14,31 +13,33 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { habitCategories as initialCategories } from '@/lib/data';
 import type { HabitCategory } from '@/lib/types';
 import { X, Plus, Pencil, Check } from 'lucide-react';
 
 interface ManageCategoriesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  categories: HabitCategory[];
+  onAdd: (name: string) => Promise<void>;
+  onUpdate: (category: HabitCategory) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesDialogProps) {
-  const [categories, setCategories] = useState<HabitCategory[]>(initialCategories);
+export function ManageCategoriesDialog({ open, onOpenChange, categories, onAdd, onUpdate, onDelete }: ManageCategoriesDialogProps) {
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
   const { toast } = useToast();
 
-  const handleAddNewCategory = () => {
+  const handleAddNewCategory = async () => {
     if (newCategoryName.trim()) {
-      const newCategory: HabitCategory = {
-        id: `cat${Date.now()}`,
-        name: newCategoryName.trim(),
-      };
-      setCategories([...categories, newCategory]);
-      setNewCategoryName('');
-      toast({ title: 'Category Added', description: `${newCategory.name} has been added.` });
+      try {
+        await onAdd(newCategoryName.trim());
+        setNewCategoryName('');
+        toast({ title: 'Category Added', description: `${newCategoryName.trim()} has been added.` });
+      } catch (e) {
+        toast({ variant: 'destructive', title: 'Error', description: `Failed to add category.` });
+      }
     }
   };
   
@@ -47,18 +48,26 @@ export function ManageCategoriesDialog({ open, onOpenChange }: ManageCategoriesD
     setEditingCategoryName(category.name);
   };
   
-  const handleSaveEdit = (categoryId: string) => {
+  const handleSaveEdit = async (categoryId: string) => {
     if(editingCategoryName.trim()) {
-      setCategories(categories.map(c => c.id === categoryId ? { ...c, name: editingCategoryName.trim() } : c));
-      setEditingCategoryId(null);
-      toast({ title: 'Category Updated', description: `Category has been updated to ${editingCategoryName.trim()}.` });
+      try {
+        await onUpdate({ id: categoryId, name: editingCategoryName.trim() });
+        setEditingCategoryId(null);
+        toast({ title: 'Category Updated', description: `Category has been updated to ${editingCategoryName.trim()}.` });
+      } catch (e) {
+        toast({ variant: 'destructive', title: 'Error', description: `Failed to update category.` });
+      }
     }
   };
 
-  const handleDelete = (categoryId: string) => {
+  const handleDelete = async (categoryId: string) => {
     const categoryName = categories.find(c => c.id === categoryId)?.name;
-    setCategories(categories.filter(c => c.id !== categoryId));
-    toast({ variant: 'destructive', title: 'Category Deleted', description: `${categoryName} has been deleted.` });
+    try {
+      await onDelete(categoryId);
+      toast({ variant: 'destructive', title: 'Category Deleted', description: `${categoryName} has been deleted.` });
+    } catch(e) {
+      toast({ variant: 'destructive', title: 'Error', description: `Failed to delete category.` });
+    }
   }
 
   return (

@@ -4,18 +4,22 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { weeklySchedule, exercises, habits } from '@/lib/data';
 import { Dumbbell, Target } from 'lucide-react';
+import { useCollection, useUser } from '@/firebase';
+import type { Exercise, Habit, Day } from '@/lib/types';
 
 export function TodaySchedule() {
   const [today, setToday] = useState('');
+  const { user } = useUser();
+  const { data: exercises } = useCollection<Exercise>(user ? `users/${user.uid}/exercises` : null);
+  const { data: habits } = useCollection<Habit>(user ? `users/${user.uid}/habits` : null);
 
   useEffect(() => {
     setToday(new Date().toLocaleString('en-US', { weekday: 'long' }));
   }, []);
   
-  const dailyHabits = habits.filter(habit => habit.days?.includes(today as any));
-  const dailyExercises = exercises.filter(ex => ex.days?.includes(today as any));
+  const dailyHabits = (habits || []).filter(habit => habit.days?.includes(today as Day));
+  const dailyExercises = (exercises || []).filter(ex => ex.days?.includes(today as Day));
 
   const allItems = [
     ...dailyHabits.map(habit => ({

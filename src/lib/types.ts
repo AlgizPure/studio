@@ -16,6 +16,7 @@ export type Exercise = {
   custom?: boolean;
   time?: string;
   days?: Day[];
+  authorId?: string;
 };
 
 export type Workout = {
@@ -41,6 +42,7 @@ export type Habit = {
   pomodoro?: {
     cycles: number;
   };
+  authorId?: string;
 };
 
 export type ScheduleItem = {

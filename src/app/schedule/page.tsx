@@ -1,45 +1,99 @@
-
 'use client';
 
 import { useState } from 'react';
+import { useCollection, useUser, useFirestore } from '@/firebase';
+import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { DailySchedule } from '@/components/daily-schedule';
 import { AddExerciseDialog } from '@/components/add-exercise-dialog';
 import { AddHabitDialog } from '@/components/add-habit-dialog';
-import type { Exercise, Habit } from '@/lib/types';
-import { exercises as initialExercises, habits as initialHabits } from '@/lib/data';
+import type { Exercise, Habit, HabitCategory, ExerciseCategory } from '@/lib/types';
 import { ManageCategoriesDialog } from '@/components/manage-categories-dialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { ManageExerciseCategoriesDialog } from '@/components/manage-exercise-categories-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SchedulePage() {
-  const [exercises, setExercises] = useState<Exercise[]>(initialExercises);
-  const [habits, setHabits] = useState<Habit[]>(initialHabits);
-  const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
+  const { user } = useUser();
+  const firestore = useFirestore();
 
-  const handleAddExercise = (newExercise: Exercise) => {
-    setExercises((prev) => [...prev, newExercise]);
+  // Data fetching from Firestore
+  const { data: exercises, loading: exercisesLoading } = useCollection<Exercise>(user ? `users/${user.uid}/exercises` : null);
+  const { data: habits, loading: habitsLoading } = useCollection<Habit>(user ? `users/${user.uid}/habits` : null);
+  const { data: habitCategories, loading: habitCatLoading } = useCollection<HabitCategory>(user ? `users/${user.uid}/habitCategories` : null);
+  const { data: exerciseCategories, loading: exerciseCatLoading } = useCollection<ExerciseCategory>(user ? `users/${user.uid}/exerciseCategories` : null);
+
+  const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
+  const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);
+  
+  const isLoading = exercisesLoading || habitsLoading || habitCatLoading || exerciseCatLoading;
+
+  // Exercise CRUD
+  const handleAddExercise = async (exerciseData: Omit<Exercise, 'id' | 'authorId'>) => {
+    if (!user || !firestore) return;
+    const exercisesCollection = collection(firestore, `users/${user.uid}/exercises`);
+    await addDoc(exercisesCollection, { ...exerciseData, authorId: user.uid });
   };
 
-  const handleUpdateExercise = (updatedExercise: Exercise) => {
-    setExercises((prev) => prev.map(ex => ex.id === updatedExercise.id ? updatedExercise : ex));
+  const handleUpdateExercise = async (exercise: Exercise) => {
+    if (!user || !firestore || !exercise.id) return;
+    const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
+    const { id, ...exerciseData } = exercise;
+    await updateDoc(exerciseDoc, exerciseData);
   };
 
-  const handleDeleteExercise = (exerciseId: string) => {
-    setExercises((prev) => prev.filter(ex => ex.id !== exerciseId));
-  }
-
-  const handleAddHabit = (newHabit: Habit) => {
-    setHabits((prev) => [...prev, newHabit]);
+  const handleDeleteExercise = async (exerciseId: string) => {
+    if (!user || !firestore) return;
+    const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exerciseId);
+    await deleteDoc(exerciseDoc);
+  };
+  
+  // Habit CRUD
+  const handleAddHabit = async (habitData: Omit<Habit, 'id' | 'authorId'>) => {
+    if (!user || !firestore) return;
+    const habitsCollection = collection(firestore, `users/${user.uid}/habits`);
+    await addDoc(habitsCollection, { ...habitData, authorId: user.uid });
   };
 
-  const handleUpdateHabit = (updatedHabit: Habit) => {
-    setHabits((prev) => prev.map(h => h.id === updatedHabit.id ? updatedHabit : h));
+  const handleUpdateHabit = async (habit: Habit) => {
+     if (!user || !firestore || !habit.id) return;
+    const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
+    const { id, ...habitData } = habit;
+    await updateDoc(habitDoc, habitData);
   };
 
-  const handleDeleteHabit = (habitId: string) => {
-    setHabits((prev) => prev.filter(h => h.id !== habitId));
-  }
-
+  const handleDeleteHabit = async (habitId: string) => {
+    if (!user || !firestore) return;
+    const habitDoc = doc(firestore, `users/${user.uid}/habits`, habitId);
+    await deleteDoc(habitDoc);
+  };
+  
+  // Category CRUD
+  const handleAddHabitCategory = async (name: string) => {
+    if (!user || !firestore) return;
+    await addDoc(collection(firestore, `users/${user.uid}/habitCategories`), { name });
+  };
+  const handleUpdateHabitCategory = async (category: HabitCategory) => {
+    if (!user || !firestore || !category.id) return;
+    await updateDoc(doc(firestore, `users/${user.uid}/habitCategories`, category.id), { name: category.name });
+  };
+  const handleDeleteHabitCategory = async (categoryId: string) => {
+    if (!user || !firestore) return;
+    await deleteDoc(doc(firestore, `users/${user.uid}/habitCategories`, categoryId));
+  };
+  
+  const handleAddExerciseCategory = async (name: string) => {
+    if (!user || !firestore) return;
+    await addDoc(collection(firestore, `users/${user.uid}/exerciseCategories`), { name });
+  };
+  const handleUpdateExerciseCategory = async (category: ExerciseCategory) => {
+    if (!user || !firestore || !category.id) return;
+    await updateDoc(doc(firestore, `users/${user.uid}/exerciseCategories`, category.id), { name: category.name });
+  };
+  const handleDeleteExerciseCategory = async (categoryId: string) => {
+     if (!user || !firestore) return;
+    await deleteDoc(doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId));
+  };
 
   return (
     <>
@@ -56,30 +110,64 @@ export default function SchedulePage() {
           <div className="flex items-center space-x-2">
               <AddHabitDialog 
                 onHabitAdd={handleAddHabit} 
-                openManageCategories={() => setIsManageCategoriesOpen(true)}
+                categories={habitCategories || []}
+                openManageCategories={() => setIsManageHabitCategoriesOpen(true)}
                 trigger={<Button variant="ghost" size="sm"><Plus className="mr-2 h-4 w-4" />Habit</Button>}
                  />
               <AddExerciseDialog 
                 onExerciseAdd={handleAddExercise}
+                categories={exerciseCategories || []}
+                openManageCategories={() => setIsManageExerciseCategoriesOpen(true)}
                 trigger={<Button variant="ghost" size="sm"><Plus className="mr-2 h-4 w-4" />Exercise</Button>}
                 />
           </div>
         </div>
         <div className="space-y-6">
-          <DailySchedule 
-            exercises={exercises} 
-            habits={habits} 
-            onExerciseAdd={handleAddExercise} 
-            onHabitAdd={handleAddHabit}
-            onExerciseUpdate={handleUpdateExercise}
-            onHabitUpdate={handleUpdateHabit}
-            onExerciseDelete={handleDeleteExercise}
-            onHabitDelete={handleDeleteHabit}
-            openManageCategories={() => setIsManageCategoriesOpen(true)}
-          />
+          {isLoading ? (
+            <Card className="glass">
+              <CardHeader>
+                  <Skeleton className="h-8 w-48" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+              </CardContent>
+            </Card>
+          ) : (
+            <DailySchedule 
+              exercises={exercises || []}
+              habits={habits || []} 
+              habitCategories={habitCategories || []}
+              exerciseCategories={exerciseCategories || []}
+              onExerciseAdd={handleAddExercise} 
+              onHabitAdd={handleAddHabit}
+              onExerciseUpdate={handleUpdateExercise}
+              onHabitUpdate={handleUpdateHabit}
+              onExerciseDelete={handleDeleteExercise}
+              onHabitDelete={handleDeleteHabit}
+              openManageHabitCategories={() => setIsManageHabitCategoriesOpen(true)}
+              openManageExerciseCategories={() => setIsManageExerciseCategoriesOpen(true)}
+            />
+          )}
         </div>
       </div>
-      <ManageCategoriesDialog open={isManageCategoriesOpen} onOpenChange={setIsManageCategoriesOpen} />
+      <ManageCategoriesDialog 
+        open={isManageHabitCategoriesOpen} 
+        onOpenChange={setIsManageHabitCategoriesOpen} 
+        categories={habitCategories || []}
+        onAdd={handleAddHabitCategory}
+        onUpdate={handleUpdateHabitCategory}
+        onDelete={handleDeleteHabitCategory}
+      />
+      <ManageExerciseCategoriesDialog 
+        open={isManageExerciseCategoriesOpen} 
+        onOpenChange={setIsManageExerciseCategoriesOpen}
+        categories={exerciseCategories || []}
+        onAdd={handleAddExerciseCategory}
+        onUpdate={handleUpdateExerciseCategory}
+        onDelete={handleDeleteExerciseCategory}
+      />
     </>
   );
 }
