@@ -26,8 +26,8 @@ export default function ProgramsPage() {
   const { data: userPrograms, loading: userProgramsLoading } = useCollection<Program>(userProgramsQuery);
 
   const templateProgramsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'programs'), where('isTemplate', '==', true)) : null),
-    [firestore]
+    () => (user && firestore ? query(collection(firestore, 'programs'), where('isTemplate', '==', true)) : null),
+    [user, firestore]
   );
   const { data: templatePrograms, loading: templateProgramsLoading } = useCollection<Program>(templateProgramsQuery);
 
