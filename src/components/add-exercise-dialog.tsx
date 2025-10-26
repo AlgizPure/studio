@@ -23,6 +23,7 @@ import type { Exercise, Day, ExerciseCategory } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const hoursOfDay = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -52,6 +53,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const isEditMode = !!exerciseToEdit;
+  const customImage = PlaceHolderImages.find(p => p.id === 'custom')?.imageUrl || 'https://picsum.photos/seed/custom/600/400';
 
   const {
     register,
@@ -78,20 +80,20 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
           name: '',
           categoryId: '',
           description: '',
-          image: 'https://picsum.photos/seed/custom/600/400',
+          image: customImage,
           time: '00:00',
           days: [],
         });
       }
     }
-  }, [isEditMode, exerciseToEdit, setValue, reset, isOpen]);
+  }, [isEditMode, exerciseToEdit, setValue, reset, isOpen, customImage]);
 
 
   const onSubmit: SubmitHandler<ExerciseFormValues> = (data) => {
     try {
       const finalData = {
         ...data,
-        image: data.image || 'https://picsum.photos/seed/custom/600/400'
+        image: data.image || customImage
       }
       if (isEditMode && exerciseToEdit && onExerciseUpdate) {
           const updatedExercise: Exercise = {
