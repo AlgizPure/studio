@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -38,7 +39,7 @@ export default function SchedulePage() {
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-10">
         <div className="lg:col-span-6">
-          <DailySchedule exercises={exercises} habits={habits} />
+          <DailySchedule exercises={exercises} habits={habits} onExerciseAdd={handleAddExercise} />
         </div>
         <div className="lg:col-span-4">
           <HabitList habits={habits} onHabitAdd={handleAddHabit} setHabits={setHabits} />

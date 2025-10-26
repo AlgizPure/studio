@@ -12,19 +12,22 @@ import { Badge } from './ui/badge';
 import type { LucideIcon } from 'lucide-react';
 import type { Exercise, Habit } from '@/lib/types';
 import { Target } from 'lucide-react';
+import { AddExerciseDialog } from './add-exercise-dialog';
 
 interface DailyScheduleProps {
     exercises: Exercise[];
     habits: Habit[];
+    onExerciseAdd: (exercise: Exercise) => void;
 }
 
-export function DailySchedule({ exercises, habits }: DailyScheduleProps) {
+export function DailySchedule({ exercises, habits, onExerciseAdd }: DailyScheduleProps) {
   const today = new Date().toLocaleString('en-US', { weekday: 'long' });
 
   return (
     <Card className="glass">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-headline">Exercises</CardTitle>
+        <AddExerciseDialog onExerciseAdd={onExerciseAdd} />
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible defaultValue={today} className="w-full">
