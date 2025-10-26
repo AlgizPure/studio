@@ -9,6 +9,8 @@ import type { Exercise, Habit } from '@/lib/types';
 import { exercises as initialExercises, habits as initialHabits } from '@/lib/data';
 import { HabitList } from '@/components/habit-list';
 import { ManageCategoriesDialog } from '@/components/manage-categories-dialog';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 export default function SchedulePage() {
   const [exercises, setExercises] = useState<Exercise[]>(initialExercises);
@@ -53,8 +55,15 @@ export default function SchedulePage() {
             </p>
           </div>
           <div className="flex items-center space-x-2">
-              <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => setIsManageCategoriesOpen(true)} />
-              <AddExerciseDialog onExerciseAdd={handleAddExercise} />
+              <AddHabitDialog 
+                onHabitAdd={handleAddHabit} 
+                openManageCategories={() => setIsManageCategoriesOpen(true)}
+                trigger={<Button variant="ghost" size="sm"><Plus className="mr-2 h-4 w-4" />Habit</Button>}
+                 />
+              <AddExerciseDialog 
+                onExerciseAdd={handleAddExercise}
+                trigger={<Button variant="ghost" size="sm"><Plus className="mr-2 h-4 w-4" />Exercise</Button>}
+                />
           </div>
         </div>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-10">

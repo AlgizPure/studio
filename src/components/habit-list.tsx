@@ -46,7 +46,7 @@ export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, se
         onHabitDelete={onHabitDelete}
         onHabitAdd={onHabitAdd}
         trigger={
-            <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
                 <Pencil className="h-4 w-4" />
             </Button>
         }

@@ -225,7 +225,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
                 name="days"
                 control={control}
                 render={({ field }) => (
-                  <div className="col-span-3 grid grid-cols-3 items-center gap-y-2">
+                  <div className="col-span-3 grid grid-cols-4 items-center gap-y-2">
                     {daysOfWeek.map((day) => (
                       <div key={day} className="flex items-center gap-2">
                         <Checkbox
@@ -249,7 +249,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
                         checked={watchedDays.length === daysOfWeek.length}
                         onCheckedChange={handleAllDaysChange}
                       />
-                      <Label htmlFor={`all-days-habit-${habitToEdit?.id || 'new'}`} className="text-sm font-normal">All Days</Label>
+                      <Label htmlFor={`all-days-habit-${habitToEdit?.id || 'new'}`} className="text-sm font-normal">All</Label>
                     </div>
                   </div>
                 )}
