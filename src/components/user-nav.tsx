@@ -11,6 +11,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { userProfile } from '@/lib/data';
 import { CreditCard, LogOut, Settings, User, Timer, FolderKanban } from 'lucide-react';
@@ -51,18 +55,24 @@ export function UserNav() {
               <CreditCard className="mr-2 h-4 w-4" />
               <span>Billing</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setIsPomodoroSettingsOpen(true)}>
-              <Timer className="mr-2 h-4 w-4" />
-              <span>Pomodoro Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setIsManageCategoriesOpen(true)}>
-              <FolderKanban className="mr-2 h-4 w-4" />
-              <span>Manage Categories</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem onSelect={() => setIsPomodoroSettingsOpen(true)}>
+                    <Timer className="mr-2 h-4 w-4" />
+                    <span>Pomodoro</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setIsManageCategoriesOpen(true)}>
+                    <FolderKanban className="mr-2 h-4 w-4" />
+                    <span>Categories</span>
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem>
