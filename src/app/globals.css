@@ -8,73 +8,74 @@ body {
 
 @layer base {
   :root {
-    --background: 40 33% 96%; /* off white */
-    --foreground: 25 15% 35%; /* sketch */
-    --card: 38 42% 98%; /* off white variant */
-    --card-foreground: 25 15% 35%;
-    --popover: 38 42% 98%;
-    --popover-foreground: 25 15% 35%;
-    --primary: 16 65% 68%; /* soft */
-    --primary-foreground: 10 30% 20%;
-    --secondary: 100 15% 88%; /* light olive */
-    --secondary-foreground: 25 15% 35%;
-    --muted: 100 15% 92%;
-    --muted-foreground: 25 15% 45%;
-    --accent: 100 25% 82%; /* olive */
-    --accent-foreground: 25 15% 25%;
+    --background: 210 20% 98%;
+    --foreground: 224 10% 20%;
+    --card: 210 20% 98%;
+    --card-foreground: 224 10% 20%;
+    --popover: 210 20% 98%;
+    --popover-foreground: 224 10% 20%;
+    --primary: 205 35% 55%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 10% 90%;
+    --secondary-foreground: 224 10% 20%;
+    --muted: 220 10% 94%;
+    --muted-foreground: 224 10% 45%;
+    --accent: 200 25% 92%;
+    --accent-foreground: 224 10% 20%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 40 20% 88%;
-    --input: 40 20% 93%;
-    --ring: 16 65% 68%;
-    --chart-1: 16 65% 68%; /* soft */
-    --chart-2: 15 50% 75%; /* terract */
-    --chart-3: 100 25% 62%; /* olive */
-    --chart-4: 30 30% 80%; /* sacle cast */
-    --chart-5: 25 15% 55%; /* sketch */
+    --border: 220 10% 88%;
+    --input: 220 10% 93%;
+    --ring: 205 35% 55%;
+    --chart-1: 205 35% 55%;
+    --chart-2: 200 30% 65%;
+    --chart-3: 195 25% 75%;
+    --chart-4: 220 20% 80%;
+    --chart-5: 224 10% 55%;
     --radius: 0.75rem;
-    --sidebar-background: 25 15% 25%;
-    --sidebar-foreground: 40 33% 90%;
-    --sidebar-primary: 16 65% 68%;
-    --sidebar-primary-foreground: 10 30% 20%;
-    --sidebar-accent: 25 15% 35%;
-    --sidebar-accent-foreground: 40 33% 96%;
-    --sidebar-border: 25 15% 30%;
-    --sidebar-ring: 16 65% 68%;
+    --sidebar-background: 224 10% 15%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 205 35% 55%;
+    --sidebar-primary-foreground: 210 20% 98%;
+    --sidebar-accent: 224 10% 25%;
+    --sidebar-accent-foreground: 210 20% 96%;
+    --sidebar-border: 224 10% 20%;
+    --sidebar-ring: 205 35% 55%;
   }
+
   .dark {
-    --background: 25 15% 25%; /* sketch */
-    --foreground: 40 33% 90%; /* off white */
-    --card: 25 15% 30%;
-    --card-foreground: 40 33% 90%;
-    --popover: 25 15% 25%;
-    --popover-foreground: 40 33% 90%;
-    --primary: 16 65% 68%; /* soft */
-    --primary-foreground: 10 30% 20%;
-    --secondary: 25 15% 40%;
-    --secondary-foreground: 40 33% 96%;
-    --muted: 25 15% 35%;
-    --muted-foreground: 40 33% 70%;
-    --accent: 100 25% 42%; /* olive */
-    --accent-foreground: 40 33% 98%;
+    --background: 224 10% 15%;
+    --foreground: 210 20% 90%;
+    --card: 224 10% 20%;
+    --card-foreground: 210 20% 90%;
+    --popover: 224 10% 15%;
+    --popover-foreground: 210 20% 90%;
+    --primary: 205 35% 55%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 224 10% 25%;
+    --secondary-foreground: 210 20% 96%;
+    --muted: 224 10% 22%;
+    --muted-foreground: 210 20% 70%;
+    --accent: 200 25% 32%;
+    --accent-foreground: 210 20% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 25 15% 35%;
-    --input: 25 15% 35%;
-    --ring: 16 65% 68%;
-    --chart-1: 16 65% 68%; /* soft */
-    --chart-2: 15 50% 75%; /* terract */
-    --chart-3: 100 meditative olive 25% 62%;
-    --chart-4: 30 30% 80%; /* sacle cast */
-    --chart-5: 25 15% 55%; /* sketch */
-    --sidebar-background: 25 15% 25%;
-    --sidebar-foreground: 40 33% 90%;
-    --sidebar-primary: 16 65% 68%;
-    --sidebar-primary-foreground: 10 30% 20%;
-    --sidebar-accent: 25 15% 35%;
-    --sidebar-accent-foreground: 40 33% 96%;
-    --sidebar-border: 25 15% 30%;
-    --sidebar-ring: 16 65% 68%;
+    --border: 224 10% 25%;
+    --input: 224 10% 25%;
+    --ring: 205 35% 55%;
+    --chart-1: 205 35% 55%;
+    --chart-2: 200 30% 65%;
+    --chart-3: 195 25% 75%;
+    --chart-4: 220 20% 80%;
+    --chart-5: 224 10% 55%;
+    --sidebar-background: 224 10% 15%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 205 35% 55%;
+    --sidebar-primary-foreground: 210 20% 98%;
+    --sidebar-accent: 224 10% 25%;
+    --sidebar-accent-foreground: 210 20% 96%;
+    --sidebar-border: 224 10% 20%;
+    --sidebar-ring: 205 35% 55%;
   }
 }
 
@@ -84,5 +85,11 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-card/50 backdrop-blur-lg border;
   }
 }

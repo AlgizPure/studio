@@ -1,8 +1,9 @@
-import { Activity, BarChart3, Dumbbell, HeartPulse, Target } from 'lucide-react';
+import { Activity, BarChart3, Dumbbell, HeartPulse, Target, PlusSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DailySchedule } from '@/components/daily-schedule';
+import { TodaySchedule } from '@/components/today-schedule';
 import { HabitTracker } from '@/components/habit-tracker';
 import { AiOptimizerDialog } from '@/components/ai-optimizer-dialog';
+import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
   return (
@@ -17,11 +18,15 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
+          <Button variant="outline">
+            <PlusSquare className="mr-2 h-4 w-4" />
+            Plan for Tomorrow
+          </Button>
           <AiOptimizerDialog />
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="glass">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Workouts This Week</CardTitle>
             <Dumbbell className="h-4 w-4 text-muted-foreground" />
@@ -33,7 +38,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Habits Completed</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
@@ -45,7 +50,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Running Distance</CardTitle>
             <HeartPulse className="h-4 w-4 text-muted-foreground" />
@@ -57,7 +62,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Streak</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
@@ -73,7 +78,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <DailySchedule />
+          <TodaySchedule />
         </div>
         <div>
           <HabitTracker />

@@ -9,7 +9,7 @@ interface ExerciseCardProps {
 
 export function ExerciseCard({ exercise }: ExerciseCardProps) {
   return (
-    <Card className="overflow-hidden group hover:shadow-lg transition-shadow duration-300">
+    <Card className="overflow-hidden group hover:shadow-lg transition-shadow duration-300 glass">
       <CardContent className="p-0">
         <div className="relative h-48 w-full">
           <Image

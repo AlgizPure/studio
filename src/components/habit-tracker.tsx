@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 
 export function HabitTracker() {
   return (
-    <Card>
+    <Card className="glass">
       <CardHeader>
         <CardTitle className="font-headline">Daily Habits</CardTitle>
       </CardHeader>
@@ -13,7 +13,7 @@ export function HabitTracker() {
         {habits.map((habit) => {
           const Icon = habit.icon;
           return (
-            <div key={habit.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent transition-colors">
+            <div key={habit.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
               <Checkbox id={habit.id} defaultChecked={habit.completed} />
               <div className="flex-1">
                 <Label htmlFor={habit.id} className="font-medium cursor-pointer">

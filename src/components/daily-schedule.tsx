@@ -13,7 +13,7 @@ export function DailySchedule() {
   const today = new Date().toLocaleString('en-US', { weekday: 'long' });
 
   return (
-    <Card>
+    <Card className="glass">
       <CardHeader>
         <CardTitle className="font-headline">Weekly Schedule</CardTitle>
       </CardHeader>
