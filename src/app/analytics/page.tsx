@@ -14,7 +14,7 @@ export default function AnalyticsPage() {
             Visualize your progress and trends.
           </p>
         </div>
-        <Button>
+        <Button disabled>
           <Download className="mr-2 h-4 w-4" />
           Export Data
         </Button>
