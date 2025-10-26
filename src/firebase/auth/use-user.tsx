@@ -2,21 +2,21 @@
 
 import { onAuthStateChanged, type User as AuthUser } from 'firebase/auth';
 import { useEffect, useState } from 'react';
-import { useAuth, useFirestore, useDoc, useMemoFirebase } from '../provider';
+import { useAuth, useFirestore } from '../provider';
 import type { UserProfile } from '@/lib/types';
-import { doc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export type AppUser = AuthUser & UserProfile;
 
 export const useUser = () => {
   const [user, setUser] = useState<AppUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isUserLoading, setIsLoading] = useState(true);
   const auth = useAuth();
   const firestore = useFirestore();
 
   useEffect(() => {
-    if (!auth) {
-      setLoading(false);
+    if (!auth || !firestore) {
+      setIsLoading(false);
       return;
     }
 
@@ -25,12 +25,12 @@ export const useUser = () => {
         // User is signed in, now fetch the profile
         const userRef = doc(firestore, `users/${authUser.uid}`);
         
-        // This is a one-time fetch for the profile data upon auth change.
-        // For real-time updates to profile, a separate hook/listener would be needed if required elsewhere.
         try {
-            const userSnap = await (await import('firebase/firestore')).getDoc(userRef);
+            const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
-                setUser({ ...authUser, ...(userSnap.data() as UserProfile) });
+                const userProfile = userSnap.data() as UserProfile;
+                const mergedUser: AppUser = { ...authUser, ...userProfile, id: authUser.uid };
+                setUser(mergedUser);
             } else {
                 // Profile doesn't exist, create it.
                 const userProfileData: UserProfile = {
@@ -41,8 +41,9 @@ export const useUser = () => {
                     currentStreak: 0,
                     lastActiveDate: null,
                 };
-                await (await import('firebase/firestore')).setDoc(userRef, userProfileData);
-                setUser({ ...authUser, ...userProfileData });
+                await setDoc(userRef, userProfileData);
+                const mergedUser: AppUser = { ...authUser, ...userProfileData, id: authUser.uid };
+                setUser(mergedUser);
             }
         } catch (error) {
             console.error("Error fetching or creating user profile:", error);
@@ -54,11 +55,11 @@ export const useUser = () => {
         // User is signed out
         setUser(null);
       }
-      setLoading(false);
+      setIsLoading(false);
     });
 
     return () => unsubscribe();
   }, [auth, firestore]);
 
-  return { user, isUserLoading: loading, appUser: user };
+  return { user, isUserLoading };
 };
