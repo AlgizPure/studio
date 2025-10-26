@@ -18,6 +18,7 @@ export type Exercise = {
   time?: string;
   days?: Day[];
   authorId?: string;
+  lastCompleted?: string; // ISO date string
 };
 
 export type Workout = {

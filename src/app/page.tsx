@@ -9,7 +9,7 @@ import { PlanTomorrowDialog } from '@/components/plan-tomorrow-dialog';
 import { useUser, useCollection } from '@/firebase';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { getWeek, startOfWeek, isWithinInterval } from 'date-fns';
+import { startOfWeek, isWithinInterval, isToday } from 'date-fns';
 import type { Exercise, Habit } from '@/lib/types';
 import { useMemo } from 'react';
 
@@ -24,14 +24,14 @@ export default function DashboardPage() {
     const endOfThisWeek = new Date(startOfThisWeek);
     endOfThisWeek.setDate(endOfThisWeek.getDate() + 6);
 
-    // Calculate workout count for the week
-    const weeklyWorkouts = (exercises || []).filter(ex => 
+    const scheduledWorkoutsThisWeek = (exercises || []).filter(ex => 
       (ex.days || []).length > 0
     );
-    const scheduledWorkoutsThisWeek = weeklyWorkouts.reduce((acc, ex) => acc + (ex.days?.length || 0) , 0)
 
+    const completedWorkoutsThisWeek = (exercises || []).filter(ex => 
+      ex.lastCompleted && isWithinInterval(new Date(ex.lastCompleted), { start: startOfThisWeek, end: endOfThisWeek })
+    );
 
-    // Calculate habit completion for the week
     const totalHabits = (habits || []).length;
     let completedHabits = 0;
     if (habits) {
@@ -41,8 +41,8 @@ export default function DashboardPage() {
 
 
     return {
-      workoutsCompleted: 0, // Placeholder for now
-      workoutsScheduled: scheduledWorkoutsThisWeek,
+      workoutsCompleted: completedWorkoutsThisWeek.length,
+      workoutsScheduled: scheduledWorkoutsThisWeek.length,
       habitCompletion: habitCompletionPercentage,
     }
   }, [exercises, habits]);
