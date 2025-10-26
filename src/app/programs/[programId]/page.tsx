@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
 import { notFound } from 'next/navigation';
-import type { Program } from '@/lib/types';
+import type { Program, Workout } from '@/lib/types';
+import { AddWorkoutToProgramDialog } from '@/components/add-workout-to-program-dialog';
 
 // Mock data, replace with Firestore call
 const programs: Program[] = [
@@ -40,9 +39,10 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
     notFound();
   }
 
-  const handleAddWorkout = () => {
-    // Logic for adding a workout will go here
-    console.log('Adding workout to program:', program.id);
+  const handleAddWorkout = (newWorkout: Workout) => {
+    // This function will eventually save the workout and its schedule to Firestore
+    setWorkouts(prev => [...prev, newWorkout]);
+    console.log('Added workout to program:', newWorkout);
   };
 
   return (
@@ -55,10 +55,7 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-headline font-semibold tracking-tight">Workouts</h2>
-          <Button onClick={handleAddWorkout}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Workout
-          </Button>
+          <AddWorkoutToProgramDialog programId={program.id} onWorkoutAdd={handleAddWorkout} />
         </div>
         
         {workouts.length === 0 ? (
