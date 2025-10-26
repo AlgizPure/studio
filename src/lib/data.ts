@@ -1,4 +1,4 @@
-import type { Exercise, Workout, Habit, DailySchedule, UserProfile, Day, HabitCategory } from './types';
+import type { Exercise, Workout, Habit, DailySchedule, UserProfile, Day, HabitCategory, ExerciseCategory } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 import { Dumbbell, HeartPulse, BrainCircuit, BookOpen, Wind, CheckCircle } from 'lucide-react';
 
@@ -10,21 +10,30 @@ export const userProfile: UserProfile = {
   avatarUrl: findImage('profile'),
 };
 
+export const exerciseCategories: ExerciseCategory[] = [
+    { id: 'excat1', name: 'Strength' },
+    { id: 'excat2', name: 'Cardio' },
+    { id: 'excat3', name: 'Bio-dynamics' },
+    { id: 'excat4', name: 'TRX' },
+    { id: 'excat5', name: 'Bodyweight' },
+    { id: 'excat6', name: 'Static' },
+];
+
 export const exercises: Exercise[] = [
-  { id: 'ex1', name: 'Barbell Squats', category: 'Strength', description: 'Squat with a barbell on your shoulders.', image: findImage('barbell squat') },
-  { id: 'ex2', name: 'Overhead Press', category: 'Strength', description: 'Lift a barbell or dumbbells overhead.', image: findImage('strength2') },
-  { id: 'ex3', name: 'Bench Press', category: 'Strength', description: 'Lie on a bench and press a weight upwards.', image: findImage('bench press') },
-  { id: 'ex4', name: 'Tricep Dips', category: 'Strength', description: 'Lower and raise your body with your arms.', image: findImage('bodyweight') },
-  { id: 'ex5', name: 'Deadlifts', category: 'Strength', description: 'Lift a barbell off the floor to hip level.', image: findImage('deadlift') },
-  { id: 'ex6', name: 'Bicep Curls', category: 'Strength', description: 'Curl dumbbells towards your shoulders.', image: findImage('strength1') },
-  { id: 'ex7', name: 'Crunches', category: 'Strength', description: 'Flex your abdominal muscles.', image: findImage('bodyweight') },
-  { id: 'ex8', name: 'Neck Bridges', category: 'Strength', description: 'Strengthen your neck muscles.', image: findImage('static') },
-  { id: 'ex9', name: 'Grip Squeezes', category: 'Strength', description: 'Improve your grip strength.', image: findImage('strength3') },
-  { id: 'ex10', name: 'Trail Running', category: 'Cardio', description: 'Run on uneven, natural terrain.', image: findImage('trail running') },
-  { id: 'ex11', name: 'Functional Patterns', category: 'Bio-dynamics', description: 'Exercises mimicking natural human movements.', image: findImage('dynamic yoga') },
-  { id: 'ex12', name: 'Joint Mobilization', category: 'Bio-dynamics', description: 'Improve joint range of motion.', image: findImage('dynamic yoga') },
-  { id: 'ex13', name: 'TRX Rows', category: 'TRX', description: 'Use TRX straps to perform a rowing motion.', image: findImage('TRX training') },
-  { id: 'ex14', name: 'Plank', category: 'Static', description: 'Hold a push-up like position.', image: findImage('plank') },
+  { id: 'ex1', name: 'Barbell Squats', categoryId: 'excat1', description: 'Squat with a barbell on your shoulders.', image: findImage('barbell squat') },
+  { id: 'ex2', name: 'Overhead Press', categoryId: 'excat1', description: 'Lift a barbell or dumbbells overhead.', image: findImage('strength2') },
+  { id: 'ex3', name: 'Bench Press', categoryId: 'excat1', description: 'Lie on a bench and press a weight upwards.', image: findImage('bench press') },
+  { id: 'ex4', name: 'Tricep Dips', categoryId: 'excat1', description: 'Lower and raise your body with your arms.', image: findImage('bodyweight') },
+  { id: 'ex5', name: 'Deadlifts', categoryId: 'excat1', description: 'Lift a barbell off the floor to hip level.', image: findImage('deadlift') },
+  { id: 'ex6', name: 'Bicep Curls', categoryId: 'excat1', description: 'Curl dumbbells towards your shoulders.', image: findImage('strength1') },
+  { id: 'ex7', name: 'Crunches', categoryId: 'excat1', description: 'Flex your abdominal muscles.', image: findImage('bodyweight') },
+  { id: 'ex8', name: 'Neck Bridges', categoryId: 'excat1', description: 'Strengthen your neck muscles.', image: findImage('static') },
+  { id: 'ex9', name: 'Grip Squeezes', categoryId: 'excat1', description: 'Improve your grip strength.', image: findImage('strength3') },
+  { id: 'ex10', name: 'Trail Running', categoryId: 'excat2', description: 'Run on uneven, natural terrain.', image: findImage('trail running') },
+  { id: 'ex11', name: 'Functional Patterns', categoryId: 'excat3', description: 'Exercises mimicking natural human movements.', image: findImage('dynamic yoga') },
+  { id: 'ex12', name: 'Joint Mobilization', categoryId: 'excat3', description: 'Improve joint range of motion.', image: findImage('dynamic yoga') },
+  { id: 'ex13', name: 'TRX Rows', categoryId: 'excat4', description: 'Use TRX straps to perform a rowing motion.', image: findImage('TRX training') },
+  { id: 'ex14', name: 'Plank', categoryId: 'excat6', description: 'Hold a push-up like position.', image: findImage('plank') },
 ];
 
 export const workouts: Workout[] = [

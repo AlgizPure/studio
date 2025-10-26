@@ -16,21 +16,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, Plus, Pencil } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Exercise, Day } from '@/lib/types';
+import type { Exercise, Day, ExerciseCategory } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+import { exerciseCategories as initialExerciseCategories } from '@/lib/data';
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const hoursOfDay = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 
 const exerciseSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  category: z.enum(['Strength', 'Cardio', 'Bio-dynamics', 'TRX', 'Bodyweight', 'Static']),
+  categoryId: z.string().min(1, 'Category is required'),
   description: z.string().min(1, 'Description is required'),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format.').optional(),
   days: z.array(z.string()).optional(),
@@ -44,12 +45,14 @@ interface AddExerciseDialogProps {
   onExerciseDelete?: (exerciseId: string) => void;
   exerciseToEdit?: Exercise;
   trigger?: React.ReactNode;
+  openManageCategories?: () => void;
 }
 
-export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseDelete, exerciseToEdit, trigger }: AddExerciseDialogProps) {
+export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseDelete, exerciseToEdit, trigger, openManageCategories }: AddExerciseDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const isEditMode = !!exerciseToEdit;
+  const [exerciseCategories, setExerciseCategories] = useState<ExerciseCategory[]>(initialExerciseCategories);
 
   const {
     register,
@@ -65,13 +68,14 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
   useEffect(() => {
     if (isEditMode && exerciseToEdit) {
       setValue('name', exerciseToEdit.name);
-      setValue('category', exerciseToEdit.category);
+      setValue('categoryId', exerciseToEdit.categoryId);
       setValue('description', exerciseToEdit.description);
       setValue('time', exerciseToEdit.time || '00:00');
       setValue('days', exerciseToEdit.days || []);
     } else {
       reset({
         name: '',
+        categoryId: '',
         description: '',
         time: '00:00',
         days: [],
@@ -85,7 +89,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
         const updatedExercise: Exercise = {
             ...exerciseToEdit,
             name: data.name,
-            category: data.category,
+            categoryId: data.categoryId,
             description: data.description,
             time: data.time,
             days: data.days as Day[],
@@ -99,7 +103,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
         const newExercise: Exercise = {
             id: `ex${Date.now()}`,
             name: data.name,
-            category: data.category,
+            categoryId: data.categoryId,
             description: data.description,
             time: data.time,
             days: data.days as Day[],
@@ -126,6 +130,15 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
             variant: 'destructive'
         });
         setIsOpen(false);
+    }
+  }
+
+  const handleCategoryChange = (value: string) => {
+    if (value === 'add-new' && openManageCategories) {
+        setIsOpen(false);
+        openManageCategories();
+    } else {
+        setValue('categoryId', value, { shouldValidate: true });
     }
   }
   
@@ -176,30 +189,35 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
             {errors.name && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.name.message}</p>}
             
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="category" className="text-right">
+              <Label htmlFor="categoryId" className="text-right">
                 Category
               </Label>
               <Controller
-                name="category"
+                name="categoryId"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={openManageCategories ? handleCategoryChange : field.onChange} value={field.value}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Strength">Strength</SelectItem>
-                      <SelectItem value="Cardio">Cardio</SelectItem>
-                      <SelectItem value="Bio-dynamics">Bio-dynamics</SelectItem>
-                      <SelectItem value="TRX">TRX</SelectItem>
-                      <SelectItem value="Bodyweight">Bodyweight</SelectItem>
-                      <SelectItem value="Static">Static</SelectItem>
+                      <SelectGroup>
+                        <SelectLabel>Exercise Categories</SelectLabel>
+                        {openManageCategories && (
+                          <SelectItem value="add-new">
+                              <span className="flex items-center"><Plus className="mr-2 h-4 w-4" /> Add new category...</span>
+                          </SelectItem>
+                        )}
+                        {exerciseCategories.map(cat => (
+                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                 )}
               />
             </div>
-             {errors.category && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.category.message}</p>}
+             {errors.categoryId && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.categoryId.message}</p>}
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="description" className="text-right">

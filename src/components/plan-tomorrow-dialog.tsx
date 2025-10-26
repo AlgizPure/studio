@@ -9,10 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { PlusSquare, GripVertical, Plus } from 'lucide-react';
-import { habits as initialHabits, exercises as initialExercises } from '@/lib/data';
+import { habits as initialHabits, exercises as initialExercises, exerciseCategories } from '@/lib/data';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
@@ -63,7 +62,7 @@ export function PlanTomorrowDialog() {
                     <Checkbox id={`ex-${exercise.id}`} className="mr-4" />
                     <div className="flex-1">
                       <Label htmlFor={`ex-${exercise.id}`} className="font-medium cursor-pointer">{exercise.name}</Label>
-                      <p className="text-xs text-muted-foreground">{exercise.category}</p>
+                      <p className="text-xs text-muted-foreground">{exerciseCategories.find(c => c.id === exercise.categoryId)?.name}</p>
                     </div>
                   </div>
                 ))}
@@ -73,7 +72,7 @@ export function PlanTomorrowDialog() {
           <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center pr-4">
                 <h3 className="font-semibold text-lg">Habits</h3>
-                <AddHabitDialog onHabitAdd={handleAddHabit} />
+                <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => {}} />
             </div>
             <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">

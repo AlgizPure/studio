@@ -2,10 +2,15 @@ import type { LucideIcon } from "lucide-react";
 
 export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 
+export type ExerciseCategory = {
+  id: string;
+  name: string;
+}
+
 export type Exercise = {
   id: string;
   name: string;
-  category: 'Strength' | 'Cardio' | 'Bio-dynamics' | 'TRX' | 'Bodyweight' | 'Static';
+  categoryId: string;
   description: string;
   image: string;
   custom?: boolean;

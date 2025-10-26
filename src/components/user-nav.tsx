@@ -17,13 +17,15 @@ import {
   DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { userProfile } from '@/lib/data';
-import { CreditCard, LogOut, Settings, User, Timer, FolderKanban } from 'lucide-react';
+import { CreditCard, LogOut, Settings, User, Timer, FolderKanban, Dumbbell } from 'lucide-react';
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
+import { ManageExerciseCategoriesDialog } from './manage-exercise-categories-dialog';
 
 export function UserNav() {
   const [isPomodoroSettingsOpen, setIsPomodoroSettingsOpen] = useState(false);
-  const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
+  const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
+  const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);
 
   return (
     <>
@@ -66,9 +68,13 @@ export function UserNav() {
                     <Timer className="mr-2 h-4 w-4" />
                     <span>Pomodoro</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setIsManageCategoriesOpen(true)}>
+                  <DropdownMenuItem onSelect={() => setIsManageHabitCategoriesOpen(true)}>
                     <FolderKanban className="mr-2 h-4 w-4" />
-                    <span>Categories</span>
+                    <span>Habit Categories</span>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem onSelect={() => setIsManageExerciseCategoriesOpen(true)}>
+                    <Dumbbell className="mr-2 h-4 w-4" />
+                    <span>Exercise Categories</span>
                   </DropdownMenuItem>
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
@@ -82,7 +88,8 @@ export function UserNav() {
         </DropdownMenuContent>
       </DropdownMenu>
       <PomodoroSettingsDialog open={isPomodoroSettingsOpen} onOpenChange={setIsPomodoroSettingsOpen} />
-      <ManageCategoriesDialog open={isManageCategoriesOpen} onOpenChange={setIsManageCategoriesOpen} />
+      <ManageCategoriesDialog open={isManageHabitCategoriesOpen} onOpenChange={setIsManageHabitCategoriesOpen} />
+      <ManageExerciseCategoriesDialog open={isManageExerciseCategoriesOpen} onOpenChange={setIsManageExerciseCategoriesOpen} />
     </>
   );
 }
