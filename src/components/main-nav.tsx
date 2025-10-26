@@ -24,13 +24,16 @@ export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElemen
       <SidebarMenu>
         {navItems.map((item) => (
           <SidebarMenuItem key={item.href}>
-            <Link href={item.href}>
+            <Link href={item.href} passHref>
               <SidebarMenuButton
+                asChild
                 isActive={pathname === item.href}
                 tooltip={{ children: item.label, side: 'right', align: 'center' }}
               >
-                <item.icon />
-                <span>{item.label}</span>
+                <div>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </div>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
