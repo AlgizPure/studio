@@ -19,14 +19,36 @@ import { useState }from 'react';
 import type { Exercise, Habit, ExerciseCategory, HabitCategory } from '@/lib/types';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
 import { ManageExerciseCategoriesDialog } from './manage-exercise-categories-dialog';
-import { useCollection, useUser } from '@/firebase';
+import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 export function PlanTomorrowDialog() {
     const { user } = useUser();
-    const { data: exercises } = useCollection<Exercise>(user ? `users/${user.uid}/exercises` : null);
-    const { data: habits } = useCollection<Habit>(user ? `users/${user.uid}/habits` : null);
-    const { data: exerciseCategories } = useCollection<ExerciseCategory>(user ? `users/${user.uid}/exerciseCategories` : null);
-    const { data: habitCategories } = useCollection<HabitCategory>(user ? `users/${user.uid}/habitCategories` : null);
+    const firestore = useFirestore();
+
+    const exercisesQuery = useMemoFirebase(
+      () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
+      [user, firestore]
+    );
+    const { data: exercises } = useCollection<Exercise>(exercisesQuery);
+    
+    const habitsQuery = useMemoFirebase(
+      () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
+      [user, firestore]
+    );
+    const { data: habits } = useCollection<Habit>(habitsQuery);
+    
+    const exerciseCatQuery = useMemoFirebase(
+      () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
+      [user, firestore]
+    );
+    const { data: exerciseCategories } = useCollection<ExerciseCategory>(exerciseCatQuery);
+    
+    const habitCatQuery = useMemoFirebase(
+      () => (user ? collection(firestore, `users/${user.uid}/habitCategories`) : null),
+      [user, firestore]
+    );
+    const { data: habitCategories } = useCollection<HabitCategory>(habitCatQuery);
     
     const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
     const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);

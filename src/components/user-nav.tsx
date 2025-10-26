@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useAuth, useUser, useFirestore } from '@/firebase';
+import { useAuth, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { signOut } from '@/firebase/auth';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 
@@ -34,8 +34,17 @@ export function UserNav() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const { data: habitCategories } = useCollection<HabitCategory>(user ? `users/${user.uid}/habitCategories` : null);
-  const { data: exerciseCategories } = useCollection<ExerciseCategory>(user ? `users/${user.uid}/exerciseCategories` : null);
+  const habitCategoriesQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/habitCategories`) : null),
+    [user, firestore]
+  );
+  const { data: habitCategories } = useCollection<HabitCategory>(habitCategoriesQuery);
+
+  const exerciseCategoriesQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
+    [user, firestore]
+  );
+  const { data: exerciseCategories } = useCollection<ExerciseCategory>(exerciseCategoriesQuery);
 
   const [isPomodoroSettingsOpen, setIsPomodoroSettingsOpen] = useState(false);
   const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);

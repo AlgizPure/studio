@@ -1,7 +1,7 @@
 'use client';
 
 import { notFound } from 'next/navigation';
-import { useDoc, useCollection, useUser, useFirestore } from '@/firebase';
+import { useDoc, useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, doc } from 'firebase/firestore';
 import type { Program, Workout, ProgramWorkout } from '@/lib/types';
 import { AddWorkoutToProgramDialog } from '@/components/add-workout-to-program-dialog';
@@ -11,13 +11,25 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const programPath = user ? `users/${user.uid}/programs/${params.programId}` : null;
-  const workoutsPath = user ? `users/${user.uid}/workouts` : null;
-  const programWorkoutsPath = user ? `users/${user.uid}/programs/${params.programId}/workouts` : null;
+  const programRef = useMemoFirebase(
+    () => (user ? doc(firestore, `users/${user.uid}/programs/${params.programId}`) : null),
+    [user, firestore, params.programId]
+  );
+  const { data: program, loading: programLoading } = useDoc<Program>(programRef);
 
-  const { data: program, loading: programLoading } = useDoc<Program>(programPath);
-  const { data: programWorkouts, loading: programWorkoutsLoading } = useCollection<ProgramWorkout>(programWorkoutsPath);
-  const { data: allWorkouts, loading: allWorkoutsLoading } = useCollection<Workout>(workoutsPath);
+  const workoutsQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/workouts`) : null),
+    [user, firestore]
+  );
+  const { data: allWorkouts, loading: allWorkoutsLoading } = useCollection<Workout>(workoutsQuery);
+  
+  const programWorkoutsPath = user ? `users/${user.uid}/programs/${params.programId}/workouts` : null;
+  const programWorkoutsQuery = useMemoFirebase(
+    () => (programWorkoutsPath ? collection(firestore, programWorkoutsPath) : null),
+    [firestore, programWorkoutsPath]
+  );
+  const { data: programWorkouts, loading: programWorkoutsLoading } = useCollection<ProgramWorkout>(programWorkoutsQuery);
+
 
   const handleAddWorkout = async (newWorkoutData: Omit<Workout, 'id'>) => {
     if (!user || !firestore || !programWorkoutsPath) return;

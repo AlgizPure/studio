@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useCollection } from '@/firebase';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useMemoFirebase } from '@/firebase';
 import { ExerciseCard } from '@/components/exercise-card';
 import { Input } from '@/components/ui/input';
 import { AddExerciseDialog } from '@/components/add-exercise-dialog';
@@ -16,12 +16,18 @@ export default function LibraryPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const { data: exercises, loading: exercisesLoading } = useCollection<Exercise>(
-    user ? `users/${user.uid}/exercises` : null
+  const exercisesQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
+    [user, firestore]
   );
-  const { data: exerciseCategories, loading: categoriesLoading } = useCollection<ExerciseCategory>(
-    user ? `users/${user.uid}/exerciseCategories` : null
+  const { data: exercises, loading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
+  
+  const categoriesQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
+    [user, firestore]
   );
+  const { data: exerciseCategories, loading: categoriesLoading } = useCollection<ExerciseCategory>(categoriesQuery);
+
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);

@@ -1,22 +1,35 @@
 'use client'
 
-import { Activity, BarChart3, Dumbbell, HeartPulse, Target } from 'lucide-react';
+import { Activity, Dumbbell, HeartPulse, Target } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TodaySchedule } from '@/components/today-schedule';
 import { HabitTracker } from '@/components/habit-tracker';
 import { AiOptimizerDialog } from '@/components/ai-optimizer-dialog';
 import { PlanTomorrowDialog } from '@/components/plan-tomorrow-dialog';
-import { useUser, useCollection } from '@/firebase';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { startOfWeek, isWithinInterval, isToday } from 'date-fns';
 import type { Exercise, Habit } from '@/lib/types';
 import { useMemo } from 'react';
+import { collection } from 'firebase/firestore';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
-  const { data: exercises } = useCollection<Exercise>(user ? `users/${user.uid}/exercises` : null);
-  const { data: habits } = useCollection<Habit>(user ? `users/${user.uid}/habits` : null);
+  const firestore = useFirestore();
+
+  const exercisesQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
+    [user, firestore]
+  );
+  const { data: exercises } = useCollection<Exercise>(exercisesQuery);
+  
+  const habitsQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
+    [user, firestore]
+  );
+  const { data: habits } = useCollection<Habit>(habitsQuery);
+
 
   const weeklyStats = useMemo(() => {
     const now = new Date();

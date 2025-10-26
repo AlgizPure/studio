@@ -21,9 +21,10 @@ import { z } from 'zod';
 import type { Workout, Exercise } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { useCollection, useUser } from '@/firebase';
+import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { ScrollArea } from './ui/scroll-area';
 import { Checkbox } from './ui/checkbox';
+import { collection } from 'firebase/firestore';
 
 const workoutDetailsSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -46,7 +47,13 @@ export function AddWorkoutToProgramDialog({ onWorkoutAdd }: AddWorkoutToProgramD
   const { toast } = useToast();
   
   const { user } = useUser();
-  const { data: allExercises, loading: exercisesLoading } = useCollection<Exercise>(user ? `users/${user.uid}/exercises` : null);
+  const firestore = useFirestore();
+
+  const allExercisesQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
+    [user, firestore]
+  );
+  const { data: allExercises, loading: exercisesLoading } = useCollection<Exercise>(allExercisesQuery);
 
 
   const {

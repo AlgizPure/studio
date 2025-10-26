@@ -5,9 +5,9 @@ import { Label } from '@/components/ui/label';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Dumbbell, Target } from 'lucide-react';
-import { useCollection, useUser, useFirestore } from '@/firebase';
+import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import type { Exercise, Habit, Day } from '@/lib/types';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection } from 'firebase/firestore';
 import { isToday } from 'date-fns';
 
 export function TodaySchedule() {
@@ -15,8 +15,17 @@ export function TodaySchedule() {
   const { user } = useUser();
   const firestore = useFirestore();
   
-  const { data: exercises, loading: exercisesLoading } = useCollection<Exercise>(user ? `users/${user.uid}/exercises` : null);
-  const { data: habits, loading: habitsLoading } = useCollection<Habit>(user ? `users/${user.uid}/habits` : null);
+  const exercisesQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
+    [user, firestore]
+  );
+  const { data: exercises, loading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
+  
+  const habitsQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
+    [user, firestore]
+  );
+  const { data: habits, loading: habitsLoading } = useCollection<Habit>(habitsQuery);
 
   useEffect(() => {
     setToday(new Date().toLocaleString('en-US', { weekday: 'long' }));

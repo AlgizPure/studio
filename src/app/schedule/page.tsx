@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useCollection, useUser, useFirestore } from '@/firebase';
+import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { DailySchedule } from '@/components/daily-schedule';
 import { AddExerciseDialog } from '@/components/add-exercise-dialog';
@@ -18,10 +18,30 @@ export default function SchedulePage() {
   const firestore = useFirestore();
 
   // Data fetching from Firestore
-  const { data: exercises, loading: exercisesLoading } = useCollection<Exercise>(user ? `users/${user.uid}/exercises` : null);
-  const { data: habits, loading: habitsLoading } = useCollection<Habit>(user ? `users/${user.uid}/habits` : null);
-  const { data: habitCategories, loading: habitCatLoading } = useCollection<HabitCategory>(user ? `users/${user.uid}/habitCategories` : null);
-  const { data: exerciseCategories, loading: exerciseCatLoading } = useCollection<ExerciseCategory>(user ? `users/${user.uid}/exerciseCategories` : null);
+  const exercisesQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
+    [user, firestore]
+  );
+  const { data: exercises, loading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
+
+  const habitsQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
+    [user, firestore]
+  );
+  const { data: habits, loading: habitsLoading } = useCollection<Habit>(habitsQuery);
+
+  const habitCatQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/habitCategories`) : null),
+    [user, firestore]
+  );
+  const { data: habitCategories, loading: habitCatLoading } = useCollection<HabitCategory>(habitCatQuery);
+  
+  const exerciseCatQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
+    [user, firestore]
+  );
+  const { data: exerciseCategories, loading: exerciseCatLoading } = useCollection<ExerciseCategory>(exerciseCatQuery);
+
 
   const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
   const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);

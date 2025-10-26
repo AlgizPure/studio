@@ -1,7 +1,7 @@
 'use client';
 
-import { useCollection, useUser, useFirestore } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, addDoc, query, where } from 'firebase/firestore';
 import { AddProgramDialog } from '@/components/add-program-dialog';
 import { ProgramCard } from '@/components/program-card';
 import type { Program } from '@/lib/types';
@@ -10,13 +10,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function ProgramsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const { data: userPrograms, loading: userProgramsLoading } = useCollection<Program>(
-    user ? `users/${user.uid}/programs` : null
+
+  const userProgramsQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/programs`) : null),
+    [user, firestore]
   );
-  const { data: templatePrograms, loading: templateProgramsLoading } = useCollection<Program>(
-    'programs',
-    [{ type: 'where', field: 'isTemplate', op: '==', value: true }]
+  const { data: userPrograms, loading: userProgramsLoading } = useCollection<Program>(userProgramsQuery);
+
+  const templateProgramsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'programs'), where('isTemplate', '==', true)) : null),
+    [firestore]
   );
+  const { data: templatePrograms, loading: templateProgramsLoading } = useCollection<Program>(templateProgramsQuery);
 
   const handleAddProgram = async (newProgramData: Omit<Program, 'id' | 'authorId' | 'isTemplate'>) => {
     if (!user || !firestore) return;
