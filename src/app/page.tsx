@@ -6,12 +6,46 @@ import { TodaySchedule } from '@/components/today-schedule';
 import { HabitTracker } from '@/components/habit-tracker';
 import { AiOptimizerDialog } from '@/components/ai-optimizer-dialog';
 import { PlanTomorrowDialog } from '@/components/plan-tomorrow-dialog';
-import { useUser } from '@/firebase';
+import { useUser, useCollection } from '@/firebase';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { getWeek, startOfWeek, isWithinInterval } from 'date-fns';
+import type { Exercise, Habit } from '@/lib/types';
+import { useMemo } from 'react';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
+  const { data: exercises } = useCollection<Exercise>(user ? `users/${user.uid}/exercises` : null);
+  const { data: habits } = useCollection<Habit>(user ? `users/${user.uid}/habits` : null);
+
+  const weeklyStats = useMemo(() => {
+    const now = new Date();
+    const startOfThisWeek = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
+    const endOfThisWeek = new Date(startOfThisWeek);
+    endOfThisWeek.setDate(endOfThisWeek.getDate() + 6);
+
+    // Calculate workout count for the week
+    const weeklyWorkouts = (exercises || []).filter(ex => 
+      (ex.days || []).length > 0
+    );
+    const scheduledWorkoutsThisWeek = weeklyWorkouts.reduce((acc, ex) => acc + (ex.days?.length || 0) , 0)
+
+
+    // Calculate habit completion for the week
+    const totalHabits = (habits || []).length;
+    let completedHabits = 0;
+    if (habits) {
+        completedHabits = habits.filter(h => h.completed).length;
+    }
+    const habitCompletionPercentage = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0;
+
+
+    return {
+      workoutsCompleted: 0, // Placeholder for now
+      workoutsScheduled: scheduledWorkoutsThisWeek,
+      habitCompletion: habitCompletionPercentage,
+    }
+  }, [exercises, habits]);
 
   if (isUserLoading) {
     return (
@@ -66,9 +100,9 @@ export default function DashboardPage() {
             <Dumbbell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0/0</div>
+            <div className="text-2xl font-bold">{weeklyStats.workoutsCompleted}/{weeklyStats.workoutsScheduled}</div>
             <p className="text-xs text-muted-foreground">
-              No workouts scheduled yet
+              Completed vs. Scheduled
             </p>
           </CardContent>
         </Card>
@@ -78,9 +112,9 @@ export default function DashboardPage() {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0%</div>
+            <div className="text-2xl font-bold">{weeklyStats.habitCompletion}%</div>
             <p className="text-xs text-muted-foreground">
-              Daily average
+              This week's average
             </p>
           </CardContent>
         </Card>
@@ -121,5 +155,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
