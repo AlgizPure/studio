@@ -54,11 +54,11 @@ export function DailySchedule({
         <CardContent>
           <Accordion type="single" collapsible defaultValue={today} className="w-full">
             {weeklySchedule.map(({ day, items }) => {
-              const dailyHabits = habits.filter(habit => habit.days?.includes(day) || !habit.days || habit.days.length === 0);
+              const dailyHabits = habits.filter(habit => habit.days?.includes(day));
               const dailyExercises = exercises.filter(ex => ex.days?.includes(day));
               
               const allItems = [
-                ...items.map(item => ({...item, isDefault: true})), // Mark default items
+                ...items.map(item => ({...item, isDefault: true, id: `${day}-${item.id}`})), 
                 ...dailyHabits.map(habit => ({
                   id: habit.id,
                   time: habitCategories.find(c => c.id === habit.categoryId)?.name || 'Habit',
@@ -81,12 +81,10 @@ export function DailySchedule({
                     isCustom: ex.custom,
                 }))
               ].sort((a, b) => {
-                if (!a.time || a.time === 'Habit' || a.time === 'Any time') return 1;
-                if (!b.time || b.time === 'Habit' || b.time === 'Any time') return -1;
-                const timeA = a.time?.split(' ')[0];
-                const timeB = b.time?.split(' ')[0];
-                if (timeA < timeB) return -1;
-                if (timeA > timeB) return 1;
+                const aTime = (a.time || '99:99').split(' ')[0];
+                const bTime = (b.time || '99:99').split(' ')[0];
+                if (aTime < bTime) return -1;
+                if (aTime > bTime) return 1;
                 return 0;
               });
 
@@ -120,7 +118,8 @@ export function DailySchedule({
                                 </div>
                                 {(item as any).isPomodoro && <PomodoroIcon className="mr-2"/>}
                                 <Badge variant={item.activityType === 'Habit' ? 'secondary' : 'outline'} className="mr-2">{item.duration}</Badge>
-                                {isCustomItem && item.activityType === 'Habit' && (
+                                
+                                {isCustomItem && item.activityType === 'Habit' ? (
                                     <AddHabitDialog
                                         habitToEdit={item.raw as Habit}
                                         onHabitUpdate={onHabitUpdate}
@@ -129,8 +128,7 @@ export function DailySchedule({
                                         trigger={editTrigger}
                                         openManageCategories={openManageCategories}
                                     />
-                                )}
-                                {isCustomItem && item.activityType === 'Workout' && (
+                                ) : isCustomItem && item.activityType === 'Workout' ? (
                                     <AddExerciseDialog
                                         exerciseToEdit={item.raw as Exercise}
                                         onExerciseUpdate={onExerciseUpdate}
@@ -139,6 +137,9 @@ export function DailySchedule({
                                         trigger={editTrigger}
                                         openManageCategories={() => setIsManageExerciseCategoriesOpen(true)}
                                     />
+                                ) : (
+                                  // Placeholder for default items to maintain layout
+                                  <div className="w-8 h-8" />
                                 )}
                               </div>
                             )
