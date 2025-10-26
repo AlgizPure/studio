@@ -5,6 +5,7 @@ export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | '
 export type ExerciseCategory = {
   id: string;
   name: string;
+  authorId?: string;
 }
 
 export type Exercise = {
@@ -30,6 +31,7 @@ export type Workout = {
 export type HabitCategory = {
   id: string;
   name: string;
+  authorId?: string;
 }
 
 export type Habit = {
@@ -71,4 +73,15 @@ export type Program = {
     description: string;
     isTemplate: boolean;
     authorId?: string;
+}
+
+export type ProgramWorkout = {
+    id: string;
+    workoutId: string;
+    schedule: {
+        type: 'repeating' | 'fixed_times';
+        days?: Day[];
+        repeatCount?: number;
+        endDate?: string;
+    }
 }

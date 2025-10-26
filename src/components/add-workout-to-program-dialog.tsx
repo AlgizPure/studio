@@ -21,7 +21,7 @@ import { z } from 'zod';
 import type { Workout, Exercise } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { exercises as allExercises } from '@/lib/data';
+import { useCollection, useUser, useFirestore } from '@/firebase';
 import { ScrollArea } from './ui/scroll-area';
 import { Checkbox } from './ui/checkbox';
 
@@ -35,16 +35,20 @@ type WorkoutDetailsValues = z.infer<typeof workoutDetailsSchema>;
 
 interface AddWorkoutToProgramDialogProps {
   programId: string;
-  onWorkoutAdd: (workout: Workout) => void;
+  onWorkoutAdd: (workout: Omit<Workout, 'id'>) => void;
 }
 
 export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkoutToProgramDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
-  const [workoutDetails, setWorkoutDetails] = useState<Partial<Workout>>({});
+  const [workoutDetails, setWorkoutDetails] = useState<Partial<Omit<Workout, 'id'>>>({});
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+  
+  const { user } = useUser();
+  const { data: allExercises, loading: exercisesLoading } = useCollection<Exercise>(user ? `users/${user.uid}/exercises` : null);
+
 
   const {
     register,
@@ -57,7 +61,6 @@ export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkou
 
   const handleDetailsSubmit: SubmitHandler<WorkoutDetailsValues> = (data) => {
     setWorkoutDetails({
-      id: `wk${Date.now()}`,
       name: data.name,
       description: data.description || '',
       level: data.level ? parseInt(data.level) : undefined,
@@ -84,10 +87,10 @@ export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkou
     }
     // In the future, this will go to step 3 (configure sets/reps)
     // For now, we'll just create the workout
-     const newWorkout: Workout = {
+     const newWorkout: Omit<Workout, 'id'> = {
       ...workoutDetails,
       exercises: selectedExercises.map(exId => ({ exerciseId: exId })),
-    } as Workout;
+    } as Omit<Workout, 'id'>;
     
     onWorkoutAdd(newWorkout);
     toast({
@@ -114,7 +117,7 @@ export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkou
     setIsOpen(open);
   }
 
-  const filteredExercises = allExercises.filter(ex => 
+  const filteredExercises = (allExercises || []).filter(ex => 
     ex.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -130,7 +133,7 @@ export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkou
         {step === 1 && (
           <form onSubmit={handleSubmit(handleDetailsSubmit)}>
             <DialogHeader>
-              <DialogTitle>Add New Workout (Step 1 of 4)</DialogTitle>
+              <DialogTitle>Add New Workout (Step 1 of 2)</DialogTitle>
               <DialogDescription>Define the details for your new workout.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -145,7 +148,7 @@ export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkou
               </div>
               <div className="space-y-2">
                 <Label htmlFor="level">Difficulty Level</Label>
-                <Select {...register('level')}>
+                 <Select onValueChange={(value) => register('level').onChange({ target: { value } })} name={register('level').name}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a level (optional)" />
                   </SelectTrigger>
@@ -169,7 +172,7 @@ export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkou
         {step === 2 && (
           <>
             <DialogHeader>
-              <DialogTitle>Select Exercises (Step 2 of 4)</DialogTitle>
+              <DialogTitle>Select Exercises (Step 2 of 2)</DialogTitle>
               <DialogDescription>Choose exercises from your library to include in this workout.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -183,20 +186,22 @@ export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkou
                     />
                 </div>
                 <ScrollArea className="h-72 w-full rounded-md border">
-                    <div className="p-4 space-y-2">
-                    {filteredExercises.map(exercise => (
-                        <div key={exercise.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/50">
-                            <Checkbox 
-                                id={`ex-select-${exercise.id}`}
-                                checked={selectedExercises.includes(exercise.id)}
-                                onCheckedChange={() => handleExerciseToggle(exercise.id)}
-                            />
-                            <Label htmlFor={`ex-select-${exercise.id}`} className="font-medium cursor-pointer w-full">
-                                {exercise.name}
-                            </Label>
+                    {exercisesLoading ? <p className="p-4 text-muted-foreground">Loading exercises...</p> : (
+                        <div className="p-4 space-y-2">
+                        {filteredExercises.map(exercise => (
+                            <div key={exercise.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-accent/50">
+                                <Checkbox 
+                                    id={`ex-select-${exercise.id}`}
+                                    checked={selectedExercises.includes(exercise.id)}
+                                    onCheckedChange={() => handleExerciseToggle(exercise.id)}
+                                />
+                                <Label htmlFor={`ex-select-${exercise.id}`} className="font-medium cursor-pointer w-full">
+                                    {exercise.name}
+                                </Label>
+                            </div>
+                        ))}
                         </div>
-                    ))}
-                    </div>
+                    )}
                 </ScrollArea>
             </div>
             <DialogFooter className="justify-between sm:justify-between">
@@ -204,7 +209,7 @@ export function AddWorkoutToProgramDialog({ programId, onWorkoutAdd }: AddWorkou
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
               <Button onClick={handleNextToConfigure}>
-                Next <ArrowRight className="ml-2 h-4 w-4" />
+                Finish & Add Workout
               </Button>
             </DialogFooter>
           </>

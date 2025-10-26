@@ -1,11 +1,27 @@
+'use client'
+
 import { Activity, BarChart3, Dumbbell, HeartPulse, Target } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TodaySchedule } from '@/components/today-schedule';
 import { HabitTracker } from '@/components/habit-tracker';
 import { AiOptimizerDialog } from '@/components/ai-optimizer-dialog';
 import { PlanTomorrowDialog } from '@/components/plan-tomorrow-dialog';
+import { useUser } from '@/firebase';
 
 export default function DashboardPage() {
+  const { user } = useUser();
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+              <h2 className="text-2xl font-semibold mb-2">Welcome to Zenith Trainer</h2>
+              <p className="text-muted-foreground">Please sign in to continue.</p>
+          </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between space-y-2">
@@ -29,9 +45,9 @@ export default function DashboardPage() {
             <Dumbbell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4/6</div>
+            <div className="text-2xl font-bold">0/0</div>
             <p className="text-xs text-muted-foreground">
-              +2 from last week
+              No workouts scheduled yet
             </p>
           </CardContent>
         </Card>
@@ -41,7 +57,7 @@ export default function DashboardPage() {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">75%</div>
+            <div className="text-2xl font-bold">0%</div>
             <p className="text-xs text-muted-foreground">
               Daily average
             </p>
@@ -53,7 +69,7 @@ export default function DashboardPage() {
             <HeartPulse className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24km</div>
+            <div className="text-2xl font-bold">0km</div>
             <p className="text-xs text-muted-foreground">
               This week's total
             </p>
@@ -65,9 +81,9 @@ export default function DashboardPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12 Days</div>
+            <div className="text-2xl font-bold">0 Days</div>
             <p className="text-xs text-muted-foreground">
-              Keep the momentum going!
+              Let's get started!
             </p>
           </CardContent>
         </Card>

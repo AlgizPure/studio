@@ -1,5 +1,4 @@
 'use client';
-import { weeklySchedule } from '@/lib/data';
 import {
   Accordion,
   AccordionContent,
@@ -17,13 +16,15 @@ import { Button } from './ui/button';
 import { useState } from 'react';
 import { PomodoroIcon } from './pomodoro-icon';
 
+const weeklySchedule: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 interface DailyScheduleProps {
     exercises: Exercise[];
     habits: Habit[];
     habitCategories: HabitCategory[];
     exerciseCategories: ExerciseCategory[];
-    onExerciseAdd: (exercise: Omit<Exercise, 'id'>) => Promise<void>;
-    onHabitAdd: (habit: Omit<Habit, 'id'>) => Promise<void>;
+    onExerciseAdd: (exercise: Omit<Exercise, 'id' | 'authorId'>) => Promise<void>;
+    onHabitAdd: (habit: Omit<Habit, 'id' | 'authorId'>) => Promise<void>;
     onExerciseUpdate: (exercise: Exercise) => Promise<void>;
     onHabitUpdate: (habit: Habit) => Promise<void>;
     onExerciseDelete: (exerciseId: string) => Promise<void>;

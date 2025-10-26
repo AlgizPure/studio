@@ -3,37 +3,37 @@
     {
       "id": "strength-1",
       "description": "A person performing a squat with a barbell.",
-      "imageUrl": "https://images.unsplash.com/photo-1758875568582-ec8a4229c2b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxiYXJiZWxsJTIwc3F1YXR8ZW58MHx8fHwxNzYxMzg5NjcyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1758875568671-9fa1829fe1e3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxiYXJiZWxsJTIwc3F1YXR8ZW58MHx8fHwxNzYxMzg5NjcyfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "barbell squat"
     },
     {
       "id": "strength-2",
       "description": "A person doing a bench press.",
-      "imageUrl": "https://images.unsplash.com/photo-1652363722856-214ce6a06a44?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxiZW5jaCUyMHByZXNzfGVufDB8fHx8MTc2MTQ0MzY0MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1534368959876-26bf04f2c947?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxiZW5jaCUyMHByZXNzfGVufDB8fHx8MTc2MTQ0MzY0MXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "bench press"
     },
     {
       "id": "strength-3",
       "description": "A person doing a deadlift.",
-      "imageUrl": "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkZWFkbGlmdHxlbnwwfHx8fDE3NjE0MDA4MTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1584863231364-2edc166de576?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkZWFkbGlmdHxlbnwwfHx8fDE3NjE0MDA4MTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "deadlift"
     },
     {
       "id": "cardio-1",
       "description": "A person running on a trail.",
-      "imageUrl": "https://images.unsplash.com/photo-1539182972012-585804f77548?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx0cmFpbCUyMHJ1bm5pbmd8ZW58MHx8fHwxNzYxNDY2NDEwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1530143311094-34d807799e8f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx0cmFpbCUyMHJ1bm5pbmd8ZW58MHx8fHwxNzYxNDY2NDEwfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "trail running"
     },
     {
       "id": "biodynamics-1",
       "description": "A person in a dynamic yoga pose.",
-      "imageUrl": "https://images.unsplash.com/photo-1576226565048-f377166d7e7f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxkeW5hbWljJTIweW9nYXxlbnwwfHx8fDE3NjE0NjY0MTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1574890522390-5c7d7ae3f3ba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxkeW5hbWljJTIweW9nYXxlbnwwfHx8fDE3NjE0NjY0MTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "dynamic yoga"
     },
     {
       "id": "trx-1",
       "description": "A person using TRX suspension trainers.",
-      "imageUrl": "https://images.unsplash.com/photo-1611758493104-32e4ae0cba43?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxUUlglMjB0cmFpbmluZ3xlbnwwfHx8fDE3NjE0NjY0MTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1530021356476-0a6375ffe73b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxUUlglMjB0cmFpbmluZ3xlbnwwfHx8fDE3NjE0NjY0MTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "TRX training"
     },
     {
@@ -45,14 +45,20 @@
     {
       "id": "static-1",
       "description": "A person holding a plank position.",
-      "imageUrl": "https://images.unsplash.com/photo-1720788073779-04a9e709935c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwbGFuayUyMGV4ZXJjaXNlfGVufDB8fHx8MTc2MTM0MDQ1N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1630225760711-ac8eaa0c8947?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwbGFuayUyMGV4ZXJjaXNlfGVufDB8fHx8MTc2MTQ4NjE0OXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "plank exercise"
     },
     {
       "id": "profile-avatar",
       "description": "A profile picture for the user.",
-      "imageUrl": "https://images.unsplash.com/photo-1581403341630-a6e0b9d2d257?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwcm9maWxlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYxMzYzODI1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1509768368676-f3c3b060679d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwcm9maWxlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYxNDkzMDI5fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "profile portrait"
+    },
+    {
+      "id": "custom",
+      "description": "Custom exercise image",
+      "imageUrl": "https://images.unsplash.com/photo-1518310383802-640c2de311b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmaXRuZXNzJTIwZXhlcmNpc2V8ZW58MHx8fHwxNzYxNDk3MDY2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fitness exercise"
     }
   ]
 }
