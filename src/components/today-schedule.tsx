@@ -1,10 +1,11 @@
 'use client';
-import { weeklySchedule } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { weeklySchedule, exercises, habits } from '@/lib/data';
+import { Dumbbell, Target } from 'lucide-react';
 
 export function TodaySchedule() {
   const [today, setToday] = useState('');
@@ -13,9 +14,39 @@ export function TodaySchedule() {
     setToday(new Date().toLocaleString('en-US', { weekday: 'long' }));
   }, []);
   
-  const todaySchedule = weeklySchedule.find((d) => d.day === today);
+  const dailyHabits = habits.filter(habit => habit.days?.includes(today as any));
+  const dailyExercises = exercises.filter(ex => ex.days?.includes(today as any));
 
-  if (!todaySchedule) {
+  const allItems = [
+    ...dailyHabits.map(habit => ({
+      id: habit.id,
+      time: 'Any time',
+      activityType: 'Habit',
+      activityName: habit.name,
+      duration: habit.goal || '',
+      icon: Target,
+      raw: habit,
+      isPomodoro: !!habit.pomodoro,
+    })),
+    ...dailyExercises.map(ex => ({
+        id: ex.id,
+        time: ex.time || 'Any time',
+        activityType: 'Workout',
+        activityName: ex.name,
+        duration: 'Exercise',
+        icon: Dumbbell,
+        raw: ex,
+    }))
+  ].sort((a, b) => {
+    const aTime = (a.time || '99:99').split(' ')[0];
+    const bTime = (b.time || '99:99').split(' ')[0];
+    if (aTime < bTime) return -1;
+    if (aTime > bTime) return 1;
+    return 0;
+  });
+
+
+  if (!today) {
     return (
         <Card className="glass">
             <CardHeader>
@@ -34,9 +65,9 @@ export function TodaySchedule() {
         <CardTitle className="font-headline">Today's Activities</CardTitle>
       </CardHeader>
       <CardContent>
-        {todaySchedule.items.length > 0 ? (
+        {allItems.length > 0 ? (
           <div className="space-y-4">
-            {todaySchedule.items.map((item) => {
+            {allItems.map((item) => {
               const Icon = item.icon as LucideIcon;
               const itemId = `today-${item.id}`;
               return (

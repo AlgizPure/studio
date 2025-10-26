@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from './ui/badge';
 import type { LucideIcon } from 'lucide-react';
 import type { Exercise, Habit } from '@/lib/types';
-import { Target, Pencil, Dumbbell, Timer } from 'lucide-react';
+import { Target, Pencil, Dumbbell } from 'lucide-react';
 import { AddExerciseDialog } from './add-exercise-dialog';
 import { AddHabitDialog } from './add-habit-dialog';
 import { Button } from './ui/button';
@@ -49,11 +49,11 @@ export function DailySchedule({
     <>
       <Card className="glass">
         <CardHeader>
-          <CardTitle className="font-headline">Exercises</CardTitle>
+          <CardTitle className="font-headline">Weekly Schedule</CardTitle>
         </CardHeader>
         <CardContent>
           <Accordion type="single" collapsible defaultValue={today} className="w-full">
-            {weeklySchedule.map(({ day, items }) => {
+            {weeklySchedule.map((day) => {
               const dailyHabits = habits.filter(habit => habit.days?.includes(day));
               const dailyExercises = exercises.filter(ex => ex.days?.includes(day));
               
@@ -124,7 +124,7 @@ export function DailySchedule({
                                         trigger={editTrigger}
                                         openManageCategories={openManageCategories}
                                     />
-                                ) : item.activityType === 'Workout' ? (
+                                ) : (
                                     <AddExerciseDialog
                                         exerciseToEdit={item.raw as Exercise}
                                         onExerciseUpdate={onExerciseUpdate}
@@ -133,8 +133,6 @@ export function DailySchedule({
                                         trigger={editTrigger}
                                         openManageCategories={() => setIsManageExerciseCategoriesOpen(true)}
                                     />
-                                ) : (
-                                  <div className="w-8 h-8" />
                                 )}
                               </div>
                             )
