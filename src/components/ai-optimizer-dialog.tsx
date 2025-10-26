@@ -18,10 +18,13 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getOptimizedRoutine, applySchedule } from '@/app/actions';
+import { getOptimizedRoutine } from '@/app/actions';
 import { ScrollArea } from './ui/scroll-area';
-import type { AIRoutineOptimizerOutput } from '@/ai/flows/ai-routine-optimizer';
-import { useUser } from '@/firebase';
+import type { AIRoutineOptimizerOutput, ScheduledActivity } from '@/ai/flows/ai-routine-optimizer';
+import { useUser, useFirestore, useCollection } from '@/firebase';
+import { writeBatch, doc } from 'firebase/firestore';
+import type { Exercise, Habit } from '@/lib/types';
+
 
 const schema = z.object({
   goals: z.string().min(10, 'Please describe your goals in more detail.'),
@@ -39,6 +42,10 @@ export function AiOptimizerDialog() {
   const [suggestion, setSuggestion] = useState<AIRoutineOptimizerOutput | null>(null);
   const { toast } = useToast();
   const { user } = useUser();
+  const firestore = useFirestore();
+
+  const { data: exercises } = useCollection<Exercise>(user ? `users/${user.uid}/exercises` : null);
+  const { data: habits } = useCollection<Habit>(user ? `users/${user.uid}/habits` : null);
 
   const {
     register,
@@ -73,7 +80,7 @@ export function AiOptimizerDialog() {
   };
   
   const handleApplySchedule = async () => {
-    if (!suggestion || !suggestion.structuredSchedule || !user) {
+    if (!suggestion || !suggestion.structuredSchedule || !user || !firestore) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -82,18 +89,57 @@ export function AiOptimizerDialog() {
       return;
     }
     setIsApplying(true);
-    const result = await applySchedule(suggestion.structuredSchedule, user.uid);
-    setIsApplying(false);
+    
+    try {
+        const batch = writeBatch(firestore);
+        const allUserActivities = [
+            ...(exercises || []).map(ex => ({...ex, type: 'Workout'})),
+            ...(habits || []).map(h => ({...h, type: 'Habit'}))
+        ];
 
-    if (result.success) {
-      toast({ title: "Schedule Applied!", description: "Your new schedule is now active."});
-      handleOpenChange(false);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Error Applying Schedule',
-        description: result.error || 'An unknown error occurred.',
-      });
+        const activitiesToUpdate: { [key: string]: { days: string[], time?: string, type: 'Workout' | 'Habit' } } = {};
+
+        for (const item of suggestion.structuredSchedule) {
+            if (!activitiesToUpdate[item.activityName]) {
+                activitiesToUpdate[item.activityName] = { days: [], time: item.time, type: item.activityType };
+            }
+            activitiesToUpdate[item.activityName].days.push(item.day);
+            if(item.activityType === 'Workout') {
+                activitiesToUpdate[item.activityName].time = item.time;
+            }
+        }
+        
+        for (const activityName in activitiesToUpdate) {
+            const details = activitiesToUpdate[activityName];
+            const existingActivity = allUserActivities.find(act => act.name === activityName);
+
+            if (existingActivity && existingActivity.id) {
+                const collectionName = existingActivity.type === 'Workout' ? 'exercises' : 'habits';
+                const docRef = doc(firestore, `users/${user.uid}/${collectionName}`, existingActivity.id);
+                if (details.type === 'Workout') {
+                    batch.update(docRef, { days: details.days, time: details.time });
+                } else {
+                    batch.update(docRef, { days: details.days });
+                }
+            } else {
+                console.log(`Activity "${activityName}" not found in user's library. Skipping.`);
+            }
+        }
+
+        await batch.commit();
+
+        toast({ title: "Schedule Applied!", description: "Your new schedule is now active."});
+        handleOpenChange(false);
+
+    } catch (error) {
+        console.error("Failed to apply schedule:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error Applying Schedule',
+            description: 'An unexpected error occurred while updating your schedule.',
+        });
+    } finally {
+        setIsApplying(false);
     }
   }
 
