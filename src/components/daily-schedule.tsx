@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from './ui/badge';
 import type { LucideIcon } from 'lucide-react';
 import type { Exercise, Habit } from '@/lib/types';
-import { Target, Pencil, Dumbbell } from 'lucide-react';
+import { Target, Pencil, Dumbbell, Timer } from 'lucide-react';
 import { AddExerciseDialog } from './add-exercise-dialog';
 import { AddHabitDialog } from './add-habit-dialog';
 import { Button } from './ui/button';
@@ -65,7 +65,8 @@ export function DailySchedule({
                   activityName: habit.name,
                   duration: habit.goal || '',
                   icon: Target,
-                  raw: habit
+                  raw: habit,
+                  isPomodoro: !!habit.pomodoro,
                 })),
                 ...dailyExercises.map(ex => ({
                     id: ex.id,
@@ -116,6 +117,7 @@ export function DailySchedule({
                                     <p className="font-semibold">{item.activityName}</p>
                                     <p className="text-sm text-muted-foreground">{item.time}</p>
                                 </div>
+                                {(item as any).isPomodoro && <Timer className="mr-2 h-4 w-4 text-muted-foreground" />}
                                 <Badge variant={item.activityType === 'Habit' ? 'secondary' : 'outline'} className="mr-2">{item.duration}</Badge>
                                 {isCustomItem && (
                                   item.activityType === 'Habit' ? (
