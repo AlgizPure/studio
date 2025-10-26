@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { ManageExerciseCategoriesDialog } from '@/components/manage-exercise-categories-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
 export default function SchedulePage() {
   const { user } = useUser();
@@ -49,70 +50,146 @@ export default function SchedulePage() {
   const isLoading = exercisesLoading || habitsLoading || habitCatLoading || exerciseCatLoading;
 
   // Exercise CRUD
-  const handleAddExercise = async (exerciseData: Omit<Exercise, 'id' | 'authorId'>) => {
+  const handleAddExercise = (exerciseData: Omit<Exercise, 'id' | 'authorId'>) => {
     if (!user || !firestore) return;
     const exercisesCollection = collection(firestore, `users/${user.uid}/exercises`);
-    await addDoc(exercisesCollection, { ...exerciseData, authorId: user.uid });
+    const dataToSave = { ...exerciseData, authorId: user.uid };
+    addDoc(exercisesCollection, dataToSave).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'create',
+        path: exercisesCollection.path,
+        requestResourceData: dataToSave,
+      }));
+    });
   };
 
-  const handleUpdateExercise = async (exercise: Exercise) => {
+  const handleUpdateExercise = (exercise: Exercise) => {
     if (!user || !firestore || !exercise.id) return;
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
     const { id, ...exerciseData } = exercise;
-    await updateDoc(exerciseDoc, exerciseData);
+    updateDoc(exerciseDoc, exerciseData).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'update',
+        path: exerciseDoc.path,
+        requestResourceData: exerciseData,
+      }));
+    });
   };
 
-  const handleDeleteExercise = async (exerciseId: string) => {
+  const handleDeleteExercise = (exerciseId: string) => {
     if (!user || !firestore) return;
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exerciseId);
-    await deleteDoc(exerciseDoc);
+    deleteDoc(exerciseDoc).catch(err => {
+       errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'delete',
+        path: exerciseDoc.path,
+      }));
+    });
   };
   
   // Habit CRUD
-  const handleAddHabit = async (habitData: Omit<Habit, 'id' | 'authorId'>) => {
+  const handleAddHabit = (habitData: Omit<Habit, 'id' | 'authorId'>) => {
     if (!user || !firestore) return;
     const habitsCollection = collection(firestore, `users/${user.uid}/habits`);
-    await addDoc(habitsCollection, { ...habitData, authorId: user.uid });
+    const dataToSave = { ...habitData, authorId: user.uid };
+    addDoc(habitsCollection, dataToSave).catch(err => {
+       errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'create',
+        path: habitsCollection.path,
+        requestResourceData: dataToSave,
+      }));
+    });
   };
 
-  const handleUpdateHabit = async (habit: Habit) => {
+  const handleUpdateHabit = (habit: Habit) => {
      if (!user || !firestore || !habit.id) return;
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
     const { id, ...habitData } = habit;
-    await updateDoc(habitDoc, habitData);
+    updateDoc(habitDoc, habitData).catch(err => {
+       errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'update',
+        path: habitDoc.path,
+        requestResourceData: habitData,
+      }));
+    });
   };
 
-  const handleDeleteHabit = async (habitId: string) => {
+  const handleDeleteHabit = (habitId: string) => {
     if (!user || !firestore) return;
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habitId);
-    await deleteDoc(habitDoc);
+    deleteDoc(habitDoc).catch(err => {
+       errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'delete',
+        path: habitDoc.path,
+      }));
+    });
   };
   
   // Category CRUD
-  const handleAddHabitCategory = async (name: string) => {
+  const handleAddHabitCategory = (name: string) => {
     if (!user || !firestore) return;
-    await addDoc(collection(firestore, `users/${user.uid}/habitCategories`), { name });
+    const catCollection = collection(firestore, `users/${user.uid}/habitCategories`);
+    addDoc(catCollection, { name }).catch(err => {
+       errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'create',
+        path: catCollection.path,
+        requestResourceData: { name },
+      }));
+    });
   };
-  const handleUpdateHabitCategory = async (category: HabitCategory) => {
+  const handleUpdateHabitCategory = (category: HabitCategory) => {
     if (!user || !firestore || !category.id) return;
-    await updateDoc(doc(firestore, `users/${user.uid}/habitCategories`, category.id), { name: category.name });
+    const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, category.id);
+    updateDoc(catDoc, { name: category.name }).catch(err => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'update',
+        path: catDoc.path,
+        requestResourceData: { name: category.name },
+      }));
+    });
   };
-  const handleDeleteHabitCategory = async (categoryId: string) => {
+  const handleDeleteHabitCategory = (categoryId: string) => {
     if (!user || !firestore) return;
-    await deleteDoc(doc(firestore, `users/${user.uid}/habitCategories`, categoryId));
+    const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, categoryId);
+    deleteDoc(catDoc).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'delete',
+        path: catDoc.path
+      }));
+    });
   };
   
-  const handleAddExerciseCategory = async (name: string) => {
+  const handleAddExerciseCategory = (name: string) => {
     if (!user || !firestore) return;
-    await addDoc(collection(firestore, `users/${user.uid}/exerciseCategories`), { name });
+    const catCollection = collection(firestore, `users/${user.uid}/exerciseCategories`);
+    addDoc(catCollection, { name }).catch(err => {
+       errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'create',
+        path: catCollection.path,
+        requestResourceData: { name },
+      }));
+    });
   };
-  const handleUpdateExerciseCategory = async (category: ExerciseCategory) => {
+  const handleUpdateExerciseCategory = (category: ExerciseCategory) => {
     if (!user || !firestore || !category.id) return;
-    await updateDoc(doc(firestore, `users/${user.uid}/exerciseCategories`, category.id), { name: category.name });
+    const catDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, category.id);
+    updateDoc(catDoc, { name: category.name }).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'update',
+        path: catDoc.path,
+        requestResourceData: { name: category.name },
+      }));
+    });
   };
-  const handleDeleteExerciseCategory = async (categoryId: string) => {
+  const handleDeleteExerciseCategory = (categoryId: string) => {
      if (!user || !firestore) return;
-    await deleteDoc(doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId));
+    const catDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId);
+    deleteDoc(catDoc).catch(err => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'delete',
+        path: catDoc.path,
+      }));
+    });
   };
 
   return (

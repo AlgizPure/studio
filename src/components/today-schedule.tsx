@@ -9,6 +9,7 @@ import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebas
 import type { Exercise, Habit, Day } from '@/lib/types';
 import { doc, updateDoc, collection } from 'firebase/firestore';
 import { isToday } from 'date-fns';
+import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
 export function TodaySchedule() {
   const [today, setToday] = useState('');
@@ -31,19 +32,33 @@ export function TodaySchedule() {
     setToday(new Date().toLocaleString('en-US', { weekday: 'long' }));
   }, []);
   
-  const handleHabitToggle = async (habit: Habit) => {
+  const handleHabitToggle = (habit: Habit) => {
     if (!user || !firestore || !habit.id) return;
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
-    await updateDoc(habitDoc, { completed: !habit.completed });
+    const updatedData = { completed: !habit.completed };
+    updateDoc(habitDoc, updatedData).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'update',
+        path: habitDoc.path,
+        requestResourceData: updatedData,
+      }));
+    });
   };
   
-  const handleExerciseToggle = async (exercise: Exercise) => {
+  const handleExerciseToggle = (exercise: Exercise) => {
       if (!user || !firestore || !exercise.id) return;
       const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
       const isCompletedToday = exercise.lastCompleted && isToday(new Date(exercise.lastCompleted));
-      
-      await updateDoc(exerciseDoc, {
+      const updatedData = {
           lastCompleted: isCompletedToday ? null : new Date().toISOString(),
+      };
+      
+      updateDoc(exerciseDoc, updatedData).catch(err => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          operation: 'update',
+          path: exerciseDoc.path,
+          requestResourceData: updatedData,
+        }));
       });
   };
 

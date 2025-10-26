@@ -6,6 +6,7 @@ import { AddProgramDialog } from '@/components/add-program-dialog';
 import { ProgramCard } from '@/components/program-card';
 import type { Program } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
 export default function ProgramsPage() {
   const { user } = useUser();
@@ -23,13 +24,20 @@ export default function ProgramsPage() {
   );
   const { data: templatePrograms, loading: templateProgramsLoading } = useCollection<Program>(templateProgramsQuery);
 
-  const handleAddProgram = async (newProgramData: Omit<Program, 'id' | 'authorId' | 'isTemplate'>) => {
+  const handleAddProgram = (newProgramData: Omit<Program, 'id' | 'authorId' | 'isTemplate'>) => {
     if (!user || !firestore) return;
     const programsCollection = collection(firestore, `users/${user.uid}/programs`);
-    await addDoc(programsCollection, {
+    const dataToSave = {
       ...newProgramData,
       authorId: user.uid,
       isTemplate: false,
+    };
+    addDoc(programsCollection, dataToSave).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'create',
+        path: programsCollection.path,
+        requestResourceData: dataToSave,
+      }));
     });
   };
 

@@ -39,9 +39,9 @@ const exerciseSchema = z.object({
 type ExerciseFormValues = z.infer<typeof exerciseSchema>;
 
 interface AddExerciseDialogProps {
-  onExerciseAdd: (exercise: Omit<Exercise, 'id'>) => Promise<void>;
-  onExerciseUpdate?: (exercise: Exercise) => Promise<void>;
-  onExerciseDelete?: (exerciseId: string) => Promise<void>;
+  onExerciseAdd: (exercise: Omit<Exercise, 'id'>) => void;
+  onExerciseUpdate?: (exercise: Exercise) => void;
+  onExerciseDelete?: (exerciseId: string) => void;
   exerciseToEdit?: Exercise;
   trigger?: React.ReactNode;
   openManageCategories?: () => void;
@@ -87,7 +87,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
   }, [isEditMode, exerciseToEdit, setValue, reset, isOpen]);
 
 
-  const onSubmit: SubmitHandler<ExerciseFormValues> = async (data) => {
+  const onSubmit: SubmitHandler<ExerciseFormValues> = (data) => {
     try {
       if (isEditMode && exerciseToEdit && onExerciseUpdate) {
           const updatedExercise: Exercise = {
@@ -95,7 +95,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
               ...data,
               days: data.days as Day[],
           };
-          await onExerciseUpdate(updatedExercise);
+          onExerciseUpdate(updatedExercise);
           toast({
               title: 'Exercise Updated',
               description: `${data.name} has been updated.`,
@@ -106,7 +106,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
               custom: true,
               days: data.days as Day[],
           };
-          await onExerciseAdd(newExercise);
+          onExerciseAdd(newExercise);
           toast({
               title: 'Exercise Added',
               description: `${data.name} has been added to your library.`,
@@ -122,10 +122,10 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (isEditMode && exerciseToEdit && onExerciseDelete) {
         try {
-            await onExerciseDelete(exerciseToEdit.id);
+            onExerciseDelete(exerciseToEdit.id);
             toast({
                 title: 'Exercise Deleted',
                 description: `${exerciseToEdit.name} has been removed.`,

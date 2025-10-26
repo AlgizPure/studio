@@ -36,9 +36,9 @@ const habitSchema = z.object({
 type HabitFormValues = z.infer<typeof habitSchema>;
 
 interface AddHabitDialogProps {
-  onHabitAdd: (habit: Omit<Habit, 'id'>) => Promise<void>;
-  onHabitUpdate?: (habit: Habit) => Promise<void>;
-  onHabitDelete?: (habitId: string) => Promise<void>;
+  onHabitAdd: (habit: Omit<Habit, 'id'>) => void;
+  onHabitUpdate?: (habit: Habit) => void;
+  onHabitDelete?: (habitId: string) => void;
   habitToEdit?: Habit;
   trigger?: React.ReactNode;
   openManageCategories: () => void;
@@ -93,7 +93,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
     }
   };
 
-  const onSubmit: SubmitHandler<HabitFormValues> = async (data) => {
+  const onSubmit: SubmitHandler<HabitFormValues> = (data) => {
     try {
       if(isEditMode && habitToEdit && onHabitUpdate) {
           const updatedHabit: Habit = {
@@ -104,7 +104,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
               days: data.days as Day[],
               pomodoro: data.usePomodoro ? (habitToEdit.pomodoro || { cycles: 1 }) : undefined,
           };
-          await onHabitUpdate(updatedHabit);
+          onHabitUpdate(updatedHabit);
           toast({
               title: 'Habit Updated',
               description: `${data.name} has been updated.`,
@@ -118,7 +118,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
             days: data.days as Day[],
             ...(data.usePomodoro && { pomodoro: { cycles: 1 } }),
           };
-          await onHabitAdd(newHabit);
+          onHabitAdd(newHabit);
           toast({
             title: 'Habit Added',
             description: `${data.name} has been added to your list.`,
@@ -134,10 +134,10 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if(isEditMode && habitToEdit && onHabitDelete) {
       try {
-        await onHabitDelete(habitToEdit.id);
+        onHabitDelete(habitToEdit.id);
         toast({
             title: 'Habit Deleted',
             description: `${habitToEdit.name} has been removed.`,

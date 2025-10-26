@@ -12,6 +12,7 @@ import { ManageCategoriesDialog } from './manage-categories-dialog';
 import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, updateDoc, addDoc, deleteDoc, collection } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
+import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
 export function HabitTracker() {
   const { user } = useUser();
@@ -38,31 +39,64 @@ export function HabitTracker() {
     setToday(dayOfWeek);
   }, []);
 
-  const handleToggleCompletion = async (habit: Habit) => {
+  const handleToggleCompletion = (habit: Habit) => {
     if (!user || !firestore || !habit.id) return;
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
-    await updateDoc(habitDoc, { completed: !habit.completed });
+    const updatedData = { completed: !habit.completed };
+    updateDoc(habitDoc, updatedData).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'update',
+        path: habitDoc.path,
+        requestResourceData: updatedData,
+      }));
+    });
   };
 
-  const handleAddHabit = async (newHabit: Omit<Habit, 'id'>) => {
+  const handleAddHabit = (newHabit: Omit<Habit, 'id'>) => {
     if (!user || !firestore) return;
     const habitsCollection = collection(firestore, `users/${user.uid}/habits`);
-    await addDoc(habitsCollection, newHabit);
+    addDoc(habitsCollection, newHabit).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'create',
+        path: habitsCollection.path,
+        requestResourceData: newHabit,
+      }));
+    });
   };
 
-  const handleAddCategory = async (name: string) => {
+  const handleAddCategory = (name: string) => {
     if (!user || !firestore) return;
-    await addDoc(collection(firestore, `users/${user.uid}/habitCategories`), { name });
+    const catCollection = collection(firestore, `users/${user.uid}/habitCategories`);
+    addDoc(catCollection, { name }).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'create',
+        path: catCollection.path,
+        requestResourceData: { name },
+      }));
+    });
   };
 
-  const handleUpdateCategory = async (category: HabitCategory) => {
+  const handleUpdateCategory = (category: HabitCategory) => {
     if (!user || !firestore || !category.id) return;
-    await updateDoc(doc(firestore, `users/${user.uid}/habitCategories`, category.id), { name: category.name });
+    const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, category.id);
+    updateDoc(catDoc, { name: category.name }).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'update',
+        path: catDoc.path,
+        requestResourceData: { name: category.name },
+      }));
+    });
   };
 
-  const handleDeleteCategory = async (categoryId: string) => {
+  const handleDeleteCategory = (categoryId: string) => {
     if (!user || !firestore) return;
-    await deleteDoc(doc(firestore, `users/${user.uid}/habitCategories`, categoryId));
+    const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, categoryId);
+    deleteDoc(catDoc).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'delete',
+        path: catDoc.path,
+      }));
+    });
   };
 
   const todaysHabits = useMemo(() => {

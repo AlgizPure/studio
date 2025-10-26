@@ -11,6 +11,7 @@ import type { Exercise, ExerciseCategory } from '@/lib/types';
 import { ManageExerciseCategoriesDialog } from '@/components/manage-exercise-categories-dialog';
 import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
 export default function LibraryPage() {
   const { user } = useUser();
@@ -32,41 +33,75 @@ export default function LibraryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
 
-  const handleAddExercise = async (newExercise: Omit<Exercise, 'id' | 'authorId'>) => {
+  const handleAddExercise = (newExercise: Omit<Exercise, 'id' | 'authorId'>) => {
     if (!user || !firestore) return;
     const exercisesCollection = collection(firestore, `users/${user.uid}/exercises`);
-    await addDoc(exercisesCollection, { ...newExercise, authorId: user.uid });
+    addDoc(exercisesCollection, { ...newExercise, authorId: user.uid }).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'create',
+        path: exercisesCollection.path,
+        requestResourceData: newExercise,
+      }));
+    });
   };
   
-  const handleUpdateExercise = async (exercise: Exercise) => {
+  const handleUpdateExercise = (exercise: Exercise) => {
     if (!user || !firestore || !exercise.id) return;
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
     const { id, ...exerciseData } = exercise;
-    await updateDoc(exerciseDoc, exerciseData);
+    updateDoc(exerciseDoc, exerciseData).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'update',
+        path: exerciseDoc.path,
+        requestResourceData: exerciseData,
+      }));
+    });
   }
 
-  const handleDeleteExercise = async (exerciseId: string) => {
+  const handleDeleteExercise = (exerciseId: string) => {
     if (!user || !firestore) return;
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exerciseId);
-    await deleteDoc(exerciseDoc);
+    deleteDoc(exerciseDoc).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'delete',
+        path: exerciseDoc.path,
+      }));
+    });
   }
 
-  const handleAddCategory = async (name: string) => {
+  const handleAddCategory = (name: string) => {
     if (!user || !firestore) return;
     const categoriesCollection = collection(firestore, `users/${user.uid}/exerciseCategories`);
-    await addDoc(categoriesCollection, { name });
+    addDoc(categoriesCollection, { name }).catch(err => {
+       errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'create',
+        path: categoriesCollection.path,
+        requestResourceData: { name },
+      }));
+    });
   };
 
-  const handleUpdateCategory = async (category: ExerciseCategory) => {
+  const handleUpdateCategory = (category: ExerciseCategory) => {
     if (!user || !firestore || !category.id) return;
     const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, category.id);
-    await updateDoc(categoryDoc, { name: category.name });
+    updateDoc(categoryDoc, { name: category.name }).catch(err => {
+       errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'update',
+        path: categoryDoc.path,
+        requestResourceData: { name: category.name },
+      }));
+    });
   };
 
-  const handleDeleteCategory = async (categoryId: string) => {
+  const handleDeleteCategory = (categoryId: string) => {
     if (!user || !firestore) return;
     const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId);
-    await deleteDoc(categoryDoc);
+    deleteDoc(categoryDoc).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'delete',
+        path: categoryDoc.path,
+      }));
+    });
   };
   
   const filteredExercises = (exercises || []).filter(ex => 

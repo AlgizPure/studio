@@ -2,10 +2,11 @@
 
 import { notFound } from 'next/navigation';
 import { useDoc, useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, doc, writeBatch } from 'firebase/firestore';
 import type { Program, Workout, ProgramWorkout } from '@/lib/types';
 import { AddWorkoutToProgramDialog } from '@/components/add-workout-to-program-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
 export default function ProgramDetailPage({ params }: { params: { programId: string } }) {
   const { user } = useUser();
@@ -34,21 +35,33 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
   const handleAddWorkout = async (newWorkoutData: Omit<Workout, 'id'>) => {
     if (!user || !firestore || !programWorkoutsPath) return;
 
-    // 1. Create the workout document in the user's top-level workouts collection
-    const workoutsCollection = collection(firestore, `users/${user.uid}/workouts`);
-    const workoutDocRef = await addDoc(workoutsCollection, newWorkoutData);
+    try {
+      const batch = writeBatch(firestore);
 
-    // 2. Create the ProgramWorkout document to link it to the program
-    const programWorkoutsCollection = collection(firestore, programWorkoutsPath);
-    const newProgramWorkout: Omit<ProgramWorkout, 'id'> = {
-      workoutId: workoutDocRef.id,
-      // Default schedule, can be edited later
-      schedule: {
-        type: 'repeating',
-        days: ['Monday', 'Wednesday', 'Friday'],
-      },
-    };
-    await addDoc(programWorkoutsCollection, newProgramWorkout);
+      // 1. Create the workout document in the user's top-level workouts collection
+      const newWorkoutRef = doc(collection(firestore, `users/${user.uid}/workouts`));
+      batch.set(newWorkoutRef, newWorkoutData);
+
+      // 2. Create the ProgramWorkout document to link it to the program
+      const newProgramWorkoutRef = doc(collection(firestore, programWorkoutsPath));
+      const newProgramWorkout: Omit<ProgramWorkout, 'id'> = {
+        workoutId: newWorkoutRef.id,
+        schedule: {
+          type: 'repeating',
+          days: ['Monday', 'Wednesday', 'Friday'],
+        },
+      };
+      batch.set(newProgramWorkoutRef, newProgramWorkout);
+
+      await batch.commit();
+
+    } catch (err) {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'write',
+        path: `batch write to users/${user.uid}/workouts and ${programWorkoutsPath}`,
+        requestResourceData: newWorkoutData,
+      }));
+    }
   };
   
   const programWorkoutDetails = programWorkouts?.map(pw => {

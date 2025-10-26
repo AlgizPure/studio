@@ -29,7 +29,7 @@ const programSchema = z.object({
 type ProgramFormValues = z.infer<typeof programSchema>;
 
 interface AddProgramDialogProps {
-  onProgramAdd: (program: Omit<Program, 'id' | 'isTemplate' | 'authorId'>) => Promise<void>;
+  onProgramAdd: (program: Omit<Program, 'id' | 'isTemplate' | 'authorId'>) => void;
   programToEdit?: Program;
   trigger?: React.ReactNode;
 }
@@ -52,12 +52,12 @@ export function AddProgramDialog({ onProgramAdd, programToEdit, trigger }: AddPr
     }
   });
 
-  const onSubmit: SubmitHandler<ProgramFormValues> = async (data) => {
+  const onSubmit: SubmitHandler<ProgramFormValues> = (data) => {
     try {
       if (isEditMode && programToEdit) {
         // Update logic here
       } else {
-          await onProgramAdd(data);
+          onProgramAdd(data);
           toast({
               title: 'Program Added',
               description: `${data.name} has been added to your programs.`,
