@@ -73,11 +73,11 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-10">
+        <div className="lg:col-span-6">
           <TodaySchedule />
         </div>
-        <div>
+        <div className="lg:col-span-4">
           <HabitTracker />
         </div>
       </div>
