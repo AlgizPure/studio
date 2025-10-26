@@ -24,7 +24,7 @@ export function DailySchedule({ exercises, habits }: DailyScheduleProps) {
   return (
     <Card className="glass">
       <CardHeader>
-        <CardTitle className="font-headline">Weekly Schedule</CardTitle>
+        <CardTitle className="font-headline">Exercises</CardTitle>
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible defaultValue={today} className="w-full">
