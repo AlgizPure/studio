@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from "lucide-react";
 
 export type Exercise = {
@@ -7,6 +8,7 @@ export type Exercise = {
   description: string;
   image: string;
   custom?: boolean;
+  time?: string;
 };
 
 export type Workout = {
