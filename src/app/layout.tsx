@@ -7,6 +7,7 @@ import { Sidebar } from '@/components/sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { FirebaseClientProvider } from '@/firebase';
 import { ThemeProvider } from '@/components/theme-provider';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 export const metadata: Metadata = {
   title: 'Zenith Trainer',
@@ -35,6 +36,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <FirebaseClientProvider>
+            <FirebaseErrorListener />
             <SidebarProvider>
               <Sidebar />
               <div className="flex flex-col flex-1 md:pl-[3rem]">

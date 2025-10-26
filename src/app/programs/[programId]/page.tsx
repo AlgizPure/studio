@@ -16,20 +16,20 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
     () => (user ? doc(firestore, `users/${user.uid}/programs/${params.programId}`) : null),
     [user, firestore, params.programId]
   );
-  const { data: program, loading: programLoading } = useDoc<Program>(programRef);
+  const { data: program, isLoading: programLoading } = useDoc<Program>(programRef);
 
   const workoutsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/workouts`) : null),
     [user, firestore]
   );
-  const { data: allWorkouts, loading: allWorkoutsLoading } = useCollection<Workout>(workoutsQuery);
+  const { data: allWorkouts, isLoading: allWorkoutsLoading } = useCollection<Workout>(workoutsQuery);
   
   const programWorkoutsPath = user ? `users/${user.uid}/programs/${params.programId}/workouts` : null;
   const programWorkoutsQuery = useMemoFirebase(
     () => (programWorkoutsPath ? collection(firestore, programWorkoutsPath) : null),
     [firestore, programWorkoutsPath]
   );
-  const { data: programWorkouts, loading: programWorkoutsLoading } = useCollection<ProgramWorkout>(programWorkoutsQuery);
+  const { data: programWorkouts, isLoading: programWorkoutsLoading } = useCollection<ProgramWorkout>(programWorkoutsQuery);
 
 
   const handleAddWorkout = async (newWorkoutData: Omit<Workout, 'id'>) => {

@@ -174,6 +174,7 @@ export function HabitTracker() {
             onAdd={handleAddCategory}
             onUpdate={handleUpdateCategory}
             onDelete={handleDeleteCategory}
+            categoryType="Habit"
         />
     </>
   );
