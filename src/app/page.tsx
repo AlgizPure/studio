@@ -9,10 +9,10 @@ import { PlanTomorrowDialog } from '@/components/plan-tomorrow-dialog';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { startOfWeek, isWithinInterval, isToday } from 'date-fns';
+import { startOfWeek, isWithinInterval, isToday, isYesterday, formatISO, subDays } from 'date-fns';
 import type { Exercise, Habit } from '@/lib/types';
-import { useMemo } from 'react';
-import { collection } from 'firebase/firestore';
+import { useMemo, useEffect } from 'react';
+import { collection, doc, updateDoc } from 'firebase/firestore';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -59,6 +59,46 @@ export default function DashboardPage() {
       habitCompletion: habitCompletionPercentage,
     }
   }, [exercises, habits]);
+
+  const anyActivityCompletedToday = useMemo(() => {
+    const habitCompleted = (habits || []).some(h => h.completed);
+    const workoutCompleted = (exercises || []).some(ex => ex.lastCompleted && isToday(new Date(ex.lastCompleted)));
+    return habitCompleted || workoutCompleted;
+  }, [habits, exercises]);
+
+  useEffect(() => {
+    if (!user || !firestore || !anyActivityCompletedToday) return;
+
+    const userRef = doc(firestore, `users/${user.uid}`);
+    const todayStr = formatISO(new Date(), { representation: 'date' });
+
+    if (user.lastActiveDate === todayStr) return; // Already updated for today
+
+    if (user.lastActiveDate && isYesterday(new Date(user.lastActiveDate))) {
+      // Last active was yesterday, increment streak
+      updateDoc(userRef, {
+        currentStreak: (user.currentStreak || 0) + 1,
+        lastActiveDate: todayStr,
+      });
+    } else {
+      // Last active was not yesterday, reset streak to 1
+       updateDoc(userRef, {
+        currentStreak: 1,
+        lastActiveDate: todayStr,
+      });
+    }
+  }, [anyActivityCompletedToday, user, firestore]);
+  
+  useEffect(() => {
+    if (!user || !firestore) return;
+    // Check if streak should be reset
+    if (user.lastActiveDate && !isToday(new Date(user.lastActiveDate)) && !isYesterday(new Date(user.lastActiveDate))) {
+      if ((user.currentStreak || 0) > 0) {
+        const userRef = doc(firestore, `users/${user.uid}`);
+        updateDoc(userRef, { currentStreak: 0 });
+      }
+    }
+  }, [user, firestore]);
 
   if (isUserLoading) {
     return (
@@ -149,9 +189,9 @@ export default function DashboardPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0 Days</div>
+            <div className="text-2xl font-bold">{user.currentStreak || 0} Days</div>
             <p className="text-xs text-muted-foreground">
-              Let's get started!
+              Keep it going!
             </p>
           </CardContent>
         </Card>

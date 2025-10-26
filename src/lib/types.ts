@@ -63,9 +63,12 @@ export type DailySchedule = {
 }
 
 export type UserProfile = {
-  name: string;
+  id: string;
   email: string;
-  avatarUrl: string;
+  displayName?: string | null;
+  photoURL?: string | null;
+  currentStreak?: number;
+  lastActiveDate?: string | null; // ISO date string (e.g., '2024-07-26')
 };
 
 export type Program = {

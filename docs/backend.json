@@ -23,6 +23,14 @@
           "type": "string",
           "description": "URL of the user's profile picture.",
           "format": "uri"
+        },
+        "currentStreak": {
+          "type": "number",
+          "description": "The user's current consecutive day activity streak."
+        },
+        "lastActiveDate": {
+          "type": "string",
+          "description": "The last date the user completed an activity, in ISO format (YYYY-MM-DD)."
         }
       },
       "required": ["id", "email"]
@@ -323,5 +331,3 @@
     "reasoning": "The Firestore data structure is designed to support Zenith Trainer's core features. It segregates user-specific data under a `/users/{userId}` path to secure it with path-based ownership rules (`request.auth.uid == userId`). Shared data, like program templates, resides in a global collection. This structure ensures data privacy, scalability, and efficient querying by keeping related data nested (e.g., workouts within a program) while allowing for flexible relationships (e.g., shared exercises)."
   }
 }
-
-    
