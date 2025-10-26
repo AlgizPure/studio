@@ -42,13 +42,13 @@ export function PlanTomorrowDialog() {
             Select your exercises and habits for tomorrow. Your changes will be saved automatically.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 max-h-[60vh] overflow-y-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
           <div className="flex flex-col space-y-4">
             <div className="flex justify-between items-center pr-4">
               <h3 className="font-semibold text-lg">Exercises</h3>
                <AddExerciseDialog onExerciseAdd={handleAddExercise} />
             </div>
-            <ScrollArea className="h-full pr-4">
+            <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">
                 {exercises.map((exercise) => (
                   <div key={exercise.id} className="flex items-center p-3 rounded-lg border bg-card/50">
@@ -71,7 +71,7 @@ export function PlanTomorrowDialog() {
                     New
                 </Button>
             </div>
-            <ScrollArea className="h-full pr-4">
+            <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">
                 {habits.map((habit) => (
                    <div key={habit.id} className="flex items-center p-3 rounded-lg border bg-card/50">
