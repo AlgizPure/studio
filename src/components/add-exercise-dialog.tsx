@@ -1,6 +1,6 @@
 
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,15 +20,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Exercise } from '@/lib/types';
+import type { Exercise, Day } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { Checkbox } from './ui/checkbox';
+
+const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const exerciseSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   category: z.enum(['Strength', 'Cardio', 'Bio-dynamics', 'TRX', 'Bodyweight', 'Static']),
   description: z.string().min(1, 'Description is required'),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format.').optional(),
+  days: z.array(z.string()).optional(),
 });
 
 type ExerciseFormValues = z.infer<typeof exerciseSchema>;
@@ -50,6 +53,7 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
     resolver: zodResolver(exerciseSchema),
     defaultValues: {
       time: '00:00',
+      days: [],
     },
   });
 
@@ -60,6 +64,7 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
       category: data.category,
       description: data.description,
       time: data.time,
+      days: data.days as Day[],
       image: 'https://picsum.photos/seed/custom/600/400',
       custom: true,
     };
@@ -188,6 +193,40 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
                 />
              </div>
              {errors.time && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.time.message}</p>}
+
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">
+                Days
+              </Label>
+              <div className="col-span-3 grid grid-cols-3 gap-2">
+                <Controller
+                  name="days"
+                  control={control}
+                  render={({ field }) => (
+                    <>
+                      {daysOfWeek.map((day) => (
+                        <div key={day} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`day-${day}`}
+                            checked={field.value?.includes(day)}
+                            onCheckedChange={(checked) => {
+                              const currentDays = field.value || [];
+                              if (checked) {
+                                field.onChange([...currentDays, day]);
+                              } else {
+                                field.onChange(currentDays.filter(d => d !== day));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`day-${day}`} className="text-sm font-normal">{day.substring(0,3)}</Label>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                />
+              </div>
+            </div>
+             {errors.days && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.days.message}</p>}
           </div>
           <DialogFooter>
             <Button type="submit">Save Exercise</Button>

@@ -14,17 +14,21 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Habit } from '@/lib/types';
+import type { Habit, Day } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { BrainCircuit } from 'lucide-react';
+import { Checkbox } from './ui/checkbox';
+
+const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const habitSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   goal: z.string().optional(),
+  days: z.array(z.string()).optional(),
 });
 
 type HabitFormValues = z.infer<typeof habitSchema>;
@@ -40,9 +44,13 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<HabitFormValues>({
     resolver: zodResolver(habitSchema),
+    defaultValues: {
+      days: [],
+    },
   });
 
   const onSubmit: SubmitHandler<HabitFormValues> = (data) => {
@@ -52,6 +60,7 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
       goal: data.goal,
       icon: BrainCircuit, // Default icon for now
       completed: false,
+      days: data.days as Day[],
     };
     onHabitAdd(newHabit);
     toast({
@@ -94,6 +103,40 @@ export function AddHabitDialog({ onHabitAdd }: AddHabitDialogProps) {
               <Input id="goal" placeholder="e.g., 8 glasses" className="col-span-3" {...register('goal')} />
             </div>
             {errors.goal && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.goal.message}</p>}
+
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">
+                Days
+              </Label>
+              <div className="col-span-3 grid grid-cols-3 gap-2">
+                <Controller
+                  name="days"
+                  control={control}
+                  render={({ field }) => (
+                    <>
+                      {daysOfWeek.map((day) => (
+                        <div key={day} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`day-habit-${day}`}
+                            checked={field.value?.includes(day)}
+                            onCheckedChange={(checked) => {
+                              const currentDays = field.value || [];
+                              if (checked) {
+                                field.onChange([...currentDays, day]);
+                              } else {
+                                field.onChange(currentDays.filter(d => d !== day));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`day-habit-${day}`} className="text-sm font-normal">{day.substring(0,3)}</Label>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                />
+              </div>
+            </div>
+             {errors.days && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.days.message}</p>}
 
           </div>
           <DialogFooter>

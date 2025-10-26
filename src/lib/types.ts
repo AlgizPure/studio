@@ -1,6 +1,8 @@
 
 import type { LucideIcon } from "lucide-react";
 
+export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+
 export type Exercise = {
   id: string;
   name: string;
@@ -9,6 +11,7 @@ export type Exercise = {
   image: string;
   custom?: boolean;
   time?: string;
+  days?: Day[];
 };
 
 export type Workout = {
@@ -23,9 +26,8 @@ export type Habit = {
   icon: LucideIcon;
   goal?: string; // e.g., "3 lessons", "10 minutes"
   completed: boolean;
+  days?: Day[];
 };
-
-export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 
 export type ScheduleItem = {
   id: string;
