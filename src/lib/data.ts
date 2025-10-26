@@ -1,4 +1,4 @@
-import type { Exercise, Workout, Habit, DailySchedule, UserProfile, Day } from './types';
+import type { Exercise, Workout, Habit, DailySchedule, UserProfile, Day, HabitCategory } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 import { Dumbbell, HeartPulse, BrainCircuit, BookOpen, Wind, CheckCircle } from 'lucide-react';
 
@@ -55,10 +55,16 @@ export const workouts: Workout[] = [
   }
 ];
 
+export const habitCategories: HabitCategory[] = [
+    { id: 'cat1', name: 'Mindfulness' },
+    { id: 'cat2', name: 'Learning' },
+    { id: 'cat3', name: 'Fitness' },
+];
+
 export const habits: Habit[] = [
-    { id: 'h1', name: 'Mindfulness', goal: '15 minutes', completed: true, pomodoro: { cycles: 1 } },
-    { id: 'h2', name: 'Study Lessons', goal: '2 lessons', completed: false, pomodoro: { cycles: 2 } },
-    { id: 'h3', name: 'Morning Run', goal: '8 km', completed: true },
+    { id: 'h1', name: 'Meditation', categoryId: 'cat1', goal: '15 minutes', completed: true, pomodoro: { cycles: 1 } },
+    { id: 'h2', name: 'Study Lessons', categoryId: 'cat2', goal: '2 lessons', completed: false, pomodoro: { cycles: 2 } },
+    { id: 'h3', name: 'Morning Run', categoryId: 'cat3', goal: '8 km', completed: true },
 ];
 
 const scheduleTemplate: { [key in Day]: DailySchedule } = {

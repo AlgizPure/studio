@@ -1,6 +1,6 @@
 
 'use client';
-import { weeklySchedule } from '@/lib/data';
+import { weeklySchedule, habitCategories } from '@/lib/data';
 import {
   Accordion,
   AccordionContent,
@@ -25,6 +25,7 @@ interface DailyScheduleProps {
     onHabitUpdate: (habit: Habit) => void;
     onExerciseDelete: (exerciseId: string) => void;
     onHabitDelete: (habitId: string) => void;
+    openManageCategories: () => void;
 }
 
 export function DailySchedule({ 
@@ -35,7 +36,8 @@ export function DailySchedule({
     onExerciseUpdate,
     onHabitUpdate,
     onExerciseDelete,
-    onHabitDelete
+    onHabitDelete,
+    openManageCategories
 }: DailyScheduleProps) {
   const today = new Date().toLocaleString('en-US', { weekday: 'long' });
 
@@ -55,7 +57,7 @@ export function DailySchedule({
               ...items.map(item => ({...item, isDefault: true})), // Mark default items
               ...dailyHabits.map(habit => ({
                 id: habit.id,
-                time: 'Habit',
+                time: habitCategories.find(c => c.id === habit.categoryId)?.name || 'Habit',
                 activityType: 'Habit',
                 activityName: habit.name,
                 duration: habit.goal || '',
@@ -116,6 +118,7 @@ export function DailySchedule({
                                         onHabitDelete={onHabitDelete}
                                         onHabitAdd={onHabitAdd}
                                         trigger={editTrigger}
+                                        openManageCategories={openManageCategories}
                                     />
                                 ) : (
                                     <AddExerciseDialog
@@ -154,5 +157,3 @@ const Dumbbell = ({ className }: { className?: string }) => (
     <path d="m2.5 2.5 1.4 1.4" />
   </svg>
 );
-
-    

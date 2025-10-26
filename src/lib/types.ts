@@ -19,9 +19,15 @@ export type Workout = {
   exercises: { exerciseId: string; sets?: number; reps?: number; duration?: string }[];
 };
 
+export type HabitCategory = {
+  id: string;
+  name: string;
+}
+
 export type Habit = {
   id: string;
   name: string;
+  categoryId: string;
   goal?: string; // e.g., "3 lessons", "10 minutes"
   completed: boolean;
   days?: Day[];

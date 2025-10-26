@@ -18,9 +18,10 @@ interface HabitListProps {
     onHabitUpdate: (habit: Habit) => void;
     onHabitDelete: (habitId: string) => void;
     setHabits: React.Dispatch<React.SetStateAction<Habit[]>>;
+    openManageCategories: () => void;
 }
 
-export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, setHabits }: HabitListProps) {
+export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, setHabits, openManageCategories }: HabitListProps) {
   
   const handleToggleCompletion = (habitId: string) => {
     setHabits(prevHabits =>
@@ -49,6 +50,7 @@ export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, se
                 <Pencil className="h-4 w-4" />
             </Button>
         }
+        openManageCategories={openManageCategories}
     />
   );
 
@@ -57,7 +59,7 @@ export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, se
     <Card className="glass">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-headline">Habits</CardTitle>
-        <AddHabitDialog onHabitAdd={onHabitAdd} />
+        <AddHabitDialog onHabitAdd={onHabitAdd} openManageCategories={openManageCategories}/>
       </CardHeader>
       <CardContent className="space-y-2 max-h-[70vh] overflow-y-auto">
         {sortedHabits.map((habit) => {
@@ -100,5 +102,3 @@ export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, se
     </Card>
   );
 }
-
-    

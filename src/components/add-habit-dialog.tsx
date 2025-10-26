@@ -17,17 +17,20 @@ import { Plus } from 'lucide-react';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Habit, Day } from '@/lib/types';
+import type { Habit, Day, HabitCategory } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from './ui/select';
+import { habitCategories as initialHabitCategories } from '@/lib/data';
 
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const habitSchema = z.object({
   name: z.string().min(1, 'Name is required'),
+  categoryId: z.string().min(1, 'Category is required'),
   goal: z.string().optional(),
   days: z.array(z.string()).optional(),
   usePomodoro: z.boolean().default(false).optional(),
@@ -41,12 +44,14 @@ interface AddHabitDialogProps {
   onHabitDelete?: (habitId: string) => void;
   habitToEdit?: Habit;
   trigger?: React.ReactNode;
+  openManageCategories: () => void;
 }
 
-export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habitToEdit, trigger }: AddHabitDialogProps) {
+export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habitToEdit, trigger, openManageCategories }: AddHabitDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const isEditMode = !!habitToEdit;
+  const [habitCategories, setHabitCategories] = useState<HabitCategory[]>(initialHabitCategories);
 
   const {
     register,
@@ -63,12 +68,14 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
   useEffect(() => {
     if (isEditMode && habitToEdit) {
       setValue('name', habitToEdit.name);
+      setValue('categoryId', habitToEdit.categoryId);
       setValue('goal', habitToEdit.goal);
       setValue('days', habitToEdit.days || []);
       setValue('usePomodoro', !!habitToEdit.pomodoro);
     } else {
         reset({
             name: '',
+            categoryId: '',
             goal: '',
             days: [],
             usePomodoro: false,
@@ -92,6 +99,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
         const updatedHabit: Habit = {
             ...habitToEdit,
             name: data.name,
+            categoryId: data.categoryId,
             goal: data.goal,
             days: data.days as Day[],
             pomodoro: data.usePomodoro ? (habitToEdit.pomodoro || { cycles: 1 }) : undefined,
@@ -105,6 +113,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
         const newHabit: Habit = {
           id: `hb${Date.now()}`,
           name: data.name,
+          categoryId: data.categoryId,
           goal: data.goal,
           completed: false,
           days: data.days as Day[],
@@ -131,6 +140,15 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
         setIsOpen(false);
     }
   };
+
+  const handleCategoryChange = (value: string) => {
+    if (value === 'add-new') {
+        setIsOpen(false);
+        openManageCategories();
+    } else {
+        setValue('categoryId', value, { shouldValidate: true });
+    }
+  }
 
   const dialogTrigger = trigger ? trigger : (
     <Button variant="ghost" size="sm">
@@ -162,6 +180,36 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
             {errors.name && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.name.message}</p>}
             
             <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="categoryId" className="text-right">
+                    Category
+                </Label>
+                <Controller
+                    name="categoryId"
+                    control={control}
+                    render={({ field }) => (
+                        <Select onValueChange={handleCategoryChange} value={field.value}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectLabel>Habit Categories</SelectLabel>
+                                    <SelectItem value="add-new">
+                                        <span className="flex items-center"><Plus className="mr-2 h-4 w-4" /> Add new category...</span>
+                                    </SelectItem>
+                                    {habitCategories.map(cat => (
+                                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
+            </div>
+            {errors.categoryId && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.categoryId.message}</p>}
+
+
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="goal" className="text-right">
                 Goal
               </Label>
@@ -177,7 +225,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
                 name="days"
                 control={control}
                 render={({ field }) => (
-                  <div className="col-span-3 grid grid-cols-3 gap-y-2">
+                  <div className="col-span-3 grid grid-cols-3 items-center gap-y-2">
                     {daysOfWeek.map((day) => (
                       <div key={day} className="flex items-center gap-2">
                         <Checkbox
@@ -254,5 +302,3 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
     </Dialog>
   );
 }
-
-    

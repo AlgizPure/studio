@@ -1,7 +1,7 @@
 
 'use client';
 
-import { habits } from '@/lib/data';
+import { habits as initialHabits } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { AddHabitDialog } from './add-habit-dialog';
 
 export function HabitTracker() {
-  const [trackedHabits, setTrackedHabits] = useState<Habit[]>(habits);
+  const [trackedHabits, setTrackedHabits] = useState<Habit[]>(initialHabits);
   const [today, setToday] = useState<Day | null>(null);
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export function HabitTracker() {
     <Card className="glass">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-headline">Daily Habits</CardTitle>
-        <AddHabitDialog onHabitAdd={handleAddHabit} />
+        <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => {}}/>
       </CardHeader>
       <CardContent className="space-y-2">
         {sortedHabits.map((habit) => {

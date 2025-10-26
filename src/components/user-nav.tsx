@@ -13,11 +13,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { userProfile } from '@/lib/data';
-import { CreditCard, LogOut, Settings, User, Timer } from 'lucide-react';
+import { CreditCard, LogOut, Settings, User, Timer, FolderKanban } from 'lucide-react';
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog';
+import { ManageCategoriesDialog } from './manage-categories-dialog';
 
 export function UserNav() {
   const [isPomodoroSettingsOpen, setIsPomodoroSettingsOpen] = useState(false);
+  const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
 
   return (
     <>
@@ -53,6 +55,10 @@ export function UserNav() {
               <Timer className="mr-2 h-4 w-4" />
               <span>Pomodoro Settings</span>
             </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setIsManageCategoriesOpen(true)}>
+              <FolderKanban className="mr-2 h-4 w-4" />
+              <span>Manage Categories</span>
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
@@ -66,6 +72,7 @@ export function UserNav() {
         </DropdownMenuContent>
       </DropdownMenu>
       <PomodoroSettingsDialog open={isPomodoroSettingsOpen} onOpenChange={setIsPomodoroSettingsOpen} />
+      <ManageCategoriesDialog open={isManageCategoriesOpen} onOpenChange={setIsManageCategoriesOpen} />
     </>
   );
 }
