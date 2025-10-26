@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from './ui/checkbox';
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const hoursOfDay = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 
 const exerciseSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -160,17 +161,24 @@ export function AddExerciseDialog({ onExerciseAdd }: AddExerciseDialogProps) {
                   control={control}
                   render={({ field }) => (
                     <div className="col-span-3 grid grid-cols-2 gap-2">
-                      <Input
-                        type="number"
-                        min="0"
-                        max="23"
+                       <Select
                         defaultValue={field.value?.split(':')[0] || '00'}
-                        onChange={(e) => {
-                          const hour = e.target.value.padStart(2, '0');
+                        onValueChange={(hour) => {
                           const minute = field.value?.split(':')[1] || '00';
                           field.onChange(`${hour}:${minute}`);
                         }}
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                           {hoursOfDay.map((hour) => (
+                            <SelectItem key={hour} value={hour}>
+                              {hour}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Select
                         defaultValue={field.value?.split(':')[1] || '00'}
                         onValueChange={(minute) => {
