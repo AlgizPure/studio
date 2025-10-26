@@ -1,6 +1,4 @@
-// A flow to suggest a balanced exercise schedule based on user preferences, schedule, and goals.
 'use server';
-
 /**
  * @fileOverview An AI-powered routine optimizer flow.
  *

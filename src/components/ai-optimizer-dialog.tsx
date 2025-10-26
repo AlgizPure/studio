@@ -20,7 +20,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { getOptimizedRoutine } from '@/app/actions';
 import { ScrollArea } from './ui/scroll-area';
-import { Separator } from './ui/separator';
 
 const schema = z.object({
   goals: z.string().min(10, 'Please describe your goals in more detail.'),
