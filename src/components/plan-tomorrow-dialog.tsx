@@ -82,9 +82,6 @@ export function PlanTomorrowDialog() {
             </ScrollArea>
           </div>
         </div>
-        <DialogFooter>
-          <Button type="submit">Save Plan</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
