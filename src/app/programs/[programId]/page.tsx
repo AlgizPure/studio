@@ -11,10 +11,11 @@ import { errorEmitter, FirestorePermissionError } from '@/firebase';
 export default function ProgramDetailPage({ params }: { params: { programId: string } }) {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { programId } = params;
 
   const programRef = useMemoFirebase(
-    () => (user ? doc(firestore, `users/${user.uid}/programs/${params.programId}`) : null),
-    [user, firestore, params.programId]
+    () => (user ? doc(firestore, `users/${user.uid}/programs/${programId}`) : null),
+    [user, firestore, programId]
   );
   const { data: program, isLoading: programLoading } = useDoc<Program>(programRef);
 
@@ -24,7 +25,7 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
   );
   const { data: allWorkouts, isLoading: allWorkoutsLoading } = useCollection<Workout>(workoutsQuery);
   
-  const programWorkoutsPath = user ? `users/${user.uid}/programs/${params.programId}/workouts` : null;
+  const programWorkoutsPath = user ? `users/${user.uid}/programs/${programId}/workouts` : null;
   const programWorkoutsQuery = useMemoFirebase(
     () => (programWorkoutsPath ? collection(firestore, programWorkoutsPath) : null),
     [firestore, programWorkoutsPath]
