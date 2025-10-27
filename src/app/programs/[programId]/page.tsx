@@ -7,11 +7,13 @@ import type { Program, Workout, ProgramWorkout } from '@/lib/types';
 import { AddWorkoutToProgramDialog } from '@/components/add-workout-to-program-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
+import React from 'react';
 
 export default function ProgramDetailPage({ params }: { params: { programId: string } }) {
+  const resolvedParams = React.use(params);
+  const { programId } = resolvedParams;
   const { user } = useUser();
   const firestore = useFirestore();
-  const { programId } = params;
 
   const programRef = useMemoFirebase(
     () => (user ? doc(firestore, `users/${user.uid}/programs/${programId}`) : null),
