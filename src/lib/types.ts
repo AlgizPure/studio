@@ -45,7 +45,7 @@ export type Workout = {
   name:string;
   description: string;
   level?: number;
-  exercises: { exerciseId: string; sets?: number; reps?: number; duration?: string }[];
+  exercises?: { exerciseId: string; sets?: number; reps?: number; duration?: string }[];
 };
 
 export type HabitCategory = {
@@ -98,9 +98,7 @@ export type Program = {
     authorId?: string;
 }
 
-export type ProgramWorkout = {
-    id: string;
-    workoutId: string;
+export interface ProgramWorkout extends Workout {
     schedule: {
         type: 'repeating' | 'fixed_times';
         days?: Day[];

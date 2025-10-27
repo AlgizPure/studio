@@ -21,60 +21,35 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
   );
   const { data: program, isLoading: programLoading } = useDoc<Program>(programRef);
 
-  const workoutsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/workouts`) : null),
-    [user, firestore]
-  );
-  const { data: allWorkouts, isLoading: allWorkoutsLoading } = useCollection<Workout>(workoutsQuery);
-  
-  const programWorkoutsPath = user ? `users/${user.uid}/programs/${programId}/workouts` : null;
   const programWorkoutsQuery = useMemoFirebase(
-    () => (programWorkoutsPath ? collection(firestore, programWorkoutsPath) : null),
-    [firestore, programWorkoutsPath]
+    () => (user ? collection(firestore, `users/${user.uid}/programs/${programId}/workouts`) : null),
+    [user, firestore, programId]
   );
   const { data: programWorkouts, isLoading: programWorkoutsLoading } = useCollection<ProgramWorkout>(programWorkoutsQuery);
 
 
   const handleAddWorkout = async (newWorkoutData: Omit<Workout, 'id'>) => {
-    if (!user || !firestore || !programWorkoutsPath) return;
+    if (!user || !firestore || !programWorkoutsQuery) return;
 
-    const batch = writeBatch(firestore);
-
-    // 1. Create the workout document in the user's top-level workouts collection
-    const newWorkoutRef = doc(collection(firestore, `users/${user.uid}/workouts`));
-    batch.set(newWorkoutRef, newWorkoutData);
-
-    // 2. Create the ProgramWorkout document to link it to the program
-    const newProgramWorkoutRef = doc(collection(firestore, programWorkoutsPath));
+    // A workout in a program is just a ProgramWorkout
     const newProgramWorkout: Omit<ProgramWorkout, 'id'> = {
-      workoutId: newWorkoutRef.id,
-      schedule: {
+      ...newWorkoutData,
+       schedule: {
         type: 'repeating',
         days: ['Monday', 'Wednesday', 'Friday'],
       },
-    };
-    batch.set(newProgramWorkoutRef, newProgramWorkout);
+    }
 
-    batch.commit().catch(async (err) => {
+    addDoc(programWorkoutsQuery, newProgramWorkout).catch(async (err) => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
-        operation: 'write',
-        path: `batch write to users/${user.uid}/workouts and ${programWorkoutsPath}`,
-        requestResourceData: { workout: newWorkoutData, link: newProgramWorkout },
+        operation: 'create',
+        path: programWorkoutsQuery.path,
+        requestResourceData: newProgramWorkout,
       }));
     });
   };
-  
-  const programWorkoutDetails = programWorkouts?.map(pw => {
-      const workout = allWorkouts?.find(w => w.id === pw.workoutId);
-      return {
-          ...pw,
-          workoutName: workout?.name || 'Loading workout...',
-          workoutDescription: workout?.description || ''
-      }
-  });
 
-
-  const isLoading = programLoading || programWorkoutsLoading || allWorkoutsLoading;
+  const isLoading = programLoading || programWorkoutsLoading;
 
   if (isLoading) {
     return (
@@ -110,16 +85,16 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
         </div>
         
         <>
-            {(programWorkoutDetails || []).length === 0 ? (
+            {(programWorkouts || []).length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                     <p>This program doesn't have any workouts yet.</p>
                     {!program.isTemplate && <p className="text-sm">Click "Add Workout" to get started.</p>}
                 </div>
             ) : (
                 <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                    {programWorkoutDetails?.map(pw => (
+                    {programWorkouts?.map(pw => (
                         <div key={pw.id} className="p-4 border rounded-lg shadow-sm glass">
-                            <h3 className="font-semibold">{pw.workoutName}</h3>
+                            <h3 className="font-semibold">{pw.name}</h3>
                             <p className="text-sm text-muted-foreground">{pw.schedule.days?.join(', ')}</p>
                         </div>
                     ))}
