@@ -13,6 +13,8 @@ import { startOfWeek, isWithinInterval, isToday, isYesterday, formatISO, subDays
 import type { Exercise, Habit } from '@/lib/types';
 import { useMemo, useEffect } from 'react';
 import { collection, doc, updateDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -81,16 +83,32 @@ export default function DashboardPage() {
 
     if (user.lastActiveDate && isYesterday(new Date(user.lastActiveDate))) {
       // Last active was yesterday, increment streak
-      updateDoc(userRef, {
+      const updatedData = {
         currentStreak: (user.currentStreak || 0) + 1,
         lastActiveDate: todayStr,
+      };
+      updateDoc(userRef, updatedData).catch(async (err) => {
+        const permissionError = new FirestorePermissionError({
+          operation: 'update',
+          path: userRef.path,
+          requestResourceData: updatedData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
     } else {
       // Last active was not yesterday, reset streak to 1
-       updateDoc(userRef, {
+       const updatedData = {
         currentStreak: 1,
         lastActiveDate: todayStr,
-      });
+      };
+       updateDoc(userRef, updatedData).catch(async (err) => {
+        const permissionError = new FirestorePermissionError({
+          operation: 'update',
+          path: userRef.path,
+          requestResourceData: updatedData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+       });
     }
   }, [anyActivityCompletedToday, user, firestore]);
   
@@ -100,7 +118,15 @@ export default function DashboardPage() {
     if (user.lastActiveDate && !isToday(new Date(user.lastActiveDate)) && !isYesterday(new Date(user.lastActiveDate))) {
       if ((user.currentStreak || 0) > 0) {
         const userRef = doc(firestore, `users/${user.uid}`);
-        updateDoc(userRef, { currentStreak: 0 });
+        const updatedData = { currentStreak: 0 };
+        updateDoc(userRef, updatedData).catch(async (err) => {
+          const permissionError = new FirestorePermissionError({
+            operation: 'update',
+            path: userRef.path,
+            requestResourceData: updatedData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
       }
     }
   }, [user, firestore]);

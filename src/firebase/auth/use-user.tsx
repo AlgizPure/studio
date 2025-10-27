@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { useAuth, useFirestore } from '../provider';
 import type { UserProfile } from '@/lib/types';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { errorEmitter } from '../error-emitter';
+import { FirestorePermissionError } from '../errors';
 
 export type AppUser = AuthUser & UserProfile;
 
@@ -47,7 +49,14 @@ export const useUser = () => {
                     currentStreak: 0,
                     lastActiveDate: null,
                 };
-                await setDoc(userRef, userProfileData);
+                setDoc(userRef, userProfileData).catch(async (err) => {
+                    const permissionError = new FirestorePermissionError({
+                      operation: 'create',
+                      path: userRef.path,
+                      requestResourceData: userProfileData,
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                });
                 console.log('[useUser] New user profile created.');
                 const mergedUser: AppUser = { ...authUser, ...userProfileData, id: authUser.uid };
                 setUser(mergedUser);

@@ -19,7 +19,8 @@ import type { Exercise, Habit, ExerciseCategory, HabitCategory, Day } from '@/li
 import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc } from 'firebase/firestore';
 import { addDays, format } from 'date-fns';
-import { errorEmitter, FirestorePermissionError } from '@/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 export function PlanTomorrowDialog() {
@@ -83,12 +84,13 @@ export function PlanTomorrowDialog() {
             : [...currentDays, tomorrow];
         
         const updatedData = { days: updatedDays };
-        updateDoc(exerciseDoc, updatedData).catch(err => {
-          errorEmitter.emit('permission-error', new FirestorePermissionError({
+        updateDoc(exerciseDoc, updatedData).catch(async (err) => {
+          const permissionError = new FirestorePermissionError({
             operation: 'update',
             path: exerciseDoc.path,
             requestResourceData: updatedData,
-          }));
+          });
+          errorEmitter.emit('permission-error', permissionError);
         });
     }
 
@@ -104,12 +106,13 @@ export function PlanTomorrowDialog() {
             : [...currentDays, tomorrow];
 
         const updatedData = { days: updatedDays };
-        updateDoc(habitDoc, updatedData).catch(err => {
-          errorEmitter.emit('permission-error', new FirestorePermissionError({
+        updateDoc(habitDoc, updatedData).catch(async (err) => {
+          const permissionError = new FirestorePermissionError({
             operation: 'update',
             path: habitDoc.path,
             requestResourceData: updatedData,
-          }));
+          });
+          errorEmitter.emit('permission-error', permissionError);
         });
     }
 

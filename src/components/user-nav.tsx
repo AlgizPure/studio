@@ -26,7 +26,8 @@ import { PomodoroSettingsDialog } from './pomodoro-settings-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { errorEmitter, FirestorePermissionError } from '@/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function UserNav() {
   const { user, isUserLoading } = useUser();
@@ -53,66 +54,72 @@ export function UserNav() {
   const handleAddHabitCategory = (name: string) => {
     if (!user || !firestore) return;
     const catCollection = collection(firestore, `users/${user.uid}/habitCategories`);
-    addDoc(catCollection, { name }).catch(err => {
-       errorEmitter.emit('permission-error', new FirestorePermissionError({
+    addDoc(catCollection, { name }).catch(async (err) => {
+       const permissionError = new FirestorePermissionError({
         operation: 'create',
         path: catCollection.path,
         requestResourceData: { name },
-      }));
+      });
+       errorEmitter.emit('permission-error', permissionError);
     });
   };
   const handleUpdateHabitCategory = (category: HabitCategory) => {
     if (!user || !firestore || !category.id) return;
     const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, category.id);
-    updateDoc(catDoc, { name: category.name }).catch(err => {
-       errorEmitter.emit('permission-error', new FirestorePermissionError({
+    updateDoc(catDoc, { name: category.name }).catch(async (err) => {
+       const permissionError = new FirestorePermissionError({
         operation: 'update',
         path: catDoc.path,
         requestResourceData: { name: category.name },
-      }));
+      });
+       errorEmitter.emit('permission-error', permissionError);
     });
   };
   const handleDeleteHabitCategory = (categoryId: string) => {
     if (!user || !firestore) return;
     const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, categoryId);
-    deleteDoc(catDoc).catch(err => {
-       errorEmitter.emit('permission-error', new FirestorePermissionError({
+    deleteDoc(catDoc).catch(async (err) => {
+       const permissionError = new FirestorePermissionError({
         operation: 'delete',
         path: catDoc.path,
-      }));
+      });
+       errorEmitter.emit('permission-error', permissionError);
     });
   };
   
   const handleAddExerciseCategory = (name: string) => {
     if (!user || !firestore) return;
     const catCollection = collection(firestore, `users/${user.uid}/exerciseCategories`);
-    addDoc(catCollection, { name }).catch(err => {
-       errorEmitter.emit('permission-error', new FirestorePermissionError({
+    addDoc(catCollection, { name }).catch(async (err) => {
+       const permissionError = new FirestorePermissionError({
         operation: 'create',
         path: catCollection.path,
         requestResourceData: { name },
-      }));
+      });
+       errorEmitter.emit('permission-error', permissionError);
     });
   };
   const handleUpdateExerciseCategory = (category: ExerciseCategory) => {
     if (!user || !firestore || !category.id) return;
     const catDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, category.id);
-    updateDoc(catDoc, { name: category.name }).catch(err => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
+    updateDoc(catDoc, { name: category.name }).catch(async (err) => {
+      const permissionError = new FirestorePermissionError({
         operation: 'update',
         path: catDoc.path,
         requestResourceData: { name: category.name },
-      }));
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
   };
   const handleDeleteExerciseCategory = (categoryId: string) => {
      if (!user || !firestore) return;
     const catDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId);
-    deleteDoc(catDoc).catch(err => {
-       errorEmitter.emit('permission-error', new FirestorePermissionError({
+    deleteDoc(catDoc).catch(async (err) => {
+       const permissionError = new FirestorePermissionError({
         operation: 'delete',
         path: catDoc.path,
-      }));
+      });
+       errorEmitter.emit('permission-error', permissionError);
     });
   };
 

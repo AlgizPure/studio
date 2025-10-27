@@ -9,7 +9,8 @@ import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebas
 import type { Exercise, Habit, Day, ExerciseLog } from '@/lib/types';
 import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { isToday, formatISO } from 'date-fns';
-import { errorEmitter, FirestorePermissionError } from '@/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 import { LogExerciseDialog } from './log-exercise-dialog';
 
 export function TodaySchedule() {
@@ -49,13 +50,14 @@ export function TodaySchedule() {
     console.log(`[today-schedule.tsx] Toggling habit '${habit.name}' to ${newCompletedStatus}`);
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
     const updatedData = { completed: newCompletedStatus };
-    updateDoc(habitDoc, updatedData).catch(err => {
+    updateDoc(habitDoc, updatedData).catch(async (err) => {
       console.error(`[today-schedule.tsx] Error toggling habit '${habit.name}':`, err);
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
+      const permissionError = new FirestorePermissionError({
         operation: 'update',
         path: habitDoc.path,
         requestResourceData: updatedData,
-      }));
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
   };
   
@@ -70,13 +72,14 @@ export function TodaySchedule() {
           lastCompleted: newLastCompleted,
       };
       
-      updateDoc(exerciseDoc, updatedData).catch(err => {
+      updateDoc(exerciseDoc, updatedData).catch(async (err) => {
         console.error(`[today-schedule.tsx] Error toggling exercise '${exercise.name}':`, err);
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
+        const permissionError = new FirestorePermissionError({
           operation: 'update',
           path: exerciseDoc.path,
           requestResourceData: updatedData,
-        }));
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
   };
 
@@ -92,22 +95,24 @@ export function TodaySchedule() {
       userId: user.uid,
       date: todayStr,
       values,
-    }).catch(err => {
+    }).catch(async (err) => {
        console.error(`[today-schedule.tsx] Error adding exercise log for '${exercise.name}':`, err);
-       errorEmitter.emit('permission-error', new FirestorePermissionError({
+       const permissionError = new FirestorePermissionError({
         operation: 'create',
         path: logsCollection.path,
         requestResourceData: { exerciseId: exercise.id, date: todayStr, values },
-      }));
+      });
+       errorEmitter.emit('permission-error', permissionError);
     });
 
-    updateDoc(exerciseDoc, { lastCompleted: new Date().toISOString() }).catch(err => {
+    updateDoc(exerciseDoc, { lastCompleted: new Date().toISOString() }).catch(async (err) => {
        console.error(`[today-schedule.tsx] Error updating lastCompleted for exercise '${exercise.name}':`, err);
-       errorEmitter.emit('permission-error', new FirestorePermissionError({
+       const permissionError = new FirestorePermissionError({
         operation: 'update',
         path: exerciseDoc.path,
         requestResourceData: { lastCompleted: new Date().toISOString() },
-      }));
+      });
+       errorEmitter.emit('permission-error', permissionError);
     });
   };
 

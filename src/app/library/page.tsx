@@ -9,9 +9,10 @@ import { AddExerciseDialog } from '@/components/add-exercise-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Exercise, ExerciseCategory } from '@/lib/types';
 import { ManageCategoriesDialog } from '@/components/manage-categories-dialog';
-import { useUser } from '@/firebase';
+import { useUser } from '@/firebase/auth/use-user';
 import { Skeleton } from '@/components/ui/skeleton';
-import { errorEmitter, FirestorePermissionError } from '@/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function LibraryPage() {
   const { user } = useUser();
@@ -37,13 +38,14 @@ export default function LibraryPage() {
     if (!user || !firestore) return;
     console.log('[library/page.tsx] handleAddExercise called with:', newExercise);
     const exercisesCollection = collection(firestore, `users/${user.uid}/exercises`);
-    addDoc(exercisesCollection, { ...newExercise, authorId: user.uid }).catch(err => {
+    addDoc(exercisesCollection, { ...newExercise, authorId: user.uid }).catch(async (err) => {
       console.error('[library/page.tsx] Error adding exercise:', err);
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
+      const permissionError = new FirestorePermissionError({
         operation: 'create',
         path: exercisesCollection.path,
         requestResourceData: newExercise,
-      }));
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
   };
   
@@ -52,13 +54,14 @@ export default function LibraryPage() {
     console.log('[library/page.tsx] handleUpdateExercise called for exercise ID:', exercise.id, 'with data:', exercise);
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
     const { id, ...exerciseData } = exercise;
-    updateDoc(exerciseDoc, exerciseData).catch(err => {
+    updateDoc(exerciseDoc, exerciseData).catch(async (err) => {
       console.error('[library/page.tsx] Error updating exercise:', err);
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
+      const permissionError = new FirestorePermissionError({
         operation: 'update',
         path: exerciseDoc.path,
         requestResourceData: exerciseData,
-      }));
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
   }
 
@@ -66,12 +69,13 @@ export default function LibraryPage() {
     if (!user || !firestore) return;
     console.log('[library/page.tsx] handleDeleteExercise called for exercise ID:', exerciseId);
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exerciseId);
-    deleteDoc(exerciseDoc).catch(err => {
+    deleteDoc(exerciseDoc).catch(async (err) => {
       console.error('[library/page.tsx] Error deleting exercise:', err);
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
+      const permissionError = new FirestorePermissionError({
         operation: 'delete',
         path: exerciseDoc.path,
-      }));
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
   }
 
@@ -79,13 +83,14 @@ export default function LibraryPage() {
     if (!user || !firestore) return;
     console.log('[library/page.tsx] handleAddCategory called with name:', name);
     const categoriesCollection = collection(firestore, `users/${user.uid}/exerciseCategories`);
-    addDoc(categoriesCollection, { name }).catch(err => {
+    addDoc(categoriesCollection, { name }).catch(async (err) => {
       console.error('[library/page.tsx] Error adding category:', err);
-       errorEmitter.emit('permission-error', new FirestorePermissionError({
+       const permissionError = new FirestorePermissionError({
         operation: 'create',
         path: categoriesCollection.path,
         requestResourceData: { name },
-      }));
+      });
+       errorEmitter.emit('permission-error', permissionError);
     });
   };
 
@@ -93,13 +98,14 @@ export default function LibraryPage() {
     if (!user || !firestore || !category.id) return;
     console.log('[library/page.tsx] handleUpdateCategory called for category ID:', category.id, 'with data:', category);
     const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, category.id);
-    updateDoc(categoryDoc, { name: category.name }).catch(err => {
+    updateDoc(categoryDoc, { name: category.name }).catch(async (err) => {
       console.error('[library/page.tsx] Error updating category:', err);
-       errorEmitter.emit('permission-error', new FirestorePermissionError({
+       const permissionError = new FirestorePermissionError({
         operation: 'update',
         path: categoryDoc.path,
         requestResourceData: { name: category.name },
-      }));
+      });
+       errorEmitter.emit('permission-error', permissionError);
     });
   };
 
@@ -107,12 +113,13 @@ export default function LibraryPage() {
     if (!user || !firestore) return;
     console.log('[library/page.tsx] handleDeleteCategory called for category ID:', categoryId);
     const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId);
-    deleteDoc(categoryDoc).catch(err => {
+    deleteDoc(categoryDoc).catch(async (err) => {
       console.error('[library/page.tsx] Error deleting category:', err);
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
+      const permissionError = new FirestorePermissionError({
         operation: 'delete',
         path: categoryDoc.path,
-      }));
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
   };
   

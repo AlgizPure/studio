@@ -6,7 +6,8 @@ import { AddProgramDialog } from '@/components/add-program-dialog';
 import { ProgramCard } from '@/components/program-card';
 import type { Program, Workout } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { errorEmitter, FirestorePermissionError } from '@/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { seedProgramTemplates } from '../actions';
@@ -41,13 +42,14 @@ export default function ProgramsPage() {
       authorId: user.uid,
       isTemplate: false,
     };
-    addDoc(programsCollection, dataToSave).catch(err => {
+    addDoc(programsCollection, dataToSave).catch(async (err) => {
       console.error('[programs/page.tsx] Error adding program:', err);
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
+      const permissionError = new FirestorePermissionError({
         operation: 'create',
         path: programsCollection.path,
         requestResourceData: dataToSave,
-      }));
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
   };
 
@@ -143,11 +145,12 @@ export default function ProgramsPage() {
       });
       // Optionally emit a permission error if that's the likely cause
       if (e.code === 'permission-denied') {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
+        const permissionError = new FirestorePermissionError({
             operation: 'write',
             path: `users/${user.uid}/programs`,
             requestResourceData: templateProgram,
-        }));
+        });
+        errorEmitter.emit('permission-error', permissionError);
       }
     }
   };
