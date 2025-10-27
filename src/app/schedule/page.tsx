@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { DailySchedule } from '@/components/daily-schedule';
 import { AddExerciseDialog } from '@/components/add-exercise-dialog';

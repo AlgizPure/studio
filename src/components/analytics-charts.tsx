@@ -2,7 +2,8 @@
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import type { Exercise, Habit, Day, ExerciseLog } from '@/lib/types';
 import { useMemo, useState, useEffect } from 'react';
 import { collection } from 'firebase/firestore';
@@ -28,19 +29,19 @@ export function AnalyticsCharts() {
     () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
     [user, firestore]
   );
-  const { data: exercises, loading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
+  const { data: exercises, isLoading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
 
   const habitsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
     [user, firestore]
   );
-  const { data: habits, loading: habitsLoading } = useCollection<Habit>(habitsQuery);
+  const { data: habits, isLoading: habitsLoading } = useCollection<Habit>(habitsQuery);
   
   const exerciseLogsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/exerciseLogs`) : null),
     [user, firestore]
   );
-  const { data: exerciseLogs, loading: logsLoading } = useCollection<ExerciseLog>(exerciseLogsQuery);
+  const { data: exerciseLogs, isLoading: logsLoading } = useCollection<ExerciseLog>(exerciseLogsQuery);
   
   // Set default selected exercise if not set
   useEffect(() => {

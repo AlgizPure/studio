@@ -1,6 +1,7 @@
 'use client';
 
-import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { collection, addDoc, query, where, writeBatch, doc, getDoc, getDocs } from 'firebase/firestore';
 import { AddProgramDialog } from '@/components/add-program-dialog';
 import { ProgramCard } from '@/components/program-card';

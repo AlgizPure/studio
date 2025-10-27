@@ -9,7 +9,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { AddHabitDialog } from './add-habit-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
-import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { doc, updateDoc, addDoc, deleteDoc, collection } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -23,13 +24,13 @@ export function HabitTracker() {
     () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
     [user, firestore]
   );
-  const { data: trackedHabits, loading: habitsLoading } = useCollection<Habit>(habitsQuery);
+  const { data: trackedHabits, isLoading: habitsLoading } = useCollection<Habit>(habitsQuery);
   
   const categoriesQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/habitCategories`) : null),
     [user, firestore]
   );
-  const { data: habitCategories, loading: categoriesLoading } = useCollection<HabitCategory>(categoriesQuery);
+  const { data: habitCategories, isLoading: categoriesLoading } = useCollection<HabitCategory>(categoriesQuery);
 
   const [today, setToday] = useState<Day | null>(null);
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);

@@ -5,16 +5,18 @@ import { Label } from '@/components/ui/label';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Dumbbell, Target } from 'lucide-react';
-import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import type { Exercise, Habit, Day, ExerciseLog } from '@/lib/types';
 import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { isToday, formatISO } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { LogExerciseDialog } from './log-exercise-dialog';
+import { Skeleton } from './ui/skeleton';
 
 export function TodaySchedule() {
-  const [today, setToday] = useState('');
+  const [today, setToday] = useState<Day | null>(null);
   const { user } = useUser();
   const firestore = useFirestore();
   
@@ -22,23 +24,23 @@ export function TodaySchedule() {
     () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
     [user, firestore]
   );
-  const { data: exercises, loading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
+  const { data: exercises, isLoading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
   
   const habitsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
     [user, firestore]
   );
-  const { data: habits, loading: habitsLoading } = useCollection<Habit>(habitsQuery);
+  const { data: habits, isLoading: habitsLoading } = useCollection<Habit>(habitsQuery);
   
   const exerciseLogsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/exerciseLogs`) : null),
     [user, firestore]
   );
-  const { data: exerciseLogs, loading: logsLoading } = useCollection<ExerciseLog>(exerciseLogsQuery);
+  const { data: exerciseLogs, isLoading: logsLoading } = useCollection<ExerciseLog>(exerciseLogsQuery);
 
 
   useEffect(() => {
-    const todayString = new Date().toLocaleString('en-US', { weekday: 'long' });
+    const todayString = new Date().toLocaleString('en-US', { weekday: 'long' }) as Day;
     setToday(todayString);
   }, []);
   
@@ -156,8 +158,10 @@ export function TodaySchedule() {
             <CardHeader>
                 <CardTitle>Today's Activities</CardTitle>
             </CardHeader>
-            <CardContent>
-                <p className="text-muted-foreground">Loading schedule...</p>
+            <CardContent className="space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
             </CardContent>
         </Card>
     );

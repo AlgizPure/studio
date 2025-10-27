@@ -2,7 +2,9 @@
 
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { useDoc, useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc } from '@/firebase/firestore/use-doc';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { collection, addDoc, doc } from 'firebase/firestore';
 import type { Program, Workout } from '@/lib/types';
 import { AddWorkoutToProgramDialog } from '@/components/add-workout-to-program-dialog';

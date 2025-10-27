@@ -1,15 +1,14 @@
 'use client';
 import { useState } from 'react';
-import { useCollection } from '@/firebase';
+import { useCollection } from '@/firebase/firestore/use-collection';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { useFirestore, useMemoFirebase } from '@/firebase';
+import { useFirestore, useMemoFirebase, useUser } from '@/firebase/provider';
 import { ExerciseCard } from '@/components/exercise-card';
 import { Input } from '@/components/ui/input';
 import { AddExerciseDialog } from '@/components/add-exercise-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Exercise, ExerciseCategory } from '@/lib/types';
 import { ManageCategoriesDialog } from '@/components/manage-categories-dialog';
-import { useUser } from '@/firebase/auth/use-user';
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';

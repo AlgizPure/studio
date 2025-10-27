@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { useAuth, useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useAuth, useUser } from '@/firebase/provider';
+import { useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { signOut } from '@/firebase/auth';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,7 +20,7 @@ import {
   DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import type { HabitCategory, ExerciseCategory } from '@/lib/types';
-import { useCollection } from '@/firebase';
+import { useCollection } from '@/firebase/firestore/use-collection';
 import { CreditCard, LogOut, Settings, User, Timer, FolderKanban, Dumbbell, LogIn } from 'lucide-react';
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
