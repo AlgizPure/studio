@@ -1,178 +1,96 @@
-/**
- * @fileoverview Firestore Security Rules for Zenith Trainer application.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model.  Each user has full control over their profile and associated data (workout plans, scheduled workouts, habit trackers, habit items). Exercises are publicly readable but not writable except for admin roles (not yet implemented).
- *
- * Data Structure:
- * - /users/{userId}: Stores user profile data.  This is the root for all user-specific data.
- * - /users/{userId}/workoutPlans/{workoutPlanId}: Stores workout plans owned by the user.
- * - /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId}: Stores scheduled workouts within a workout plan.
- * - /exercises/{exerciseId}: Stores publicly available exercise data.
- * - /users/{userId}/habitTrackers/{habitTrackerId}: Stores habit trackers for each user.
- * - /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId}: Stores individual habit items within a habit tracker.
- *
- * Key Security Decisions:
- * - Users can only access their own user profile and associated data.
- * - Listing all users is disallowed.
- * - Exercises are publicly readable.
- *
- * Denormalization for Authorization:
- * - WorkoutPlans, ScheduledWorkouts, HabitTrackers, and HabitItems all reside under the user's document and do not require external lookups for authorization.  The path itself establishes ownership.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Rule for user profiles. Only the owner can read/write their own profile.
-     * @path /users/{userId}
-     * @allow (create) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can create their profile if request.auth.uid == userId
-     * @deny (create) User 'OtherUserId' cannot create a profile with userId 'Pm5LHXZFyZVUIExGPkr9yPFDL152'
-     * @allow (get) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can get their profile
-     * @deny (get) User 'OtherUserId' cannot get user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' profile
-     * @allow (update) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can update their profile
-     * @deny (update) User 'OtherUserId' cannot update user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' profile
-     * @allow (delete) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can delete their profile
-     * @deny (delete) User 'OtherUserId' cannot delete user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' profile
-     * @principle Enforces document ownership for writes.
-     */
-    match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Rule for workout plans. Only the owner can read/write their own workout plans.
-     * @path /users/{userId}/workoutPlans/{workoutPlanId}
-     * @allow (create) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can create a workout plan under their profile.
-     * @deny (create) User 'OtherUserId' cannot create a workout plan under user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' profile.
-     * @allow (get) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can get their workout plan.
-     * @deny (get) User 'OtherUserId' cannot get user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' workout plan.
-     * @allow (update) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can update their workout plan.
-     * @deny (update) User 'OtherUserId' cannot update user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' workout plan.
-     * @allow (delete) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can delete their workout plan.
-     * @deny (delete) User 'OtherUserId' cannot delete user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' workout plan.
-     * @principle Enforces document ownership for writes and reads.
-     */
-    match /users/{userId}/workoutPlans/{workoutPlanId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Rule for scheduled workouts. Only the owner can read/write their own scheduled workouts.
-     * @path /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId}
-     * @allow (create) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can create a scheduled workout under their workout plan.
-     * @deny (create) User 'OtherUserId' cannot create a scheduled workout under user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' workout plan.
-     * @allow (get) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can get their scheduled workout.
-     * @deny (get) User 'OtherUserId' cannot get user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' scheduled workout.
-     * @allow (update) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can update their scheduled workout.
-     * @deny (update) User 'OtherUserId' cannot update user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' scheduled workout.
-     * @allow (delete) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can delete their scheduled workout.
-     * @deny (delete) User 'OtherUserId' cannot delete user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' scheduled workout.
-     * @principle Enforces document ownership for writes and reads.
-     */
-    match /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Rule for exercises.  All users can read exercises. Only admins can write (not yet implemented).
-     * @path /exercises/{exerciseId}
-     * @allow (get) Any user can get an exercise.
-     * @allow (list) Any user can list exercises.
-     * @deny (create) No user can create an exercise. // TODO: Add admin role check.
-     * @deny (update) No user can update an exercise. // TODO: Add admin role check.
-     * @deny (delete) No user can delete an exercise. // TODO: Add admin role check.
-     * @principle Public read, restricted write.
-     */
-    match /exercises/{exerciseId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false; // TODO: Add admin role check.
-      allow update: if false; // TODO: Add admin role check.
-      allow delete: if false; // TODO: Add admin role check.
-    }
-
-    /**
-     * @description Rule for habit trackers. Only the owner can read/write their own habit trackers.
-     * @path /users/{userId}/habitTrackers/{habitTrackerId}
-     * @allow (create) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can create a habit tracker under their profile.
-     * @deny (create) User 'OtherUserId' cannot create a habit tracker under user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' profile.
-     * @allow (get) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can get their habit tracker.
-     * @deny (get) User 'OtherUserId' cannot get user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' habit tracker.
-     * @allow (update) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can update their habit tracker.
-     * @deny (update) User 'OtherUserId' cannot update user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' habit tracker.
-     * @allow (delete) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can delete their habit tracker.
-     * @deny (delete) User 'OtherUserId' cannot delete user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' habit tracker.
-     * @principle Enforces document ownership for writes and reads.
-     */
-    match /users/{userId}/habitTrackers/{habitTrackerId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description Rule for habit items. Only the owner can read/write their own habit items.
-     * @path /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId}
-     * @allow (create) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can create a habit item under their habit tracker.
-     * @deny (create) User 'OtherUserId' cannot create a habit item under user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' habit tracker.
-     * @allow (get) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can get their habit item.
-     * @deny (get) User 'OtherUserId' cannot get user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' habit item.
-     * @allow (update) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can update their habit item.
-     * @deny (update) User 'OtherUserId' cannot update user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' habit item.
-     * @allow (delete) User 'Pm5LHXZFyZVUIExGPkr9yPFDL152' can delete their habit item.
-     * @deny (delete) User 'OtherUserId' cannot delete user 'Pm5LHXZFyZVUIExGPkr9yPFDL152' habit item.
-     * @principle Enforces document ownership for writes and reads.
-     */
-    match /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    // --- Helper Functions ---
-
-    /**
      * @description Checks if the user is signed in.
-     * @return {boolean} True if the user is signed in, false otherwise.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the user ID matches the authenticated user's ID.
-     * @param {string} userId The user ID to check.
-     * @return {boolean} True if the user ID matches, false otherwise.
+     * @description Checks if the authenticated user is the owner of the resource.
      */
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the user is the owner of the document and it exists.  Used for updates and deletes.
-     * @param {string} userId The user ID to check.
-     * @return {boolean} True if the user is the owner and the document exists.
+     * @description Checks if the authenticated user is the owner of the resource, and that the resource exists.
      */
     function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+        return (isOwner(userId) && exists(resource));
+    }
+
+    /**
+     * @description Root match for all documents.  No direct access allowed here.
+     */
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    /**
+     * @description Manages user profiles. Only the authenticated user can read/write their own profile.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Manages workout plans for a user.  Only the owner can read/write.
+     */
+    match /users/{userId}/workoutPlans/{workoutPlanId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Manages scheduled workouts within a workout plan. Only the owner can read/write.
+     */
+    match /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Manages exercises.  All users can read the exercises. Writes are disallowed.
+     */
+    match /exercises/{exerciseId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Manages habit trackers for a user.  Only the owner can read/write.
+     */
+    match /users/{userId}/habitTrackers/{habitTrackerId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Manages habit items within a habit tracker. Only the owner can read/write.
+     */
+    match /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
   }
 }
