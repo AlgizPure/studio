@@ -1,175 +1,25 @@
-/**
- * @fileoverview Firestore Security Rules for Zenith Trainer application.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model.  Each user has full control over their profile and associated data (workout plans, scheduled workouts, habit trackers, habit items).
- *
- * Data Structure:
- * - /users/{userId}: User profile data, serving as the root for user-owned data.
- * - /users/{userId}/workoutPlans/{workoutPlanId}: Workout plans for a specific user.
- * - /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId}: Scheduled workouts within a workout plan.
- * - /exercises/{exerciseId}: Publicly accessible exercise data.
- * - /users/{userId}/habitTrackers/{habitTrackerId}: Habit trackers for a specific user.
- * - /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId}: Individual habit items within a habit tracker.
- *
- * Key Security Decisions:
- * - User data is private and accessible only to the owning user.
- * - Public read access is granted to the `/exercises` collection, but write access is not permitted.
- * - All `list` operations on user-owned subcollections are allowed for the owning user.
- *
- * Denormalization for Authorization:
- * - The 'userId' field is denormalized into WorkoutPlan, ScheduledWorkout, HabitTracker, and HabitItem documents to enable simple owner checks without additional reads.
- */
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Enforces user-ownership for user profiles.
-     * @path /users/{userId}
-     * @allow (create) User with ID 'user123' can create their own profile.
-     * @allow (get) User with ID 'user123' can read their own profile.
-     * @allow (update) User with ID 'user123' can update their own profile.
-     * @allow (delete) User with ID 'user123' can delete their own profile.
-     * @deny (create) User with ID 'user456' cannot create a profile with ID 'user123'.
-     * @deny (get) User with ID 'user456' cannot read user profile 'user123'.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+    // Deny all reads and writes by default.
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    /**
-     * @description Enforces user-ownership for workout plans.
-     * @path /users/{userId}/workoutPlans/{workoutPlanId}
-     * @allow (create) User with ID 'user123' can create a workout plan under their profile.
-     * @allow (get) User with ID 'user123' can read a workout plan under their profile.
-     * @allow (update) User with ID 'user123' can update a workout plan under their profile.
-     * @allow (delete) User with ID 'user123' can delete a workout plan under their profile.
-     * @deny (create) User with ID 'user456' cannot create a workout plan under user 'user123's profile.
-     * @deny (get) User with ID 'user456' cannot read a workout plan under user 'user123's profile.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/workoutPlans/{workoutPlanId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+    // Allow users to read and write their own user profile data,
+    // and all documents and subcollections nested within it.
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    /**
-     * @description Enforces user-ownership for scheduled workouts.
-     * @path /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId}
-     * @allow (create) User with ID 'user123' can create a scheduled workout under their workout plan.
-     * @allow (get) User with ID 'user123' can read a scheduled workout under their workout plan.
-     * @allow (update) User with ID 'user123' can update a scheduled workout under their workout plan.
-     * @allow (delete) User with ID 'user123' can delete a scheduled workout under their workout plan.
-     * @deny (create) User with ID 'user456' cannot create a scheduled workout under user 'user123's workout plan.
-     * @deny (get) User with ID 'user456' cannot read a scheduled workout under user 'user123's workout plan.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+    // Allow any authenticated user to read from the top-level 'programs' collection
+    // where 'isTemplate' is true. This is for public templates.
+    match /programs/{programId} {
+      allow get: if request.auth != null && resource.data.isTemplate == true;
+      allow list: if request.auth != null;
     }
-
-    /**
-     * @description Allows public read access to exercises. Write access is not allowed.
-     * @path /exercises/{exerciseId}
-     * @allow (get) Any user can read any exercise.
-     * @allow (list) Any user can list exercises.
-     * @deny (create) No user can create an exercise.
-     * @deny (update) No user can update an exercise.
-     * @deny (delete) No user can delete an exercise.
-     * @principle Allows public read access but restricts write access.
-     */
-    match /exercises/{exerciseId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Enforces user-ownership for habit trackers.
-     * @path /users/{userId}/habitTrackers/{habitTrackerId}
-     * @allow (create) User with ID 'user123' can create a habit tracker under their profile.
-     * @allow (get) User with ID 'user123' can read a habit tracker under their profile.
-     * @allow (update) User with ID 'user123' can update a habit tracker under their profile.
-     * @allow (delete) User with ID 'user123' can delete a habit tracker under their profile.
-     * @deny (create) User with ID 'user456' cannot create a habit tracker under user 'user123's profile.
-     * @deny (get) User with ID 'user456' cannot read a habit tracker under user 'user123's profile.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/habitTrackers/{habitTrackerId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
-    }
-
-    /**
-     * @description Enforces user-ownership for habit items.
-     * @path /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId}
-     * @allow (create) User with ID 'user123' can create a habit item under their habit tracker.
-     * @allow (get) User with ID 'user123' can read a habit item under their habit tracker.
-     * @allow (update) User with ID 'user123' can update a habit item under their habit tracker.
-     * @allow (delete) User with ID 'user123' can delete a habit item under their habit tracker.
-     * @deny (create) User with ID 'user456' cannot create a habit item under user 'user123's habit tracker.
-     * @deny (get) User with ID 'user456' cannot read a habit item under user 'user123's habit tracker.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
-    }
-     /**
-      * @description Enforces user-ownership for exercises.
-      * @path /users/{userId}/exercises/{exerciseId}
-      */
-     match /users/{userId}/exercises/{exerciseId} {
-       function isOwner(userId) {
-         return request.auth.uid == userId;
-       }
-
-       allow get: if isOwner(userId);
-       allow list: if isOwner(userId);
-       allow create: if isOwner(userId);
-       allow update: if isOwner(userId);
-       allow delete: if isOwner(userId);
-     }
   }
 }
