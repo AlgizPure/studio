@@ -8,6 +8,9 @@ import { getFirestore } from 'firebase/firestore'
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
   if (!getApps().length) {
+    // If the config object is not fully populated, Firebase will try to initialize from the environment.
+    // This is the recommended way for App Hosting.
+    // As a fallback for local development, we use the config file.
     let firebaseApp;
     try {
       firebaseApp = initializeApp();
