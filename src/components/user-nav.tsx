@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useAuth, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { signOut } from '@/firebase/auth';
-import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -21,13 +20,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { HabitCategory, ExerciseCategory } from '@/lib/types';
 import { useCollection } from '@/firebase';
-import { CreditCard, LogOut, Settings, User, Timer, FolderKanban, Dumbbell, LogIn, Palette } from 'lucide-react';
+import { CreditCard, LogOut, Settings, User, Timer, FolderKanban, Dumbbell, LogIn } from 'lucide-react';
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+
 
 export function UserNav() {
   const { user, isUserLoading } = useUser();
@@ -51,75 +52,41 @@ export function UserNav() {
   const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
   const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);
 
-  const handleAddHabitCategory = (name: string) => {
+  const handleAddCategory = (type: 'Habit' | 'Exercise') => (name: string) => {
     if (!user || !firestore) return;
-    const catCollection = collection(firestore, `users/${user.uid}/habitCategories`);
-    addDoc(catCollection, { name }).catch(async (err) => {
-       const permissionError = new FirestorePermissionError({
+    const collectionName = type === 'Habit' ? 'habitCategories' : 'exerciseCategories';
+    const catCollection = collection(firestore, `users/${user.uid}/${collectionName}`);
+    addDoc(catCollection, { name }).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'create',
         path: catCollection.path,
         requestResourceData: { name },
-      });
-       errorEmitter.emit('permission-error', permissionError);
+      }));
     });
   };
-  const handleUpdateHabitCategory = (category: HabitCategory) => {
+
+  const handleUpdateCategory = (type: 'Habit' | 'Exercise') => (category: HabitCategory | ExerciseCategory) => {
     if (!user || !firestore || !category.id) return;
-    const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, category.id);
-    updateDoc(catDoc, { name: category.name }).catch(async (err) => {
-       const permissionError = new FirestorePermissionError({
+    const collectionName = type === 'Habit' ? 'habitCategories' : 'exerciseCategories';
+    const catDoc = doc(firestore, `users/${user.uid}/${collectionName}`, category.id);
+    updateDoc(catDoc, { name: category.name }).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'update',
         path: catDoc.path,
         requestResourceData: { name: category.name },
-      });
-       errorEmitter.emit('permission-error', permissionError);
+      }));
     });
   };
-  const handleDeleteHabitCategory = (categoryId: string) => {
+
+  const handleDeleteCategory = (type: 'Habit' | 'Exercise') => (categoryId: string) => {
     if (!user || !firestore) return;
-    const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, categoryId);
-    deleteDoc(catDoc).catch(async (err) => {
-       const permissionError = new FirestorePermissionError({
+    const collectionName = type === 'Habit' ? 'habitCategories' : 'exerciseCategories';
+    const catDoc = doc(firestore, `users/${user.uid}/${collectionName}`, categoryId);
+    deleteDoc(catDoc).catch(err => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'delete',
         path: catDoc.path,
-      });
-       errorEmitter.emit('permission-error', permissionError);
-    });
-  };
-  
-  const handleAddExerciseCategory = (name: string) => {
-    if (!user || !firestore) return;
-    const catCollection = collection(firestore, `users/${user.uid}/exerciseCategories`);
-    addDoc(catCollection, { name }).catch(async (err) => {
-       const permissionError = new FirestorePermissionError({
-        operation: 'create',
-        path: catCollection.path,
-        requestResourceData: { name },
-      });
-       errorEmitter.emit('permission-error', permissionError);
-    });
-  };
-  const handleUpdateExerciseCategory = (category: ExerciseCategory) => {
-    if (!user || !firestore || !category.id) return;
-    const catDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, category.id);
-    updateDoc(catDoc, { name: category.name }).catch(async (err) => {
-      const permissionError = new FirestorePermissionError({
-        operation: 'update',
-        path: catDoc.path,
-        requestResourceData: { name: category.name },
-      });
-      errorEmitter.emit('permission-error', permissionError);
-    });
-  };
-  const handleDeleteExerciseCategory = (categoryId: string) => {
-     if (!user || !firestore) return;
-    const catDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId);
-    deleteDoc(catDoc).catch(async (err) => {
-       const permissionError = new FirestorePermissionError({
-        operation: 'delete',
-        path: catDoc.path,
-      });
-       errorEmitter.emit('permission-error', permissionError);
+      }));
     });
   };
 
@@ -210,18 +177,18 @@ export function UserNav() {
         open={isManageHabitCategoriesOpen} 
         onOpenChange={setIsManageHabitCategoriesOpen}
         categories={habitCategories || []}
-        onAdd={handleAddHabitCategory}
-        onUpdate={handleUpdateHabitCategory}
-        onDelete={handleDeleteHabitCategory}
+        onAdd={handleAddCategory('Habit')}
+        onUpdate={handleUpdateCategory('Habit')}
+        onDelete={handleDeleteCategory('Habit')}
         categoryType="Habit"
       />
       <ManageCategoriesDialog 
         open={isManageExerciseCategoriesOpen} 
         onOpenChange={setIsManageExerciseCategoriesOpen}
         categories={exerciseCategories || []}
-        onAdd={handleAddExerciseCategory}
-        onUpdate={handleUpdateExerciseCategory}
-        onDelete={handleDeleteExerciseCategory}
+        onAdd={handleAddCategory('Exercise')}
+        onUpdate={handleUpdateCategory('Exercise')}
+        onDelete={handleDeleteCategory('Exercise')}
         categoryType="Exercise"
       />
     </>

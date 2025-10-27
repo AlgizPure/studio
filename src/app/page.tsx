@@ -7,14 +7,60 @@ import { HabitTracker } from '@/components/habit-tracker';
 import { AiOptimizerDialog } from '@/components/ai-optimizer-dialog';
 import { PlanTomorrowDialog } from '@/components/plan-tomorrow-dialog';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import type { AppUser } from '@/firebase/auth/use-user';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { startOfWeek, isWithinInterval, isToday, isYesterday, formatISO, subDays } from 'date-fns';
+import { startOfWeek, isWithinInterval, isToday, isYesterday, formatISO } from 'date-fns';
 import type { Exercise, Habit } from '@/lib/types';
 import { useMemo, useEffect } from 'react';
 import { collection, doc, updateDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+
+function updateStreak(user: AppUser, firestore: any, anyActivityCompletedToday: boolean) {
+    if (!user || !firestore) return;
+  
+    const userRef = doc(firestore, `users/${user.uid}`);
+    const todayStr = formatISO(new Date(), { representation: 'date' });
+  
+    // Logic to update streak
+    if (anyActivityCompletedToday) {
+      if (user.lastActiveDate !== todayStr) {
+        let newStreak = 1;
+        if (user.lastActiveDate && isYesterday(new Date(user.lastActiveDate))) {
+          newStreak = (user.currentStreak || 0) + 1;
+        }
+        const updatedData = {
+          currentStreak: newStreak,
+          lastActiveDate: todayStr,
+        };
+        updateDoc(userRef, updatedData).catch(err => {
+          const permissionError = new FirestorePermissionError({
+            operation: 'update',
+            path: userRef.path,
+            requestResourceData: updatedData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
+      }
+    } else {
+      // Logic to reset streak if needed
+      if (user.lastActiveDate && !isToday(new Date(user.lastActiveDate)) && !isYesterday(new Date(user.lastActiveDate))) {
+        if ((user.currentStreak || 0) > 0) {
+           const updatedData = { currentStreak: 0 };
+           updateDoc(userRef, updatedData).catch(err => {
+            const permissionError = new FirestorePermissionError({
+              operation: 'update',
+              path: userRef.path,
+              requestResourceData: updatedData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+           });
+        }
+      }
+    }
+}
+
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -74,62 +120,11 @@ export default function DashboardPage() {
   }, [habits, exercises]);
 
   useEffect(() => {
-    if (!user || !firestore || !anyActivityCompletedToday) return;
-
-    const userRef = doc(firestore, `users/${user.uid}`);
-    const todayStr = formatISO(new Date(), { representation: 'date' });
-
-    if (user.lastActiveDate === todayStr) return; // Already updated for today
-
-    if (user.lastActiveDate && isYesterday(new Date(user.lastActiveDate))) {
-      // Last active was yesterday, increment streak
-      const updatedData = {
-        currentStreak: (user.currentStreak || 0) + 1,
-        lastActiveDate: todayStr,
-      };
-      updateDoc(userRef, updatedData).catch(async (err) => {
-        const permissionError = new FirestorePermissionError({
-          operation: 'update',
-          path: userRef.path,
-          requestResourceData: updatedData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
-    } else {
-      // Last active was not yesterday, reset streak to 1
-       const updatedData = {
-        currentStreak: 1,
-        lastActiveDate: todayStr,
-      };
-       updateDoc(userRef, updatedData).catch(async (err) => {
-        const permissionError = new FirestorePermissionError({
-          operation: 'update',
-          path: userRef.path,
-          requestResourceData: updatedData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-       });
+    if (user && firestore) {
+      updateStreak(user, firestore, anyActivityCompletedToday);
     }
   }, [anyActivityCompletedToday, user, firestore]);
   
-  useEffect(() => {
-    if (!user || !firestore) return;
-    // Check if streak should be reset
-    if (user.lastActiveDate && !isToday(new Date(user.lastActiveDate)) && !isYesterday(new Date(user.lastActiveDate))) {
-      if ((user.currentStreak || 0) > 0) {
-        const userRef = doc(firestore, `users/${user.uid}`);
-        const updatedData = { currentStreak: 0 };
-        updateDoc(userRef, updatedData).catch(async (err) => {
-          const permissionError = new FirestorePermissionError({
-            operation: 'update',
-            path: userRef.path,
-            requestResourceData: updatedData,
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
-      }
-    }
-  }, [user, firestore]);
 
   if (isUserLoading) {
     return (

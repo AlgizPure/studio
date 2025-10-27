@@ -42,18 +42,21 @@ export const useUser = () => {
                     currentStreak: 0,
                     lastActiveDate: null,
                 };
-                setDoc(userRef, userProfileData).catch(async (err) => {
+                await setDoc(userRef, userProfileData).catch(async (err) => {
                     const permissionError = new FirestorePermissionError({
                       operation: 'create',
                       path: userRef.path,
                       requestResourceData: userProfileData,
                     });
                     errorEmitter.emit('permission-error', permissionError);
+                    // Re-throw to be caught by the outer catch block
+                    throw err;
                 });
                 const mergedUser: AppUser = { ...authUser, ...userProfileData, id: authUser.uid };
                 setUser(mergedUser);
             }
         } catch (error) {
+            console.error("Error fetching or creating user profile:", error);
             // Fallback to just the auth user if profile fails
             setUser(authUser as AppUser); 
         }

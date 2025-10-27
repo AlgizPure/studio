@@ -44,7 +44,7 @@ export function useDoc<T = any>(
   type StateDataType = WithId<T> | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
@@ -55,27 +55,20 @@ export function useDoc<T = any>(
       return;
     }
 
-    console.log(`[useDoc] Attaching listener to path: ${memoizedDocRef.path}`);
     setIsLoading(true);
-    setError(null);
-    // Optional: setData(null); // Clear previous data instantly
 
     const unsubscribe = onSnapshot(
       memoizedDocRef,
       (snapshot: DocumentSnapshot<DocumentData>) => {
         if (snapshot.exists()) {
-          console.log(`[useDoc] Received data for path: ${memoizedDocRef.path}`);
           setData({ ...(snapshot.data() as T), id: snapshot.id });
         } else {
-          // Document does not exist
-          console.warn(`[useDoc] Document does not exist at path: ${memoizedDocRef.path}`);
           setData(null);
         }
-        setError(null); // Clear any previous error on successful snapshot (even if doc doesn't exist)
+        setError(null);
         setIsLoading(false);
       },
-      (error: FirestoreError) => {
-        console.error(`[useDoc] Error on snapshot for path ${memoizedDocRef.path}:`, error);
+      (err: FirestoreError) => {
         const contextualError = new FirestorePermissionError({
           operation: 'get',
           path: memoizedDocRef.path,
@@ -85,16 +78,12 @@ export function useDoc<T = any>(
         setData(null)
         setIsLoading(false)
 
-        // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
       }
     );
 
-    return () => {
-      console.log(`[useDoc] Detaching listener from path: ${memoizedDocRef.path}`);
-      unsubscribe();
-    }
-  }, [memoizedDocRef]); // Re-run if the memoizedDocRef changes.
+    return () => unsubscribe();
+  }, [memoizedDocRef]);
 
   return { data, isLoading, error };
 }
