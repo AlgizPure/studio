@@ -2,107 +2,108 @@
  * @fileoverview Firestore Security Rules for Zenith Trainer application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model.  Each user has full control over their profile and associated data (workout plans, scheduled workouts, habit trackers, habit items). Public read access is granted only to the `/exercises` collection.
+ * This ruleset enforces a strict user-ownership model.  Each user has full control over their profile and associated data (workout plans, scheduled workouts, habit trackers, habit items). Exercises are publicly readable but not writable except for future admin users.
  *
  * Data Structure:
- * - /users/{userId}: Stores user profile information. This is the root for all user-owned data.
+ * - /users/{userId}: Stores user profile information. Root path for all user-owned data.
  * - /users/{userId}/workoutPlans/{workoutPlanId}: Stores workout plans created by the user.
  * - /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId}: Stores scheduled workouts within a workout plan.
- * - /exercises/{exerciseId}: Stores exercises available to all users.
+ * - /exercises/{exerciseId}: Stores exercises. Publicly readable.
  * - /users/{userId}/habitTrackers/{habitTrackerId}: Stores habit trackers for each user.
  * - /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId}: Stores individual habit items within a habit tracker.
  *
  * Key Security Decisions:
- * - User listing is explicitly disallowed.
+ * - User data is strictly segregated by UID.
+ * - Listing other user's collections is disallowed.
  * - Exercises are publicly readable.
- * - All other data is strictly user-owned.
  *
  * Denormalization for Authorization:
- * - User ID is denormalized into WorkoutPlan, ScheduledWorkout, HabitTracker, and HabitItem documents to simplify authorization checks and avoid costly `get()` calls.
+ * - WorkoutPlans, ScheduledWorkouts, HabitTrackers, and HabitItems are stored as subcollections of the user's document to simplify security rules and avoid complex `get()` calls. This allows for efficient path-based authorization.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is authenticated.
+     * @description Checks if the user is signed in.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the authenticated user ID matches the provided user ID.
+     * @description Checks if the requested user ID matches the authenticated user's ID.
+     * @param {string} userId - The user ID to compare against.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
-     * @description Checks if the authenticated user owns the existing document.
-     * @details This combines the ownership check with the existence check `(isOwner(userId) && resource != null)`.
+     * @description Checks if the user is the owner of the existing document.
+     * @param {string} userId - The user ID to compare against.
      */
     function isExistingOwner(userId) {
-        return isOwner(userId) && existsAfter(/databases/$(database)/documents/users/$(userId));
+        return isOwner(userId) && resource != null;
     }
 
     /**
-     * @description Enforces that a user can only create their own user document, and only read/write their own data.
+     * @description User profile information. Root path for all user-owned data.
      * @path /users/{userId}
-     * @allow (create) - User 'A' with UID 'A' can create /users/A.
-     * @allow (get, update, delete) - User 'A' with UID 'A' can read, update, or delete /users/A.
-     * @deny (create) - User 'A' with UID 'A' cannot create /users/B.
-     * @deny (get, update, delete) - User 'B' with UID 'B' cannot read, update, or delete /users/A.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) User with UID 'user123' creates their profile with id: 'user123'.
+     * @deny (create) User with UID 'user123' attempts to create a profile with id: 'user456'.
+     * @allow (get) User with UID 'user123' reads their own profile.
+     * @deny (get) User with UID 'user123' attempts to read profile of 'user456'.
+     * @principle Enforces document ownership for writes. Restricts access to a user's own data tree.
      */
     match /users/{userId} {
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId) && request.auth.uid == userId;
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Enforces that a user can only create, read, update, or delete their own workout plans.
+     * @description Stores workout plans created by the user. Includes denormalized 'userId' for authorization independence.
      * @path /users/{userId}/workoutPlans/{workoutPlanId}
-     * @allow (create) - User 'A' with UID 'A' can create /users/A/workoutPlans/WP1.
-     * @allow (get, list, update, delete) - User 'A' with UID 'A' can read, list, update, or delete /users/A/workoutPlans/WP1.
-     * @deny (create) - User 'A' with UID 'A' cannot create /users/B/workoutPlans/WP1.
-     * @deny (get, list, update, delete) - User 'B' with UID 'B' cannot read, list, update, or delete /users/A/workoutPlans/WP1.
-     * @principle Enforces document ownership for all operations, with userId consistency.
+     * @allow (create) User with UID 'user123' creates a workout plan under their user ID.
+     * @deny (create) User with UID 'user123' attempts to create a workout plan under user ID 'user456'.
+     * @allow (get) User with UID 'user123' reads their own workout plan.
+     * @deny (get) User with UID 'user123' attempts to read workout plan of 'user456'.
+     * @principle Enforces document ownership for writes. Restricts access to a user's own data tree.
      */
     match /users/{userId}/workoutPlans/{workoutPlanId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Enforces that a user can only create, read, update, or delete their own scheduled workouts.
+     * @description Stores scheduled workouts within a workout plan. Includes denormalized 'userId' for authorization independence.
      * @path /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId}
-     * @allow (create) - User 'A' with UID 'A' can create /users/A/workoutPlans/WP1/scheduledWorkouts/SW1.
-     * @allow (get, list, update, delete) - User 'A' with UID 'A' can read, list, update, or delete /users/A/workoutPlans/WP1/scheduledWorkouts/SW1.
-     * @deny (create) - User 'A' with UID 'A' cannot create /users/B/workoutPlans/WP1/scheduledWorkouts/SW1.
-     * @deny (get, list, update, or delete) - User 'B' with UID 'B' cannot read, list, update, or delete /users/A/workoutPlans/WP1/scheduledWorkouts/SW1.
-     * @principle Enforces document ownership for all operations, with userId consistency.
+     * @allow (create) User with UID 'user123' creates a scheduled workout under their workout plan.
+     * @deny (create) User with UID 'user123' attempts to create a scheduled workout under user ID 'user456'.
+     * @allow (get) User with UID 'user123' reads their own scheduled workout.
+     * @deny (get) User with UID 'user123' attempts to read scheduled workout of 'user456'.
+     * @principle Enforces document ownership for writes. Restricts access to a user's own data tree.
      */
     match /users/{userId}/workoutPlans/{workoutPlanId}/scheduledWorkouts/{scheduledWorkoutId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows any user to read exercises.  Only owners can create, update or delete exercises.
+     * @description Stores exercises. All users have read access.
      * @path /exercises/{exerciseId}
-     * @allow (get, list) - Any user can read /exercises/E1.
-     * @deny (create, update, delete) - No one can create, update, or delete /exercises/E1.
-     * @principle Allows public read access to exercises.
+     * @allow (get) Any user can read any exercise.
+     * @deny (create) No user can create a new exercise.
+     * @principle Public read access with restricted writes.
      */
     match /exercises/{exerciseId} {
       allow get: if true;
@@ -113,37 +114,37 @@ service cloud.firestore {
     }
 
     /**
-     * @description Enforces that a user can only create, read, update, or delete their own habit trackers.
+     * @description Stores habit trackers for each user. Includes denormalized 'userId' for authorization independence.
      * @path /users/{userId}/habitTrackers/{habitTrackerId}
-     * @allow (create) - User 'A' with UID 'A' can create /users/A/habitTrackers/HT1.
-     * @allow (get, list, update, delete) - User 'A' with UID 'A' can read, list, update, or delete /users/A/habitTrackers/HT1.
-     * @deny (create) - User 'A' with UID 'A' cannot create /users/B/habitTrackers/HT1.
-     * @deny (get, list, update, delete) - User 'B' with UID 'B' cannot read, list, update, or delete /users/A/habitTrackers/HT1.
-     * @principle Enforces document ownership for all operations, with userId consistency.
+     * @allow (create) User with UID 'user123' creates a habit tracker under their user ID.
+     * @deny (create) User with UID 'user123' attempts to create a habit tracker under user ID 'user456'.
+     * @allow (get) User with UID 'user123' reads their own habit tracker.
+     * @deny (get) User with UID 'user123' attempts to read habit tracker of 'user456'.
+     * @principle Enforces document ownership for writes. Restricts access to a user's own data tree.
      */
     match /users/{userId}/habitTrackers/{habitTrackerId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Enforces that a user can only create, read, update, or delete their own habit items.
+     * @description Stores individual habit items within a habit tracker. Includes denormalized 'userId' for authorization independence.
      * @path /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId}
-     * @allow (create) - User 'A' with UID 'A' can create /users/A/habitTrackers/HT1/habitItems/HI1.
-     * @allow (get, list, update, delete) - User 'A' with UID 'A' can read, list, update, or delete /users/A/habitTrackers/HT1/habitItems/HI1.
-     * @deny (create) - User 'A' with UID 'A' cannot create /users/B/habitTrackers/HT1/habitItems/HI1.
-     * @deny (get, list, update, delete) - User 'B' with UID 'B' cannot read, list, update, or delete /users/A/habitTrackers/HT1/habitItems/HI1.
-     * @principle Enforces document ownership for all operations, with userId consistency.
+     * @allow (create) User with UID 'user123' creates a habit item under their habit tracker.
+     * @deny (create) User with UID 'user123' attempts to create a habit item under user ID 'user456'.
+     * @allow (get) User with UID 'user123' reads their own habit item.
+     * @deny (get) User with UID 'user123' attempts to read habit item of 'user456'.
+     * @principle Enforces document ownership for writes. Restricts access to a user's own data tree.
      */
     match /users/{userId}/habitTrackers/{habitTrackerId}/habitItems/{habitItemId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
   }
 }
