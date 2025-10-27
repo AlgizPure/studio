@@ -36,10 +36,8 @@ export default function LibraryPage() {
 
   const handleAddExercise = (newExercise: Omit<Exercise, 'id' | 'authorId'>) => {
     if (!user || !firestore) return;
-    console.log('[library/page.tsx] handleAddExercise called with:', newExercise);
     const exercisesCollection = collection(firestore, `users/${user.uid}/exercises`);
     addDoc(exercisesCollection, { ...newExercise, authorId: user.uid }).catch(async (err) => {
-      console.error('[library/page.tsx] Error adding exercise:', err);
       const permissionError = new FirestorePermissionError({
         operation: 'create',
         path: exercisesCollection.path,
@@ -51,11 +49,9 @@ export default function LibraryPage() {
   
   const handleUpdateExercise = (exercise: Exercise) => {
     if (!user || !firestore || !exercise.id) return;
-    console.log('[library/page.tsx] handleUpdateExercise called for exercise ID:', exercise.id, 'with data:', exercise);
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
     const { id, ...exerciseData } = exercise;
     updateDoc(exerciseDoc, exerciseData).catch(async (err) => {
-      console.error('[library/page.tsx] Error updating exercise:', err);
       const permissionError = new FirestorePermissionError({
         operation: 'update',
         path: exerciseDoc.path,
@@ -67,10 +63,8 @@ export default function LibraryPage() {
 
   const handleDeleteExercise = (exerciseId: string) => {
     if (!user || !firestore) return;
-    console.log('[library/page.tsx] handleDeleteExercise called for exercise ID:', exerciseId);
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exerciseId);
     deleteDoc(exerciseDoc).catch(async (err) => {
-      console.error('[library/page.tsx] Error deleting exercise:', err);
       const permissionError = new FirestorePermissionError({
         operation: 'delete',
         path: exerciseDoc.path,
@@ -81,10 +75,8 @@ export default function LibraryPage() {
 
   const handleAddCategory = (name: string) => {
     if (!user || !firestore) return;
-    console.log('[library/page.tsx] handleAddCategory called with name:', name);
     const categoriesCollection = collection(firestore, `users/${user.uid}/exerciseCategories`);
     addDoc(categoriesCollection, { name }).catch(async (err) => {
-      console.error('[library/page.tsx] Error adding category:', err);
        const permissionError = new FirestorePermissionError({
         operation: 'create',
         path: categoriesCollection.path,
@@ -96,10 +88,8 @@ export default function LibraryPage() {
 
   const handleUpdateCategory = (category: ExerciseCategory) => {
     if (!user || !firestore || !category.id) return;
-    console.log('[library/page.tsx] handleUpdateCategory called for category ID:', category.id, 'with data:', category);
     const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, category.id);
     updateDoc(categoryDoc, { name: category.name }).catch(async (err) => {
-      console.error('[library/page.tsx] Error updating category:', err);
        const permissionError = new FirestorePermissionError({
         operation: 'update',
         path: categoryDoc.path,
@@ -111,10 +101,8 @@ export default function LibraryPage() {
 
   const handleDeleteCategory = (categoryId: string) => {
     if (!user || !firestore) return;
-    console.log('[library/page.tsx] handleDeleteCategory called for category ID:', categoryId);
     const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId);
     deleteDoc(categoryDoc).catch(async (err) => {
-      console.error('[library/page.tsx] Error deleting category:', err);
       const permissionError = new FirestorePermissionError({
         operation: 'delete',
         path: categoryDoc.path,
