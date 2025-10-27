@@ -11,6 +11,7 @@ import { errorEmitter, FirestorePermissionError } from '@/firebase';
 export default function ProgramDetailPage({ params }: { params: { programId: string } }) {
   const { user } = useUser();
   const firestore = useFirestore();
+  console.log(`[programs/${params.programId}/page.tsx] Rendering for program ID:`, params.programId);
 
   const programRef = useMemoFirebase(
     () => (user ? doc(firestore, `users/${user.uid}/programs/${params.programId}`) : null),
@@ -34,6 +35,7 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
 
   const handleAddWorkout = async (newWorkoutData: Omit<Workout, 'id'>) => {
     if (!user || !firestore || !programWorkoutsPath) return;
+    console.log(`[programs/${params.programId}/page.tsx] handleAddWorkout called with:`, newWorkoutData);
 
     try {
       const batch = writeBatch(firestore);
@@ -41,6 +43,8 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
       // 1. Create the workout document in the user's top-level workouts collection
       const newWorkoutRef = doc(collection(firestore, `users/${user.uid}/workouts`));
       batch.set(newWorkoutRef, newWorkoutData);
+      console.log(`[programs/${params.programId}/page.tsx] Batch: setting new workout at ${newWorkoutRef.path}`);
+
 
       // 2. Create the ProgramWorkout document to link it to the program
       const newProgramWorkoutRef = doc(collection(firestore, programWorkoutsPath));
@@ -52,10 +56,15 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
         },
       };
       batch.set(newProgramWorkoutRef, newProgramWorkout);
+      console.log(`[programs/${params.programId}/page.tsx] Batch: setting new program workout link at ${newProgramWorkoutRef.path}`);
+
 
       await batch.commit();
+      console.log(`[programs/${params.programId}/page.tsx] Batch commit successful.`);
+
 
     } catch (err) {
+      console.error(`[programs/${params.programId}/page.tsx] Error in handleAddWorkout:`, err);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'write',
         path: `batch write to users/${user.uid}/workouts and ${programWorkoutsPath}`,
@@ -75,6 +84,8 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
 
 
   const isLoading = programLoading || programWorkoutsLoading || allWorkoutsLoading;
+  console.log(`[programs/${params.programId}/page.tsx] Loading state:`, { programLoading, programWorkoutsLoading, allWorkoutsLoading });
+
 
   if (isLoading) {
     return (
@@ -93,8 +104,13 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
   }
 
   if (!program) {
+    console.warn(`[programs/${params.programId}/page.tsx] Program not found after loading.`);
     notFound();
   }
+  
+  console.log(`[programs/${params.programId}/page.tsx] Program data loaded:`, program);
+  console.log(`[programs/${params.programId}/page.tsx] Program workout details:`, programWorkoutDetails);
+
 
   return (
     <div className="space-y-8">

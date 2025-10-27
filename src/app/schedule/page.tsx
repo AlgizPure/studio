@@ -17,6 +17,7 @@ import { errorEmitter, FirestorePermissionError } from '@/firebase';
 export default function SchedulePage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  console.log('[schedule/page.tsx] Rendering SchedulePage.');
 
   // Data fetching from Firestore
   const exercisesQuery = useMemoFirebase(
@@ -48,13 +49,17 @@ export default function SchedulePage() {
   const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);
   
   const isLoading = exercisesLoading || habitsLoading || habitCatLoading || exerciseCatLoading;
+  console.log('[schedule/page.tsx] Loading state:', { exercisesLoading, habitsLoading, habitCatLoading, exerciseCatLoading });
+
 
   // Exercise CRUD
   const handleAddExercise = (exerciseData: Omit<Exercise, 'id' | 'authorId'>) => {
     if (!user || !firestore) return;
+    console.log('[schedule/page.tsx] handleAddExercise called with:', exerciseData);
     const exercisesCollection = collection(firestore, `users/${user.uid}/exercises`);
     const dataToSave = { ...exerciseData, authorId: user.uid };
     addDoc(exercisesCollection, dataToSave).catch(err => {
+      console.error('[schedule/page.tsx] Error adding exercise:', err);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'create',
         path: exercisesCollection.path,
@@ -65,9 +70,11 @@ export default function SchedulePage() {
 
   const handleUpdateExercise = (exercise: Exercise) => {
     if (!user || !firestore || !exercise.id) return;
+    console.log('[schedule/page.tsx] handleUpdateExercise called for exercise ID:', exercise.id, 'with data:', exercise);
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
     const { id, ...exerciseData } = exercise;
     updateDoc(exerciseDoc, exerciseData).catch(err => {
+      console.error('[schedule/page.tsx] Error updating exercise:', err);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'update',
         path: exerciseDoc.path,
@@ -78,8 +85,10 @@ export default function SchedulePage() {
 
   const handleDeleteExercise = (exerciseId: string) => {
     if (!user || !firestore) return;
+    console.log('[schedule/page.tsx] handleDeleteExercise called for exercise ID:', exerciseId);
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exerciseId);
     deleteDoc(exerciseDoc).catch(err => {
+      console.error('[schedule/page.tsx] Error deleting exercise:', err);
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'delete',
         path: exerciseDoc.path,
@@ -90,9 +99,11 @@ export default function SchedulePage() {
   // Habit CRUD
   const handleAddHabit = (habitData: Omit<Habit, 'id' | 'authorId'>) => {
     if (!user || !firestore) return;
+    console.log('[schedule/page.tsx] handleAddHabit called with:', habitData);
     const habitsCollection = collection(firestore, `users/${user.uid}/habits`);
     const dataToSave = { ...habitData, authorId: user.uid };
     addDoc(habitsCollection, dataToSave).catch(err => {
+      console.error('[schedule/page.tsx] Error adding habit:', err);
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'create',
         path: habitsCollection.path,
@@ -103,9 +114,11 @@ export default function SchedulePage() {
 
   const handleUpdateHabit = (habit: Habit) => {
      if (!user || !firestore || !habit.id) return;
+     console.log('[schedule/page.tsx] handleUpdateHabit called for habit ID:', habit.id, 'with data:', habit);
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
     const { id, ...habitData } = habit;
     updateDoc(habitDoc, habitData).catch(err => {
+      console.error('[schedule/page.tsx] Error updating habit:', err);
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'update',
         path: habitDoc.path,
@@ -116,8 +129,10 @@ export default function SchedulePage() {
 
   const handleDeleteHabit = (habitId: string) => {
     if (!user || !firestore) return;
+    console.log('[schedule/page.tsx] handleDeleteHabit called for habit ID:', habitId);
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habitId);
     deleteDoc(habitDoc).catch(err => {
+      console.error('[schedule/page.tsx] Error deleting habit:', err);
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'delete',
         path: habitDoc.path,
@@ -128,8 +143,10 @@ export default function SchedulePage() {
   // Category CRUD
   const handleAddHabitCategory = (name: string) => {
     if (!user || !firestore) return;
+    console.log('[schedule/page.tsx] handleAddHabitCategory called with name:', name);
     const catCollection = collection(firestore, `users/${user.uid}/habitCategories`);
     addDoc(catCollection, { name }).catch(err => {
+      console.error('[schedule/page.tsx] Error adding habit category:', err);
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'create',
         path: catCollection.path,
@@ -139,8 +156,10 @@ export default function SchedulePage() {
   };
   const handleUpdateHabitCategory = (category: HabitCategory) => {
     if (!user || !firestore || !category.id) return;
+    console.log('[schedule/page.tsx] handleUpdateHabitCategory called for category ID:', category.id, 'with data:', category);
     const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, category.id);
     updateDoc(catDoc, { name: category.name }).catch(err => {
+      console.error('[schedule/page.tsx] Error updating habit category:', err);
         errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'update',
         path: catDoc.path,
@@ -150,8 +169,10 @@ export default function SchedulePage() {
   };
   const handleDeleteHabitCategory = (categoryId: string) => {
     if (!user || !firestore) return;
+    console.log('[schedule/page.tsx] handleDeleteHabitCategory called for category ID:', categoryId);
     const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, categoryId);
     deleteDoc(catDoc).catch(err => {
+      console.error('[schedule/page.tsx] Error deleting habit category:', err);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'delete',
         path: catDoc.path
@@ -161,8 +182,10 @@ export default function SchedulePage() {
   
   const handleAddExerciseCategory = (name: string) => {
     if (!user || !firestore) return;
+    console.log('[schedule/page.tsx] handleAddExerciseCategory called with name:', name);
     const catCollection = collection(firestore, `users/${user.uid}/exerciseCategories`);
     addDoc(catCollection, { name }).catch(err => {
+      console.error('[schedule/page.tsx] Error adding exercise category:', err);
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'create',
         path: catCollection.path,
@@ -172,8 +195,10 @@ export default function SchedulePage() {
   };
   const handleUpdateExerciseCategory = (category: ExerciseCategory) => {
     if (!user || !firestore || !category.id) return;
+    console.log('[schedule/page.tsx] handleUpdateExerciseCategory called for category ID:', category.id, 'with data:', category);
     const catDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, category.id);
     updateDoc(catDoc, { name: category.name }).catch(err => {
+      console.error('[schedule/page.tsx] Error updating exercise category:', err);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'update',
         path: catDoc.path,
@@ -183,8 +208,10 @@ export default function SchedulePage() {
   };
   const handleDeleteExerciseCategory = (categoryId: string) => {
      if (!user || !firestore) return;
+     console.log('[schedule/page.tsx] handleDeleteExerciseCategory called for category ID:', categoryId);
     const catDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId);
     deleteDoc(catDoc).catch(err => {
+      console.error('[schedule/page.tsx] Error deleting exercise category:', err);
         errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'delete',
         path: catDoc.path,

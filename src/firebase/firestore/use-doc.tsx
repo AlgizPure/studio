@@ -55,6 +55,7 @@ export function useDoc<T = any>(
       return;
     }
 
+    console.log(`[useDoc] Attaching listener to path: ${memoizedDocRef.path}`);
     setIsLoading(true);
     setError(null);
     // Optional: setData(null); // Clear previous data instantly
@@ -63,15 +64,18 @@ export function useDoc<T = any>(
       memoizedDocRef,
       (snapshot: DocumentSnapshot<DocumentData>) => {
         if (snapshot.exists()) {
+          console.log(`[useDoc] Received data for path: ${memoizedDocRef.path}`);
           setData({ ...(snapshot.data() as T), id: snapshot.id });
         } else {
           // Document does not exist
+          console.warn(`[useDoc] Document does not exist at path: ${memoizedDocRef.path}`);
           setData(null);
         }
         setError(null); // Clear any previous error on successful snapshot (even if doc doesn't exist)
         setIsLoading(false);
       },
       (error: FirestoreError) => {
+        console.error(`[useDoc] Error on snapshot for path ${memoizedDocRef.path}:`, error);
         const contextualError = new FirestorePermissionError({
           operation: 'get',
           path: memoizedDocRef.path,
@@ -86,7 +90,10 @@ export function useDoc<T = any>(
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      console.log(`[useDoc] Detaching listener from path: ${memoizedDocRef.path}`);
+      unsubscribe();
+    }
   }, [memoizedDocRef]); // Re-run if the memoizedDocRef changes.
 
   return { data, isLoading, error };

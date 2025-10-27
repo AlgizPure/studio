@@ -72,14 +72,17 @@ export function AiOptimizerDialog() {
   });
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
+    console.log('[ai-optimizer-dialog.tsx] onSubmit called with form data:', data);
     setIsLoading(true);
     setSuggestion(null);
     const result = await getOptimizedRoutine(data);
     setIsLoading(false);
 
     if (result.success && result.data) {
+      console.log('[ai-optimizer-dialog.tsx] AI routine suggestion received:', result.data);
       setSuggestion(result.data);
     } else {
+      console.error('[ai-optimizer-dialog.tsx] Failed to get optimized routine:', result.error);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -95,8 +98,10 @@ export function AiOptimizerDialog() {
         title: 'Error',
         description: 'No schedule to apply or user not logged in.',
       });
+      console.error('[ai-optimizer-dialog.tsx] handleApplySchedule failed: No suggestion, user, or firestore.');
       return;
     }
+    console.log('[ai-optimizer-dialog.tsx] handleApplySchedule called.');
     setIsApplying(true);
     
     try {
@@ -105,6 +110,7 @@ export function AiOptimizerDialog() {
             ...(exercises || []).map(ex => ({...ex, type: 'Workout'})),
             ...(habits || []).map(h => ({...h, type: 'Habit'}))
         ];
+        console.log('[ai-optimizer-dialog.tsx] All user activities (exercises & habits):', allUserActivities);
 
         const activitiesToUpdate: { [key: string]: { days: string[], time?: string, type: 'Workout' | 'Habit' } } = {};
 
@@ -117,6 +123,8 @@ export function AiOptimizerDialog() {
                 activitiesToUpdate[item.activityName].time = item.time;
             }
         }
+        console.log('[ai-optimizer-dialog.tsx] Activities to update based on AI suggestion:', activitiesToUpdate);
+
         
         for (const activityName in activitiesToUpdate) {
             const details = activitiesToUpdate[activityName];
@@ -125,23 +133,26 @@ export function AiOptimizerDialog() {
             if (existingActivity && existingActivity.id) {
                 const collectionName = existingActivity.type === 'Workout' ? 'exercises' : 'habits';
                 const docRef = doc(firestore, `users/${user.uid}/${collectionName}`, existingActivity.id);
+                console.log(`[ai-optimizer-dialog.tsx] Preparing to update doc: ${docRef.path}`);
                 if (details.type === 'Workout') {
                     batch.update(docRef, { days: details.days, time: details.time });
                 } else {
                     batch.update(docRef, { days: details.days });
                 }
             } else {
-                console.log(`Activity "${activityName}" not found in user's library. Skipping.`);
+                console.log(`[ai-optimizer-dialog.tsx] Activity "${activityName}" not found in user's library. Skipping.`);
             }
         }
 
         await batch.commit();
+        console.log('[ai-optimizer-dialog.tsx] Batch commit successful.');
+
 
         toast({ title: "Schedule Applied!", description: "Your new schedule is now active."});
         handleOpenChange(false);
 
     } catch (error) {
-        console.error("Failed to apply schedule:", error);
+        console.error("[ai-optimizer-dialog.tsx] Failed to apply schedule:", error);
         toast({
             variant: 'destructive',
             title: 'Error Applying Schedule',
@@ -153,6 +164,7 @@ export function AiOptimizerDialog() {
   }
 
   const handleOpenChange = (open: boolean) => {
+    console.log('[ai-optimizer-dialog.tsx] Dialog open state changed to:', open);
     setIsOpen(open);
     if (!open) {
       reset();

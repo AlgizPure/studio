@@ -16,6 +16,7 @@ export function TodaySchedule() {
   const [today, setToday] = useState('');
   const { user } = useUser();
   const firestore = useFirestore();
+  console.log('[today-schedule.tsx] Rendering TodaySchedule component.');
   
   const exercisesQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
@@ -37,14 +38,19 @@ export function TodaySchedule() {
 
 
   useEffect(() => {
-    setToday(new Date().toLocaleString('en-US', { weekday: 'long' }));
+    const todayString = new Date().toLocaleString('en-US', { weekday: 'long' });
+    setToday(todayString);
+    console.log('[today-schedule.tsx] Set today to:', todayString);
   }, []);
   
   const handleHabitToggle = (habit: Habit) => {
     if (!user || !firestore || !habit.id) return;
+    const newCompletedStatus = !habit.completed;
+    console.log(`[today-schedule.tsx] Toggling habit '${habit.name}' to ${newCompletedStatus}`);
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
-    const updatedData = { completed: !habit.completed };
+    const updatedData = { completed: newCompletedStatus };
     updateDoc(habitDoc, updatedData).catch(err => {
+      console.error(`[today-schedule.tsx] Error toggling habit '${habit.name}':`, err);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'update',
         path: habitDoc.path,
@@ -55,13 +61,17 @@ export function TodaySchedule() {
   
   const handleExerciseToggle = (exercise: Exercise) => {
       if (!user || !firestore || !exercise.id) return;
-      const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
       const isCompletedToday = exercise.lastCompleted && isToday(new Date(exercise.lastCompleted));
+      const newLastCompleted = isCompletedToday ? null : new Date().toISOString();
+      console.log(`[today-schedule.tsx] Toggling exercise '${exercise.name}' completion. New lastCompleted:`, newLastCompleted);
+
+      const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
       const updatedData = {
-          lastCompleted: isCompletedToday ? null : new Date().toISOString(),
+          lastCompleted: newLastCompleted,
       };
       
       updateDoc(exerciseDoc, updatedData).catch(err => {
+        console.error(`[today-schedule.tsx] Error toggling exercise '${exercise.name}':`, err);
         errorEmitter.emit('permission-error', new FirestorePermissionError({
           operation: 'update',
           path: exerciseDoc.path,
@@ -72,6 +82,7 @@ export function TodaySchedule() {
 
   const handleLogExercise = (exercise: Exercise, values: { [key: string]: number }) => {
     if (!user || !firestore || !exercise.id) return;
+    console.log(`[today-schedule.tsx] Logging exercise '${exercise.name}' with values:`, values);
     const logsCollection = collection(firestore, `users/${user.uid}/exerciseLogs`);
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
     const todayStr = formatISO(new Date(), { representation: 'date' });
@@ -82,6 +93,7 @@ export function TodaySchedule() {
       date: todayStr,
       values,
     }).catch(err => {
+       console.error(`[today-schedule.tsx] Error adding exercise log for '${exercise.name}':`, err);
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'create',
         path: logsCollection.path,
@@ -90,6 +102,7 @@ export function TodaySchedule() {
     });
 
     updateDoc(exerciseDoc, { lastCompleted: new Date().toISOString() }).catch(err => {
+       console.error(`[today-schedule.tsx] Error updating lastCompleted for exercise '${exercise.name}':`, err);
        errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'update',
         path: exerciseDoc.path,
@@ -139,8 +152,11 @@ export function TodaySchedule() {
   });
 
   const isLoading = exercisesLoading || habitsLoading || logsLoading;
+  console.log('[today-schedule.tsx] Loading state:', { exercisesLoading, habitsLoading, logsLoading });
+
 
   if (isLoading || !today) {
+    console.log('[today-schedule.tsx] Is loading or today is not set, showing skeleton.');
     return (
         <Card className="glass">
             <CardHeader>
@@ -152,6 +168,9 @@ export function TodaySchedule() {
         </Card>
     );
   }
+  
+  console.log('[today-schedule.tsx] Today\'s items:', allItems);
+
 
   return (
     <Card className="glass">

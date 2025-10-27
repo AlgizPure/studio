@@ -18,6 +18,7 @@ export default function ProgramsPage() {
   const { toast } = useToast();
   const router = useRouter();
 
+  console.log('[programs/page.tsx] Rendering ProgramsPage.');
 
   const userProgramsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/programs`) : null),
@@ -33,6 +34,7 @@ export default function ProgramsPage() {
 
   const handleAddProgram = (newProgramData: Omit<Program, 'id' | 'authorId' | 'isTemplate'>) => {
     if (!user || !firestore) return;
+    console.log('[programs/page.tsx] handleAddProgram called with:', newProgramData);
     const programsCollection = collection(firestore, `users/${user.uid}/programs`);
     const dataToSave = {
       ...newProgramData,
@@ -40,6 +42,7 @@ export default function ProgramsPage() {
       isTemplate: false,
     };
     addDoc(programsCollection, dataToSave).catch(err => {
+      console.error('[programs/page.tsx] Error adding program:', err);
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'create',
         path: programsCollection.path,
@@ -57,8 +60,10 @@ export default function ProgramsPage() {
       });
       return;
     }
+    console.log('[programs/page.tsx] handleAddTemplate called for template:', templateProgram.name);
 
     try {
+        console.log(`[programs/page.tsx] 1. Getting template program doc: programs/${templateProgram.id}`);
         // 1. Get the template program
         const templateProgramRef = doc(firestore, `programs/${templateProgram.id}`);
         const templateProgramSnap = await getDoc(templateProgramRef);
@@ -69,10 +74,12 @@ export default function ProgramsPage() {
                 title: 'Error',
                 description: 'Failed to fetch the program template.',
             });
+            console.error('[programs/page.tsx] Template program not found in Firestore.');
             return;
         }
         const programData = templateProgramSnap.data() as Program;
         
+        console.log(`[programs/page.tsx] 2. Getting workouts from subcollection: programs/${templateProgram.id}/workouts`);
         // 2. Get the workouts from the template's subcollection
         const templateWorkoutsRef = collection(templateProgramRef, 'workouts');
         const templateWorkoutsSnap = await getDocs(templateWorkoutsRef);
@@ -83,7 +90,9 @@ export default function ProgramsPage() {
             workouts.push(workoutDoc.data() as Omit<Workout, 'id'>);
           });
         }
+        console.log(`[programs/page.tsx] Found ${workouts.length} workouts in template.`);
       
+        console.log("[programs/page.tsx] 3. Preparing batch write for user's collections.");
         // 3. Write all data to the user's collections in a batch
         const batch = writeBatch(firestore);
         
@@ -93,12 +102,16 @@ export default function ProgramsPage() {
             authorId: user.uid,
             isTemplate: false, // It's no longer a template for the user
         });
+        console.log(`[programs/page.tsx] Batch: setting new program at ${newProgramRef.path}`);
+
 
         if (workouts) {
             workouts.forEach(workout => {
                 // Create a new workout in the user's main workouts collection
                 const newWorkoutRef = doc(collection(firestore, `users/${user.uid}/workouts`));
                 batch.set(newWorkoutRef, workout);
+                console.log(`[programs/page.tsx] Batch: setting new workout at ${newWorkoutRef.path}`);
+
 
                 // Link this new workout to the user's new program
                 const programWorkoutRef = doc(collection(newProgramRef, 'workouts'));
@@ -106,10 +119,14 @@ export default function ProgramsPage() {
                     workoutId: newWorkoutRef.id,
                     schedule: { type: 'repeating', days: ['Monday'] } // Default schedule
                 });
+                console.log(`[programs/page.tsx] Batch: setting program workout link at ${programWorkoutRef.path}`);
+
             });
         }
 
         await batch.commit();
+        console.log(`[programs/page.tsx] Batch commit successful. Navigating to /programs/${newProgramRef.id}`);
+
 
         toast({
             title: 'Program Added!',
@@ -118,7 +135,7 @@ export default function ProgramsPage() {
         router.push(`/programs/${newProgramRef.id}`);
 
     } catch (e: any) {
-      console.error(e);
+      console.error('[programs/page.tsx] Error in handleAddTemplate:', e);
       toast({
         variant: 'destructive',
         title: 'Error Adding Program',
@@ -136,6 +153,7 @@ export default function ProgramsPage() {
   };
 
   const handleSeed = async () => {
+    console.log('[programs/page.tsx] handleSeed called.');
     const result = await seedProgramTemplates();
     if(result.success) {
       toast({ title: "Seeding Complete", description: result.message });
@@ -145,6 +163,7 @@ export default function ProgramsPage() {
   }
 
   const isLoading = userProgramsLoading || templateProgramsLoading;
+  console.log('[programs/page.tsx] Loading state:', { userProgramsLoading, templateProgramsLoading });
 
   return (
     <div className="space-y-6">
