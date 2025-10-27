@@ -4,7 +4,7 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { useDoc, useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, doc } from 'firebase/firestore';
-import type { Program, Workout, ProgramWorkout } from '@/lib/types';
+import type { Program, Workout } from '@/lib/types';
 import { AddWorkoutToProgramDialog } from '@/components/add-workout-to-program-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -21,34 +21,25 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
   );
   const { data: program, isLoading: programLoading } = useDoc<Program>(programRef);
 
-  const programWorkoutsQuery = useMemoFirebase(
+  const workoutsRef = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/programs/${programId}/workouts`) : null),
     [user, firestore, programId]
   );
-  const { data: programWorkouts, isLoading: programWorkoutsLoading } = useCollection<ProgramWorkout>(programWorkoutsQuery);
+  const { data: workouts, isLoading: workoutsLoading } = useCollection<Workout>(workoutsRef);
 
   const handleAddWorkout = async (newWorkoutData: Omit<Workout, 'id'>) => {
-    if (!user || !firestore || !programWorkoutsQuery) return;
+    if (!user || !firestore || !workoutsRef) return;
 
-    // A workout in a program is just a ProgramWorkout
-    const newProgramWorkout: Omit<ProgramWorkout, 'id'> = {
-      ...newWorkoutData,
-      schedule: {
-        type: 'repeating',
-        days: ['Monday', 'Wednesday', 'Friday'],
-      },
-    };
-
-    addDoc(programWorkoutsQuery, newProgramWorkout).catch(async (err) => {
+    addDoc(workoutsRef, newWorkoutData).catch(async (err) => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
         operation: 'create',
-        path: programWorkoutsQuery.path,
-        requestResourceData: newProgramWorkout,
+        path: workoutsRef.path,
+        requestResourceData: newWorkoutData,
       }));
     });
   };
 
-  const isLoading = programLoading || programWorkoutsLoading;
+  const isLoading = programLoading || workoutsLoading;
 
   if (isLoading) {
     return (
@@ -84,18 +75,18 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
         </div>
         
         <>
-          {(programWorkouts || []).length === 0 ? (
+          {(workouts || []).length === 0 ? (
             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
               <p>This program doesn't have any workouts yet.</p>
               {!program.isTemplate && <p className="text-sm">Click "Add Workout" to get started.</p>}
             </div>
           ) : (
             <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {programWorkouts?.map(pw => (
-                <div key={pw.id} className="p-4 border rounded-lg shadow-sm glass">
-                  <h3 className="font-semibold">{pw.name}</h3>
+              {(workouts || []).map(workout => (
+                <div key={workout.id} className="p-4 border rounded-lg shadow-sm glass">
+                  <h3 className="font-semibold">{workout.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {pw.schedule.days?.join(', ') || 'No schedule set'}
+                    {workout.description}
                   </p>
                 </div>
               ))}

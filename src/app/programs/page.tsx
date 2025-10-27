@@ -12,24 +12,30 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { seedProgramTemplates } from '../actions';
 import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
 
 export default function ProgramsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
+  const [isDev, setIsDev] = useState(false);
+
+  useEffect(() => {
+    setIsDev(process.env.NODE_ENV === 'development');
+  }, []);
 
   const userProgramsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/programs`) : null),
+    () => (user ? query(collection(firestore, `users/${user.uid}/programs`), where('isTemplate', '==', false)) : null),
     [user, firestore]
   );
-  const { data: userPrograms, loading: userProgramsLoading } = useCollection<Program>(userProgramsQuery);
+  const { data: userPrograms, isLoading: userProgramsLoading } = useCollection<Program>(userProgramsQuery);
 
   const templateProgramsQuery = useMemoFirebase(
-    () => (user && firestore ? query(collection(firestore, 'programs'), where('isTemplate', '==', true)) : null),
-    [user, firestore]
+    () => (firestore ? query(collection(firestore, 'programs'), where('isTemplate', '==', true)) : null),
+    [firestore]
   );
-  const { data: templatePrograms, loading: templateProgramsLoading } = useCollection<Program>(templateProgramsQuery);
+  const { data: templatePrograms, isLoading: templateProgramsLoading } = useCollection<Program>(templateProgramsQuery);
 
   const handleAddProgram = (newProgramData: Omit<Program, 'id' | 'authorId' | 'isTemplate'>) => {
     if (!user || !firestore) return;
@@ -71,15 +77,15 @@ export default function ProgramsPage() {
             });
             return;
         }
-        const programData = templateProgramSnap.data() as Program;
+        const { authorId, ...programDataToCopy } = templateProgramSnap.data() as Program;
         
         const templateWorkoutsRef = collection(templateProgramRef, 'workouts');
         const templateWorkoutsSnap = await getDocs(templateWorkoutsRef);
         
-        const workouts: Omit<Workout, 'id'>[] = [];
+        const workoutsToCopy: Omit<Workout, 'id'>[] = [];
         if (!templateWorkoutsSnap.empty) {
           templateWorkoutsSnap.forEach(workoutDoc => {
-            workouts.push(workoutDoc.data() as Omit<Workout, 'id'>);
+            workoutsToCopy.push(workoutDoc.data() as Omit<Workout, 'id'>);
           });
         }
       
@@ -87,25 +93,17 @@ export default function ProgramsPage() {
         
         const newProgramRef = doc(collection(firestore, `users/${user.uid}/programs`));
         const newProgramData = {
-            ...programData,
+            ...programDataToCopy,
             authorId: user.uid,
-            isTemplate: false, // It's no longer a template for the user
+            isTemplate: false,
         };
         batch.set(newProgramRef, newProgramData);
 
-        const workoutLinks: { workoutId: string, schedule: any }[] = [];
-        if (workouts) {
-            workouts.forEach(workout => {
-                const newWorkoutRef = doc(collection(firestore, `users/${user.uid}/workouts`));
+        if (workoutsToCopy.length > 0) {
+            const newWorkoutsColRef = collection(newProgramRef, 'workouts');
+            workoutsToCopy.forEach(workout => {
+                const newWorkoutRef = doc(newWorkoutsColRef);
                 batch.set(newWorkoutRef, workout);
-
-                const programWorkoutRef = doc(collection(newProgramRef, 'workouts'));
-                const linkData = {
-                    workoutId: newWorkoutRef.id,
-                    schedule: { type: 'repeating', days: ['Monday'] }
-                };
-                batch.set(programWorkoutRef, linkData);
-                workoutLinks.push(linkData);
             });
         }
 
@@ -113,9 +111,8 @@ export default function ProgramsPage() {
             errorEmitter.emit('permission-error', new FirestorePermissionError({
                 path: `users/${user.uid}/programs`,
                 operation: 'write',
-                requestResourceData: { program: newProgramData, workouts, workoutLinks }
+                requestResourceData: { program: newProgramData, workouts: workoutsToCopy }
             }));
-            // Re-throw to be caught by outer catch block
             throw e;
         });
 
@@ -132,7 +129,6 @@ export default function ProgramsPage() {
         title: 'Error Adding Program',
         description: e.message || 'Could not copy the program template.',
       });
-      // Error is already emitted in the inner catch if it's a permission error
     }
   };
 
@@ -159,7 +155,7 @@ export default function ProgramsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-           {process.env.NODE_ENV === 'development' && (
+           {isDev && (
             <Button variant="outline" onClick={handleSeed}>Seed Templates</Button>
            )}
           <AddProgramDialog onProgramAdd={handleAddProgram} />

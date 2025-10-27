@@ -98,11 +98,12 @@ export type Program = {
     authorId?: string;
 }
 
-export interface ProgramWorkout extends Workout {
-    schedule: {
-        type: 'repeating' | 'fixed_times';
-        days?: Day[];
-        repeatCount?: number;
-        endDate?: string;
-    }
+export interface ProgramWorkout extends Omit<Workout, 'id'> {
+  id: string;
+  schedule: {
+      type: 'repeating' | 'fixed_times';
+      days?: Day[];
+      repeatCount?: number;
+      endDate?: string;
+  }
 }
