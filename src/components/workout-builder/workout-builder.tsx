@@ -8,7 +8,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus } from 'lucide-react';
 import type { WorkoutExtended, Cycle } from '@/lib/types';
-import { CycleBuilder } from './cycle-builder';
+import { DraggableCycle } from './draggable-cycle';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 interface WorkoutBuilderProps {
   workout?: WorkoutExtended;
@@ -21,11 +36,24 @@ export function WorkoutBuilder({ workout, onSave, onCancel }: WorkoutBuilderProp
   const [description, setDescription] = useState(workout?.description || '');
   const [cycles, setCycles] = useState<Cycle[]>(workout?.cycles || []);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const handleSave = () => {
+    // Recalculate order before saving
+    const orderedCycles = cycles.map((cycle, index) => ({
+      ...cycle,
+      order: index,
+    }));
+
     const workoutData: Omit<WorkoutExtended, 'id'> = {
       name,
       description,
-      cycles,
+      cycles: orderedCycles,
       targetMuscles: [],
       estimatedDuration: 60,
     };
@@ -44,6 +72,19 @@ export function WorkoutBuilder({ workout, onSave, onCancel }: WorkoutBuilderProp
     };
     
     setCycles([...cycles, newCycle]);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setCycles((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
   };
 
   return (
@@ -95,22 +136,33 @@ export function WorkoutBuilder({ workout, onSave, onCancel }: WorkoutBuilderProp
               <p className="text-sm mt-2">Add a cycle to start building your workout</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {cycles.map((cycle, index) => (
-                <CycleBuilder
-                    key={cycle.id}
-                    cycle={cycle}
-                    onUpdate={(updatedCycle) => {
-                    const newCycles = [...cycles];
-                    newCycles[index] = updatedCycle;
-                    setCycles(newCycles);
-                    }}
-                    onDelete={() => {
-                    setCycles(cycles.filter((_, i) => i !== index));
-                    }}
-                />
-              ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={cycles.map((c) => c.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-4">
+                  {cycles.map((cycle, index) => (
+                    <DraggableCycle
+                      key={cycle.id}
+                      cycle={cycle}
+                      onUpdate={(updatedCycle) => {
+                        const newCycles = [...cycles];
+                        newCycles[index] = updatedCycle;
+                        setCycles(newCycles);
+                      }}
+                      onDelete={() => {
+                        setCycles(cycles.filter((c) => c.id !== cycle.id));
+                      }}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </CardContent>
       </Card>

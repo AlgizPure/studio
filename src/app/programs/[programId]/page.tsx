@@ -1,15 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Play } from 'lucide-react';
 import { mockPrograms } from '@/lib/mock-programs';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AddWorkoutToProgramDialog } from '@/components/add-workout-to-program-dialog';
-import type { WorkoutExtended, ProgramWorkout, Program } from '@/lib/types';
+import type { WorkoutExtended, ProgramWorkout, Program, WorkoutLog } from '@/lib/types';
 import Link from 'next/link';
+import { WorkoutExecutionMode } from '@/components/workout-execution/workout-execution-mode';
+import { useUser, useFirestore } from '@/firebase';
+import { addDoc, collection } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ProgramDetailPage({ 
   params 
@@ -18,12 +22,52 @@ export default function ProgramDetailPage({
 }) {
   const { programId } = params;
   const router = useRouter();
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const { toast } = useToast();
 
   // In a real app, this would also fetch detailed workout objects
   const [program, setProgram] = useState<Program | undefined>(
     mockPrograms.find(p => p.id === programId)
   );
   const [isAddWorkoutOpen, setIsAddWorkoutOpen] = useState(false);
+  const [executingWorkout, setExecutingWorkout] = useState<WorkoutExtended | null>(null);
+
+  const handleWorkoutComplete = async (log: Omit<WorkoutLog, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
+    if (!user || !firestore) {
+      toast({
+        title: 'Error',
+        description: 'User not authenticated. Cannot save log.',
+        variant: 'destructive',
+      });
+      return;
+    }
+  
+    try {
+      const workoutLogsRef = collection(firestore, `users/${user.uid}/workoutLogs`);
+      await addDoc(workoutLogsRef, {
+        ...log,
+        userId: user.uid,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+  
+      toast({
+        title: 'Workout Completed!',
+        description: 'Your workout has been logged successfully.',
+      });
+  
+      setExecutingWorkout(null);
+    } catch (error) {
+      console.error("Failed to save workout log:", error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save workout log. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
 
   if (!program) {
     notFound();
@@ -46,8 +90,6 @@ export default function ProgramDetailPage({
       skipped: 0,
     };
     
-    // In a real app, you'd find a way to persist this.
-    // For now, we are just mocking the `workout` object itself.
     if (!(program as any).detailedWorkouts) {
       (program as any).detailedWorkouts = [];
     }
@@ -59,8 +101,13 @@ export default function ProgramDetailPage({
       workouts: [...program.workouts, programWorkout],
     });
   };
+  
+  const handleStartWorkout = (workout: WorkoutExtended) => {
+    setExecutingWorkout(workout);
+  };
 
   return (
+    <>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -152,15 +199,23 @@ export default function ProgramDetailPage({
                 const workoutDetail = (program as any).detailedWorkouts?.find((w: WorkoutExtended) => w.id === pw.workoutId);
                 return (
                     <Card key={index}>
-                    <CardHeader>
-                        <CardTitle>{workoutDetail?.name || `Workout ${index + 1}`}</CardTitle>
-                        <CardDescription>
-                        {pw.schedule.intervalType === 'days_of_week' 
-                            ? `${(pw.schedule.intervalValue as string[]).join(', ')}`
-                            : `Every ${pw.schedule.intervalValue} days`
-                        }
-                        </CardDescription>
-                    </CardHeader>
+                      <CardHeader>
+                          <CardTitle>{workoutDetail?.name || `Workout ${index + 1}`}</CardTitle>
+                          <CardDescription>
+                          {pw.schedule.intervalType === 'days_of_week' 
+                              ? `${(pw.schedule.intervalValue as string[]).join(', ')}`
+                              : `Every ${pw.schedule.intervalValue} days`
+                          }
+                          </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {workoutDetail && (
+                          <Button onClick={() => handleStartWorkout(workoutDetail)}>
+                            <Play className="mr-2 h-4 w-4" />
+                            Start Workout
+                          </Button>
+                        )}
+                      </CardContent>
                     </Card>
                 )
               })}
@@ -176,5 +231,17 @@ export default function ProgramDetailPage({
         onWorkoutAdd={handleWorkoutAdd}
       />
     </div>
+
+    {executingWorkout && (
+      <div className="fixed inset-0 bg-background z-50 overflow-y-auto p-4 md:p-8">
+        <WorkoutExecutionMode
+          workout={executingWorkout}
+          programId={program.id}
+          onComplete={handleWorkoutComplete}
+          onCancel={() => setExecutingWorkout(null)}
+        />
+      </div>
+    )}
+    </>
   );
 }

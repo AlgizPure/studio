@@ -90,15 +90,6 @@ export type UserProfile = {
   lastActiveDate?: string | null; // ISO date string (e.g., '2024-07-26')
 };
 
-export interface ProgramWorkout extends Omit<Workout, 'id'> {
-  id: string;
-  schedule: {
-      type: 'repeating' | 'fixed_times';
-      days?: Day[];
-      repeatCount?: number;
-      endDate?: string;
-  }
-}
 // ============================================
 // НОВЫЕ ТИПЫ ДЛЯ КОНСТРУКТОРА ПРОГРАММ
 // ============================================
@@ -153,9 +144,9 @@ export type ProgramWorkout = {
 // Расширенная структура Workout (совместима с существующей)
 export type WorkoutExtended = Workout & {
   description?: string;
-  targetMuscles: string[]; // ['chest', 'triceps', 'shoulders']
+  targetMuscles?: string[]; // ['chest', 'triceps', 'shoulders']
   estimatedDuration?: number; // минуты
-  cycles: Cycle[]; // НОВОЕ: массив циклов
+  cycles?: Cycle[]; // НОВОЕ: массив циклов
   // Старое поле exercises остается для обратной совместимости
 };
 
@@ -194,4 +185,42 @@ export type ProgramStats = {
   totalVolume: number; // килограммы
   totalDuration: number; // минуты
   lastUpdated: string; // ISO timestamp
+};
+// ============================================
+// ТИПЫ ДЛЯ РЕЖИМА ВЫПОЛНЕНИЯ ТРЕНИРОВКИ
+// ============================================
+
+export type WorkoutExecutionStatus = 'not_started' | 'in_progress' | 'paused' | 'completed';
+
+export type SetLog = {
+  setNumber: number; // номер подхода
+  reps: number; // выполненные повторения
+  weight?: number; // использованный вес
+  rpe?: number; // RPE (Rate of Perceived Exertion)
+  completed: boolean;
+  timestamp: string; // когда выполнен
+};
+
+export type WorkoutCycleLog = {
+  cycleId: string;
+  cycleNumber: number; // какое повторение цикла (для repetitions > 1)
+  exercises: ExerciseLog[];
+  completed: boolean;
+};
+
+export type WorkoutLog = {
+  id: string;
+  workoutId: string;
+  programId?: string;
+  userId: string;
+  date: string; // ISO date
+  startTime: string; // ISO timestamp
+  endTime?: string; // ISO timestamp
+  duration?: number; // минуты
+  status: WorkoutExecutionStatus;
+  cycles: WorkoutCycleLog[];
+  notes?: string;
+  totalVolume?: number; // килограммы (сумма weight * reps)
+  createdAt: string;
+  updatedAt: string;
 };

@@ -11,15 +11,31 @@ import type { Cycle, CycleType, CycleExercise, Exercise } from '@/lib/types';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { collection } from 'firebase/firestore';
-
+import { DraggableExercise } from './draggable-exercise';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 interface CycleBuilderProps {
   cycle: Cycle;
   onUpdate: (cycle: Cycle) => void;
   onDelete: () => void;
+  dragHandleProps?: any;
 }
 
-export function CycleBuilder({ cycle, onUpdate, onDelete }: CycleBuilderProps) {
+export function CycleBuilder({ cycle, onUpdate, onDelete, dragHandleProps }: CycleBuilderProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const exercisesQuery = useMemoFirebase(
@@ -27,6 +43,13 @@ export function CycleBuilder({ cycle, onUpdate, onDelete }: CycleBuilderProps) {
     [user, firestore]
   );
   const { data: exercises } = useCollection<Exercise>(exercisesQuery);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const handleCycleTypeChange = (type: CycleType) => {
     onUpdate({ ...cycle, type });
@@ -68,12 +91,33 @@ export function CycleBuilder({ cycle, onUpdate, onDelete }: CycleBuilderProps) {
     onUpdate({ ...cycle, exercises: updatedExercises });
   };
 
+  const handleExerciseDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = cycle.exercises.findIndex(
+        (ex) => ex.exerciseId + ex.order === active.id
+      );
+      const newIndex = cycle.exercises.findIndex(
+        (ex) => ex.exerciseId + ex.order === over.id
+      );
+
+      const reorderedExercises = arrayMove(cycle.exercises, oldIndex, newIndex).map(
+        (ex, idx) => ({ ...ex, order: idx })
+      );
+
+      onUpdate({ ...cycle, exercises: reorderedExercises });
+    }
+  };
+
   return (
     <Card className="glass">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+            <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
+              <GripVertical className="h-5 w-5 text-muted-foreground" />
+            </div>
             Cycle {cycle.order + 1}
           </CardTitle>
           <Button variant="ghost" size="icon" onClick={onDelete} className="hover:text-destructive">
@@ -86,10 +130,7 @@ export function CycleBuilder({ cycle, onUpdate, onDelete }: CycleBuilderProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label htmlFor={`type-${cycle.id}`}>Type</Label>
-            <Select 
-              value={cycle.type} 
-              onValueChange={handleCycleTypeChange}
-            >
+            <Select value={cycle.type} onValueChange={handleCycleTypeChange}>
               <SelectTrigger id={`type-${cycle.id}`}>
                 <SelectValue />
               </SelectTrigger>
@@ -125,57 +166,40 @@ export function CycleBuilder({ cycle, onUpdate, onDelete }: CycleBuilderProps) {
           </div>
         </div>
 
-        {/* Exercises */}
+        {/* Exercises with Drag-and-Drop */}
         <div className="space-y-2">
           <Label>Exercises</Label>
-          {cycle.exercises.map((ex, index) => {
-            const exercise = exercises?.find(e => e.id === ex.exerciseId);
-            return (
-              <div key={index} className="flex items-center gap-2 p-3 border rounded-lg bg-background/50">
-                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                <div className="flex-1">
-                  <p className="font-medium">{exercise?.name || 'Unknown'}</p>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <Input
-                      placeholder="Reps"
-                      value={ex.targetReps || ''}
-                      onChange={(e) => handleExerciseUpdate(index, { targetReps: e.target.value })}
-                      className="h-8 w-24"
-                    />
-                     <Input
-                      placeholder="Weight"
-                      type="number"
-                      value={ex.targetWeight || ''}
-                      onChange={(e) => handleExerciseUpdate(index, { targetWeight: parseInt(e.target.value) || undefined })}
-                      className="h-8 w-24"
-                    />
-                    <Input
-                      placeholder="Rest (sec)"
-                      type="number"
-                      value={ex.restAfter}
-                      onChange={(e) => handleExerciseUpdate(index, { restAfter: parseInt(e.target.value) || 0 })}
-                      className="h-8 w-24"
-                    />
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => handleRemoveExercise(index)}
-                  className="hover:text-destructive h-8 w-8"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            );
-          })}
+          
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleExerciseDragEnd}
+          >
+            <SortableContext
+              items={cycle.exercises.map((ex) => ex.exerciseId + ex.order)}
+              strategy={verticalListSortingStrategy}
+            >
+              {cycle.exercises.map((ex, index) => {
+                const exerciseData = exercises?.find((e) => e.id === ex.exerciseId);
+                return (
+                  <DraggableExercise
+                    key={ex.exerciseId + ex.order}
+                    exercise={ex}
+                    exerciseData={exerciseData}
+                    onUpdate={(updates) => handleExerciseUpdate(index, updates)}
+                    onRemove={() => handleRemoveExercise(index)}
+                  />
+                );
+              })}
+            </SortableContext>
+          </DndContext>
           
           <Select onValueChange={handleAddExercise} value="">
             <SelectTrigger>
               <SelectValue placeholder="Add exercise from library..." />
             </SelectTrigger>
             <SelectContent>
-              {exercises?.map(ex => (
+              {exercises?.map((ex) => (
                 <SelectItem key={ex.id} value={ex.id}>
                   {ex.name}
                 </SelectItem>
