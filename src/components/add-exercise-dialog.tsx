@@ -210,7 +210,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
       <DialogTrigger asChild>
         {dialogTrigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle className="font-headline">{isEditMode ? 'Edit Exercise' : 'Add Custom Exercise'}</DialogTitle>
@@ -218,7 +218,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
               {isEditMode ? 'Update the details of your exercise.' : "Add a new exercise to your personal library. Click save when you're done."}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
+          <div className="grid gap-4 py-4 pr-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input id="name" placeholder="e.g., Kettlebell Swings" {...register('name')} />
