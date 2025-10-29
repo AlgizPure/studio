@@ -90,14 +90,6 @@ export type UserProfile = {
   lastActiveDate?: string | null; // ISO date string (e.g., '2024-07-26')
 };
 
-export type Program = {
-    id: string;
-    name: string;
-    description: string;
-    isTemplate: boolean;
-    authorId?: string;
-}
-
 export interface ProgramWorkout extends Omit<Workout, 'id'> {
   id: string;
   schedule: {

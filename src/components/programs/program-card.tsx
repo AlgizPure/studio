@@ -12,12 +12,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { Program } from '@/lib/types';
 
-interface ProgramCardProps {
+type ProgramCardHandlers = {
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onActivate?: (id: string) => void;
+  onPause?: (id: string) => void;
+};
+
+interface ProgramCardProps extends ProgramCardHandlers {
   program: Program;
-  onEdit?: (programId: string) => void;
-  onDelete?: (programId: string) => void;
-  onActivate?: (programId: string) => void;
-  onPause?: (programId: string) => void;
 }
 
 export function ProgramCard({ 
