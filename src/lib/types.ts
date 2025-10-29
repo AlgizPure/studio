@@ -30,7 +30,7 @@ export type Exercise = {
   parameters?: ExerciseParameter[];
 };
 
-export type ExerciseLog = {
+export type ExerciseLogValue = {
     id: string;
     exerciseId: string;
     userId: string;
@@ -142,12 +142,10 @@ export type ProgramWorkout = {
 };
 
 // Расширенная структура Workout (совместима с существующей)
-export type WorkoutExtended = Workout & {
-  description?: string;
+export type WorkoutExtended = Omit<Workout, 'exercises'> & {
   targetMuscles?: string[]; // ['chest', 'triceps', 'shoulders']
   estimatedDuration?: number; // минуты
   cycles?: Cycle[]; // НОВОЕ: массив циклов
-  // Старое поле exercises остается для обратной совместимости
 };
 
 // Цикл в тренировке
@@ -201,7 +199,16 @@ export type SetLog = {
   timestamp: string; // когда выполнен
 };
 
-export type WorkoutCycleLog = {
+export type ExerciseLog = {
+  exerciseId: string;
+  sets: SetLog[];
+  notes?: string;
+  skipped: boolean;
+  startTime?: string;
+  endTime?: string;
+};
+
+export type CycleLog = {
   cycleId: string;
   cycleNumber: number; // какое повторение цикла (для repetitions > 1)
   exercises: ExerciseLog[];
@@ -218,7 +225,7 @@ export type WorkoutLog = {
   endTime?: string; // ISO timestamp
   duration?: number; // минуты
   status: WorkoutExecutionStatus;
-  cycles: WorkoutCycleLog[];
+  cycles: CycleLog[];
   notes?: string;
   totalVolume?: number; // килограммы (сумма weight * reps)
   createdAt: string;

@@ -51,7 +51,7 @@ export function SetTracker({
               id="reps"
               type="number"
               value={reps}
-              onChange={(e) => setReps(parseInt(e.target.value) || 0)}
+              onChange={(e) => setReps(Math.max(0, parseInt(e.target.value) || 0))}
               placeholder={targetReps}
             />
           </div>

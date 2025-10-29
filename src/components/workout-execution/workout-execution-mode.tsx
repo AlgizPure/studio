@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Play, Pause, CheckCircle2, X } from 'lucide-react';
-import type { WorkoutExtended, WorkoutLog, WorkoutCycleLog, ExerciseLog, SetLog, WorkoutExecutionStatus } from '@/lib/types';
+import type { WorkoutExtended, WorkoutLog, CycleLog, ExerciseLog, SetLog, WorkoutExecutionStatus } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { SetTracker } from './set-tracker';
 import { RestTimer } from './rest-timer';
@@ -13,7 +13,7 @@ import { RestTimer } from './rest-timer';
 interface WorkoutExecutionModeProps {
   workout: WorkoutExtended;
   programId?: string;
-  onComplete: (log: Omit<WorkoutLog, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onComplete: (log: Omit<WorkoutLog, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => void;
   onCancel: () => void;
 }
 
@@ -30,7 +30,7 @@ export function WorkoutExecutionMode({
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   
-  const [cycleLogs, setCycleLogs] = useState<WorkoutCycleLog[]>([]);
+  const [cycleLogs, setCycleLogs] = useState<CycleLog[]>([]);
   const [elapsedTime, setElapsedTime] = useState(0); // seconds
 
   const [isResting, setIsResting] = useState(false);
@@ -63,10 +63,9 @@ export function WorkoutExecutionMode({
     const endTime = new Date().toISOString();
     const duration = Math.floor(elapsedTime / 60);
 
-    const log: Omit<WorkoutLog, 'id' | 'createdAt' | 'updatedAt'> = {
+    const log: Omit<WorkoutLog, 'id' | 'createdAt' | 'updatedAt' | 'userId'> = {
       workoutId: workout.id,
       programId,
-      userId: 'user_1', // TODO: Get from auth
       date: new Date().toISOString().split('T')[0],
       startTime: startTime!,
       endTime,
@@ -99,21 +98,49 @@ export function WorkoutExecutionMode({
   const handleSetComplete = (setLog: Omit<SetLog, 'timestamp'>) => {
     const newLog = {...setLog, timestamp: new Date().toISOString()};
 
-    // Update logs
     setCycleLogs(prevLogs => {
-      // ... logic to update logs state ...
-      return prevLogs;
+      const updatedLogs = JSON.parse(JSON.stringify(prevLogs));
+    
+      let cycleLog = updatedLogs.find(
+        (log: CycleLog) => log.cycleId === currentCycleDef!.id && 
+               log.cycleNumber === currentCycleRepetition
+      );
+      
+      if (!cycleLog) {
+        cycleLog = {
+          cycleId: currentCycleDef!.id,
+          cycleNumber: currentCycleRepetition,
+          exercises: [],
+          completed: false,
+        };
+        updatedLogs.push(cycleLog);
+      }
+      
+      let exerciseLog = cycleLog.exercises.find(
+        (ex: ExerciseLog) => ex.exerciseId === currentExerciseDef!.exerciseId
+      );
+      
+      if (!exerciseLog) {
+        exerciseLog = {
+          exerciseId: currentExerciseDef!.exerciseId,
+          sets: [],
+          skipped: false,
+        };
+        cycleLog.exercises.push(exerciseLog);
+      }
+      
+      exerciseLog.sets.push(newLog);
+      
+      return updatedLogs;
     });
 
     if (currentSetIndex < (currentExerciseDef?.targetReps?.split('-').length || 1) - 1) {
       setCurrentSetIndex(prev => prev + 1);
-      // Start rest timer after a set
       if(currentExerciseDef?.restAfter) {
           setRestDuration(currentExerciseDef.restAfter);
           setIsResting(true);
       }
     } else {
-      // Move to next exercise
       moveToNextExercise();
     }
   };
@@ -123,7 +150,6 @@ export function WorkoutExecutionMode({
           setCurrentExerciseIndex(prev => prev + 1);
           setCurrentSetIndex(0);
       } else {
-          // Move to next cycle repetition or next cycle
           if (currentCycleRepetition < (currentCycleDef?.repetitions || 1) - 1) {
               setCurrentCycleRepetition(prev => prev + 1);
               setCurrentExerciseIndex(0);
@@ -150,21 +176,23 @@ export function WorkoutExecutionMode({
       setIsResting(false);
   }
 
-  const calculateProgress = () => {
+  const calculateProgress = useMemo(() => {
     if(!workout.cycles || workout.cycles.length === 0) return 0;
     
     let totalExercises = 0;
     workout.cycles.forEach(c => totalExercises += c.exercises.length * c.repetitions);
     
+    if (totalExercises === 0) return 0;
+
     let completedExercises = 0;
     for(let i=0; i<currentCycleIndex; i++) {
         completedExercises += workout.cycles[i].exercises.length * workout.cycles[i].repetitions;
     }
-    completedExercises += currentCycleRepetition * workout.cycles[currentCycleIndex].exercises.length;
+    completedExercises += currentCycleRepetition * (workout.cycles[currentCycleIndex]?.exercises.length || 0);
     completedExercises += currentExerciseIndex;
 
     return (completedExercises / totalExercises) * 100;
-  };
+  }, [workout.cycles, currentCycleIndex, currentCycleRepetition, currentExerciseIndex]);
 
 
   const formatTime = (seconds: number) => {
@@ -201,7 +229,7 @@ export function WorkoutExecutionMode({
               {currentCycleDef.repetitions || 1}
             </div>}
           </div>
-          <Progress value={calculateProgress()} className="h-2" />
+          <Progress value={calculateProgress} className="h-2" />
         </CardContent>
       </Card>
 
