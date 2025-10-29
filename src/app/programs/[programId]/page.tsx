@@ -1,101 +1,179 @@
 'use client';
 
-import React from 'react';
-import { notFound } from 'next/navigation';
-import { useDoc } from '@/firebase/firestore/use-doc';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { collection, addDoc, doc } from 'firebase/firestore';
-import type { Program, Workout } from '@/lib/types';
+import React, { use, useState } from 'react';
+import { notFound, useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Plus } from 'lucide-react';
+import { mockPrograms } from '@/lib/mock-programs';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AddWorkoutToProgramDialog } from '@/components/add-workout-to-program-dialog';
-import { Skeleton } from '@/components/ui/skeleton';
-import { errorEmitter, FirestorePermissionError } from '@/firebase';
+import type { WorkoutExtended, ProgramWorkout, Program } from '@/lib/types';
+import Link from 'next/link';
 
-export default function ProgramDetailPage({ params }: { params: { programId: string } }) {
-  const resolvedParams = React.use(params);
-  const { programId } = resolvedParams;
-  const { user } = useUser();
-  const firestore = useFirestore();
+export default function ProgramDetailPage({ 
+  params 
+}: { 
+  params: { programId: string } 
+}) {
+  const { programId } = params;
+  const router = useRouter();
 
-  const programRef = useMemoFirebase(
-    () => (user ? doc(firestore, `users/${user.uid}/programs/${programId}`) : null),
-    [user, firestore, programId]
+  const [program, setProgram] = useState<Program | undefined>(
+    mockPrograms.find(p => p.id === programId)
   );
-  const { data: program, isLoading: programLoading } = useDoc<Program>(programRef);
-
-  const workoutsRef = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/programs/${programId}/workouts`) : null),
-    [user, firestore, programId]
-  );
-  const { data: workouts, isLoading: workoutsLoading } = useCollection<Workout>(workoutsRef);
-
-  const handleAddWorkout = async (newWorkoutData: Omit<Workout, 'id'>) => {
-    if (!user || !firestore || !workoutsRef) return;
-
-    addDoc(workoutsRef, newWorkoutData).catch(async (err) => {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({
-        operation: 'create',
-        path: workoutsRef.path,
-        requestResourceData: newWorkoutData,
-      }));
-    });
-  };
-
-  const isLoading = programLoading || workoutsLoading;
-
-  if (isLoading) {
-    return (
-      <div className="space-y-8">
-        <Skeleton className="h-10 w-1/2" />
-        <Skeleton className="h-6 w-3/4" />
-        <div className="flex items-center justify-between mt-8">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-          <p>Loading program...</p>
-        </div>
-      </div>
-    );
-  }
+  const [isAddWorkoutOpen, setIsAddWorkoutOpen] = useState(false);
 
   if (!program) {
     notFound();
   }
 
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+
+  const handleWorkoutAdd = (workout: WorkoutExtended, schedule: ProgramWorkout['schedule']) => {
+    const programWorkout: ProgramWorkout = {
+      workoutId: workout.id,
+      schedule,
+      completed: 0,
+      skipped: 0,
+    };
+    
+    // In a real app, you'd find a way to persist this.
+    // For now, we are just mocking the `workout` object itself.
+    if (!(program as any).detailedWorkouts) {
+      (program as any).detailedWorkouts = [];
+    }
+    (program as any).detailedWorkouts.push(workout);
+
+
+    setProgram({
+      ...program,
+      workouts: [...program.workouts, programWorkout],
+    });
+  };
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{program.name}</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl">{program.description}</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button 
+          variant="outline" 
+          size="icon"
+          onClick={() => router.push('/programs')}
+          className="h-9 w-9"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight">{program.name}</h1>
+            <Badge>{program.status}</Badge>
+          </div>
+          <p className="text-muted-foreground mt-1">
+            {formatDate(program.startDate)} - {program.durationType === 'fixed' ? formatDate(program.endDate) : 'Ongoing'}
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold tracking-tight">Workouts</h2>
-          {!(program as any).isTemplate && <AddWorkoutToProgramDialog onWorkoutAdd={handleAddWorkout} />}
-        </div>
+      {/* Description */}
+      {program.description && (
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle>Description</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">{program.description}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tags & Goal */}
+      <div className="grid md:grid-cols-2 gap-4">
+        {program.tags.length > 0 && (
+          <Card className="glass flex-1">
+            <CardHeader>
+              <CardTitle>Tags</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {program.tags.map(tag => (
+                  <Badge key={tag} variant="outline">{tag}</Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
-        <>
-          {(workouts || []).length === 0 ? (
+        {program.goal && (
+          <Card className="glass flex-1">
+            <CardHeader>
+              <CardTitle>Goal</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">{program.goal}</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Workouts Section */}
+      <Card className="glass">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Workouts</CardTitle>
+              <CardDescription>
+                Training sessions in this program
+              </CardDescription>
+            </div>
+            <Button onClick={() => setIsAddWorkoutOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Workout
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {program.workouts.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-              <p>This program doesn't have any workouts yet.</p>
-              {!(program as any).isTemplate && <p className="text-sm">Click "Add Workout" to get started.</p>}
+              <p>No workouts added yet</p>
+              <p className="text-sm mt-2">Click "Add Workout" to get started</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {(workouts || []).map(workout => (
-                <div key={workout.id} className="p-4 border rounded-lg shadow-sm glass">
-                  <h3 className="font-semibold">{workout.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {workout.description}
-                  </p>
-                </div>
-              ))}
+            <div className="space-y-4">
+              {program.workouts.map((pw, index) => {
+                const workoutDetail = (program as any).detailedWorkouts?.find((w: WorkoutExtended) => w.id === pw.workoutId);
+                return (
+                    <Card key={index}>
+                    <CardHeader>
+                        <CardTitle>{workoutDetail?.name || `Workout ${index + 1}`}</CardTitle>
+                        <CardDescription>
+                        {pw.schedule.intervalType === 'days_of_week' 
+                            ? `${(pw.schedule.intervalValue as string[]).join(', ')}`
+                            : `Every ${pw.schedule.intervalValue} days`
+                        }
+                        </CardDescription>
+                    </CardHeader>
+                    </Card>
+                )
+              })}
             </div>
           )}
-        </>
-      </div>
+        </CardContent>
+      </Card>
+
+      {/* Add Workout Dialog */}
+      <AddWorkoutToProgramDialog
+        open={isAddWorkoutOpen}
+        onOpenChange={setIsAddWorkoutOpen}
+        onWorkoutAdd={handleWorkoutAdd}
+      />
     </div>
   );
 }

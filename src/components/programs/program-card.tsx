@@ -11,12 +11,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { Program } from '@/lib/types';
+import Link from 'next/link';
 
 type ProgramCardHandlers = {
-  onEdit?: (id: string) => void;
-  onDelete?: (id: string) => void;
-  onActivate?: (id: string) => void;
-  onPause?: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onActivate: (id: string) => void;
+  onPause: (id: string) => void;
 };
 
 interface ProgramCardProps extends ProgramCardHandlers {
@@ -60,81 +61,82 @@ export function ProgramCard({
   };
 
   return (
-    <Card className="glass hover:shadow-lg transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle className="font-headline text-xl">{program.name}</CardTitle>
-            <CardDescription className="line-clamp-2">
-              {program.description || 'No description'}
-            </CardDescription>
-          </div>
-          <DropdownMenu>
+    <Card className="glass hover:shadow-lg transition-shadow flex flex-col">
+       <Link href={`/programs/${program.id}`} className="flex-grow flex flex-col">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <CardTitle className="font-headline text-xl">{program.name}</CardTitle>
+                <CardDescription className="line-clamp-2 h-10">
+                  {program.description || 'No description'}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="pb-3 flex-grow">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+              <Calendar className="h-4 w-4" />
+              <span>
+                {formatDate(program.startDate)} - {program.durationType === 'fixed' ? formatDate(program.endDate) : 'Ongoing'}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Badge className={getStatusColor(program.status)}>
+                {getStatusLabel(program.status)}
+              </Badge>
+              {program.tags.map((tag) => (
+                <Badge key={tag} variant="outline">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+      </Link>
+
+      <CardFooter className="pt-3 border-t flex items-center justify-between">
+         <div className="text-sm text-muted-foreground">
+          <span>{program.workouts.length} workouts</span>
+        </div>
+        <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit?.(program.id)}>
+              <DropdownMenuItem onClick={() => onEdit(program.id)}>
                 <Edit2 className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
               {program.status === 'draft' && (
-                <DropdownMenuItem onClick={() => onActivate?.(program.id)}>
+                <DropdownMenuItem onClick={() => onActivate(program.id)}>
                   <Play className="mr-2 h-4 w-4" />
                   Activate
                 </DropdownMenuItem>
               )}
               {program.status === 'active' && (
-                <DropdownMenuItem onClick={() => onPause?.(program.id)}>
+                <DropdownMenuItem onClick={() => onPause(program.id)}>
                   <Pause className="mr-2 h-4 w-4" />
                   Pause
                 </DropdownMenuItem>
               )}
               {program.status === 'paused' && (
-                <DropdownMenuItem onClick={() => onActivate?.(program.id)}>
+                <DropdownMenuItem onClick={() => onActivate(program.id)}>
                   <Play className="mr-2 h-4 w-4" />
                   Resume
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem 
-                onClick={() => onDelete?.(program.id)}
-                className="text-destructive"
+                onClick={() => onDelete(program.id)}
+                className="text-destructive focus:text-destructive focus:bg-destructive/10"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="pb-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-          <Calendar className="h-4 w-4" />
-          <span>
-            {formatDate(program.startDate)} - {formatDate(program.endDate)}
-          </span>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Badge className={getStatusColor(program.status)}>
-            {getStatusLabel(program.status)}
-          </Badge>
-          {program.tags.map((tag) => (
-            <Badge key={tag} variant="outline">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      </CardContent>
-
-      <CardFooter className="pt-3 border-t">
-        <div className="flex justify-between w-full text-sm text-muted-foreground">
-          <span>{program.workouts.length} workouts</span>
-          <span>{program.durationType === 'infinite' ? '∞' : 'Fixed duration'}</span>
-        </div>
       </CardFooter>
     </Card>
   );
