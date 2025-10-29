@@ -14,7 +14,7 @@ import { Button } from './ui/button';
 
 interface HabitListProps {
     habits: Habit[];
-    onHabitAdd: (habit: Habit) => void;
+    onHabitAdd: (habit: Omit<Habit, 'id'>) => void;
     onHabitUpdate: (habit: Habit) => void;
     onHabitDelete: (habitId: string) => void;
     setHabits: React.Dispatch<React.SetStateAction<Habit[]>>;
@@ -45,6 +45,7 @@ export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, se
         onHabitUpdate={onHabitUpdate}
         onHabitDelete={onHabitDelete}
         onHabitAdd={onHabitAdd}
+        categories={[]}
         trigger={
             <Button variant="ghost" size="icon" className="h-8 w-8">
                 <Pencil className="h-4 w-4" />
@@ -59,7 +60,7 @@ export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, se
     <Card className="glass">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-headline">Habits</CardTitle>
-        <AddHabitDialog onHabitAdd={onHabitAdd} openManageCategories={openManageCategories}/>
+        <AddHabitDialog onHabitAdd={onHabitAdd} openManageCategories={openManageCategories} categories={[]}/>
       </CardHeader>
       <CardContent className="space-y-2 max-h-[70vh] overflow-y-auto">
         {sortedHabits.map((habit) => {

@@ -46,11 +46,11 @@ export default function LibraryPage() {
     });
   };
   
-  const handleUpdateExercise = (exercise: Exercise) => {
+  const handleUpdateExercise = async (exercise: Exercise) => {
     if (!user || !firestore || !exercise.id) return;
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
     const { id, ...exerciseData } = exercise;
-    updateDoc(exerciseDoc, exerciseData).catch(async (err) => {
+    await updateDoc(exerciseDoc, exerciseData).catch(async (err) => {
       const permissionError = new FirestorePermissionError({
         operation: 'update',
         path: exerciseDoc.path,
@@ -60,10 +60,10 @@ export default function LibraryPage() {
     });
   }
 
-  const handleDeleteExercise = (exerciseId: string) => {
+  const handleDeleteExercise = async (exerciseId: string) => {
     if (!user || !firestore) return;
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exerciseId);
-    deleteDoc(exerciseDoc).catch(async (err) => {
+    await deleteDoc(exerciseDoc).catch(async (err) => {
       const permissionError = new FirestorePermissionError({
         operation: 'delete',
         path: exerciseDoc.path,

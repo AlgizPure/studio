@@ -121,6 +121,7 @@ export type Program = {
   createdAt: string; // ISO timestamp
   updatedAt: string; // ISO timestamp
   userId: string; // для будущего
+  isTemplate?: boolean; // optional flag for template cards
 };
 
 // Тренировка в контексте программы (с расписанием)

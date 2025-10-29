@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { ThemeProvider as NextThemesProvider, useTheme as useNextTheme } from 'next-themes'
 import { type ThemeProviderProps } from 'next-themes/dist/types'
 
-type JapandiTheme = 'setdey' | 'olive' | 'soft' | 'terracoot' | 'mizu' | 'sakura' | 'mori' | 'kuro';
+export type JapandiTheme = 'setdey' | 'olive' | 'soft' | 'terracoot' | 'mizu' | 'sakura' | 'mori' | 'kuro';
 
 interface CustomThemeContextType {
   japandiTheme: JapandiTheme

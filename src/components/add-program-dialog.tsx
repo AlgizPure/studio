@@ -70,6 +70,7 @@ export function AddProgramDialog({
     reset,
     control,
     watch,
+    formState: { errors },
   } = useForm<ProgramFormValues>({
     resolver: zodResolver(programSchema),
   });

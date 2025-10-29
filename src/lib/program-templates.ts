@@ -1,10 +1,4 @@
-import type { Program, Workout } from './types';
-
-interface TemplateProgram extends Omit<Program, 'id' | 'isTemplate' | 'authorId'> {
-    workouts: Omit<Workout, 'id'>[];
-}
-
-export const programTemplates: TemplateProgram[] = [
+export const programTemplates = [
     {
         name: 'Foundation Strength',
         description: 'A 3-day per week program focused on building a solid strength base with compound lifts. Ideal for beginners or those returning to training.',
@@ -66,4 +60,4 @@ export const programTemplates: TemplateProgram[] = [
             }
         ]
     }
-];
+] as const;
