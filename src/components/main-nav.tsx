@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Dumbbell, Home, CalendarDays, FolderKanban } from 'lucide-react';
+import { BarChart3, Dumbbell, Home, CalendarDays, Target } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -12,8 +12,8 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
+  { href: '/programs', label: 'Programs', icon: Target },
   { href: '/schedule', label: 'Schedule', icon: CalendarDays },
-  { href: '/programs', label: 'Programs', icon: FolderKanban },
   { href: '/library', label: 'Exercise Library', icon: Dumbbell },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
 ];

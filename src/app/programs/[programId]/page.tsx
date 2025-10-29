@@ -73,14 +73,14 @@ export default function ProgramDetailPage({ params }: { params: { programId: str
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-semibold tracking-tight">Workouts</h2>
-          {!program.isTemplate && <AddWorkoutToProgramDialog onWorkoutAdd={handleAddWorkout} />}
+          {!(program as any).isTemplate && <AddWorkoutToProgramDialog onWorkoutAdd={handleAddWorkout} />}
         </div>
         
         <>
           {(workouts || []).length === 0 ? (
             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
               <p>This program doesn't have any workouts yet.</p>
-              {!program.isTemplate && <p className="text-sm">Click "Add Workout" to get started.</p>}
+              {!(program as any).isTemplate && <p className="text-sm">Click "Add Workout" to get started.</p>}
             </div>
           ) : (
             <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
