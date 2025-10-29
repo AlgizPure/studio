@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Trash2, GripVertical } from 'lucide-react';
 import type { Cycle, CycleType, CycleExercise, Exercise } from '@/lib/types';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
@@ -170,7 +170,7 @@ export function CycleBuilder({ cycle, onUpdate, onDelete }: CycleBuilderProps) {
             );
           })}
           
-          <Select onValueChange={handleAddExercise}>
+          <Select onValueChange={handleAddExercise} value="">
             <SelectTrigger>
               <SelectValue placeholder="Add exercise from library..." />
             </SelectTrigger>

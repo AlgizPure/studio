@@ -106,7 +106,7 @@ export function AddWorkoutToProgramDialog({
                   <Button variant="outline" onClick={() => setCurrentTab('workout')}>
                     Back to Builder
                   </Button>
-                  <Button onClick={handleScheduleSave}>
+                  <Button onClick={handleScheduleSave} disabled={!schedule}>
                     Add to Program
                   </Button>
                 </DialogFooter>

@@ -12,7 +12,7 @@ const DAYS: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Sa
 
 interface WorkoutScheduleSetupProps {
   schedule?: ProgramWorkout['schedule'];
-  onChange: (schedule: ProgramWorkout['schedule']) => void;
+  onChange: (schedule: ProgramWorkout['schedule'] | null) => void;
 }
 
 export function WorkoutScheduleSetup({ schedule, onChange }: WorkoutScheduleSetupProps) {
@@ -32,54 +32,41 @@ export function WorkoutScheduleSetup({ schedule, onChange }: WorkoutScheduleSetu
   const [duration, setDuration] = useState(schedule?.duration || { value: 8, unit: 'weeks' as const });
 
   useEffect(() => {
-    // Emit initial state
-    updateSchedule(intervalType, intervalType === 'days_of_week' ? selectedDays : everyNDays, duration);
-  }, []);
-
-
-  const updateSchedule = (
-    type: IntervalType, 
-    value: Day[] | number,
-    dur: typeof duration
-  ) => {
-    onChange({
-      intervalType: type,
+    const value = intervalType === 'days_of_week' ? selectedDays : everyNDays;
+    const newSchedule: ProgramWorkout['schedule'] = {
+      intervalType,
       intervalValue: value,
-      duration: dur,
-      startOffset: 0, // Default for now
-    });
-  };
+      duration,
+      startOffset: 0,
+    };
+    if (intervalType === 'days_of_week' && selectedDays.length === 0) {
+      onChange(null);
+    } else {
+      onChange(newSchedule);
+    }
+  }, [intervalType, selectedDays, everyNDays, duration, onChange]);
 
-  const handleIntervalTypeChange = (type: IntervalType) => {
-    setIntervalType(type);
-    updateSchedule(type, type === 'days_of_week' ? selectedDays : everyNDays, duration);
-  };
 
   const handleDaysChange = (day: Day, checked: boolean) => {
     const newDays = checked 
       ? [...selectedDays, day]
       : selectedDays.filter(d => d !== day);
-    
     setSelectedDays(newDays);
-    updateSchedule(intervalType, newDays, duration);
   };
 
   const handleEveryNDaysChange = (value: number) => {
-    const validValue = Math.max(1, value);
-    setEveryNDays(validValue);
-    updateSchedule(intervalType, validValue, duration);
+    setEveryNDays(Math.max(1, value));
   };
 
   const handleDurationChange = (updates: Partial<typeof duration>) => {
     const newDuration = { ...duration, ...updates };
     if(updates.value) newDuration.value = Math.max(1, updates.value);
     setDuration(newDuration);
-    updateSchedule(intervalType, intervalType === 'days_of_week' ? selectedDays : everyNDays, newDuration);
   };
 
 
   return (
-    <Card className="glass">
+    <Card className="glass border-none shadow-none">
       <CardHeader>
         <CardTitle>Workout Schedule</CardTitle>
       </CardHeader>
@@ -87,7 +74,7 @@ export function WorkoutScheduleSetup({ schedule, onChange }: WorkoutScheduleSetu
         {/* Interval Type */}
         <div>
           <Label htmlFor="interval-type">Schedule Type</Label>
-          <Select value={intervalType} onValueChange={handleIntervalTypeChange}>
+          <Select value={intervalType} onValueChange={(v) => setIntervalType(v as IntervalType)}>
             <SelectTrigger id="interval-type">
               <SelectValue />
             </SelectTrigger>

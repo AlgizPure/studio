@@ -7,6 +7,7 @@ import { AddProgramDialog } from '@/components/add-program-dialog';
 import { mockPrograms } from '@/lib/mock-programs';
 import { useState } from 'react';
 import type { Program } from '@/lib/types';
+import { DialogTrigger } from '@/components/ui/dialog';
 
 export default function ProgramsPage() {
   const [programs, setPrograms] = useState<Program[]>(mockPrograms);
@@ -46,11 +47,6 @@ export default function ProgramsPage() {
     setPrograms(programs.map(p => 
       p.id === programId ? { ...p, status: 'paused' as const } : p
     ));
-  };
-
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setEditingProgram(undefined);
   };
   
   const openNewProgramDialog = () => {

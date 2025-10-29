@@ -1,6 +1,6 @@
 'use client';
 
-import React, { use, useState } from 'react';
+import React, { useState } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus } from 'lucide-react';
@@ -19,6 +19,7 @@ export default function ProgramDetailPage({
   const { programId } = params;
   const router = useRouter();
 
+  // In a real app, this would also fetch detailed workout objects
   const [program, setProgram] = useState<Program | undefined>(
     mockPrograms.find(p => p.id === programId)
   );

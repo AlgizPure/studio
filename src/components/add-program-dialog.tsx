@@ -9,16 +9,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Program, ProgramDurationType } from '@/lib/types';
+import type { Program } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Select, 
@@ -39,7 +37,7 @@ const programSchema = z.object({
   durationType: z.enum(['fixed', 'infinite']),
   startDate: z.date(),
   duration: z.object({
-    value: z.number().min(1).optional(),
+    value: z.preprocess(val => Number(val), z.number().min(1).optional()),
     unit: z.enum(['days', 'weeks', 'months']).optional(),
   }).optional(),
   goal: z.string().optional(),
@@ -51,24 +49,20 @@ type ProgramFormValues = z.infer<typeof programSchema>;
 interface AddProgramDialogProps {
   onProgramAdd: (program: Omit<Program, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'workouts'>) => void;
   programToEdit?: Program;
-  trigger?: React.ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children?: React.ReactNode;
 }
 
 export function AddProgramDialog({ 
   onProgramAdd, 
   programToEdit, 
-  trigger,
-  open: controlledOpen,
-  onOpenChange: controlledOnOpenChange,
+  open,
+  onOpenChange,
+  children
 }: AddProgramDialogProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
   const { toast } = useToast();
   const isEditMode = !!programToEdit;
-
-  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
-  const setOpen = controlledOnOpenChange || setInternalOpen;
 
   const {
     register,
@@ -76,22 +70,8 @@ export function AddProgramDialog({
     reset,
     control,
     watch,
-    setValue,
-    formState: { errors },
   } = useForm<ProgramFormValues>({
     resolver: zodResolver(programSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      durationType: 'fixed',
-      startDate: new Date(),
-      duration: {
-        value: 8,
-        unit: 'weeks',
-      },
-      goal: '',
-      tags: '',
-    }
   });
 
   const durationType = watch('durationType');
@@ -119,14 +99,14 @@ export function AddProgramDialog({
         });
       }
     }
-  }, [programToEdit, reset, open]);
+  }, [programToEdit, open, reset]);
 
   const onSubmit: SubmitHandler<ProgramFormValues> = (data) => {
     try {
       let endDate: string | undefined;
-      if (data.durationType === 'fixed' && data.duration) {
+      if (data.durationType === 'fixed' && data.duration?.value && data.duration?.unit) {
         const start = new Date(data.startDate);
-        const { value = 8, unit = 'weeks' } = data.duration;
+        const { value, unit } = data.duration;
         
         if (unit === 'days') {
           start.setDate(start.getDate() + value);
@@ -135,7 +115,6 @@ export function AddProgramDialog({
         } else if (unit === 'months') {
           start.setMonth(start.getMonth() + value);
         }
-        
         endDate = start.toISOString();
       }
 
@@ -154,8 +133,6 @@ export function AddProgramDialog({
         tags,
       };
       
-      // Here you would differentiate between add and edit
-      // For now, we only have add logic on the page
       onProgramAdd(programData);
       
       toast({
@@ -163,7 +140,7 @@ export function AddProgramDialog({
         description: `${data.name} has been ${isEditMode ? 'updated' : 'created'}.`,
       });
       
-      setOpen(false);
+      onOpenChange(false);
     } catch (e) {
       toast({
         title: 'Error',
@@ -173,17 +150,9 @@ export function AddProgramDialog({
     }
   };
 
-  const dialogTrigger = trigger || (
-    <Button>
-      <PlusCircle className="mr-2 h-4 w-4" />
-      New Program
-    </Button>
-  );
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {!trigger && !controlledOpen ? <DialogTrigger asChild>{dialogTrigger}</DialogTrigger> : null}
-      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {children}
       
       <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -297,8 +266,8 @@ export function AddProgramDialog({
                         min="1"
                         placeholder="8"
                         className="w-20"
+                        {...field}
                         value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                       />
                     )}
                   />
