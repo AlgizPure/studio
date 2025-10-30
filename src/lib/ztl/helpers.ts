@@ -47,8 +47,8 @@ export function generateScheduledWorkouts(program: Program, daysForward: number)
     const sched = programWorkout.schedule;
     if (!sched) continue;
     // Find the template Workout for details
-    const tmpl = null; // TODO: you could look up actual Workout by workoutId if available.
-    const workoutName = (tmpl && tmpl.name) || programWorkout.workoutId || 'Workout';
+    // In this minimal implementation, use workoutId as name; integrate lookup if available
+    const workoutName = programWorkout.workoutId || 'Workout';
     // TODO: phase-aware logic can go here
     let current = new Date(startDate);
     let dayIndexes = Array.isArray(sched.intervalValue) ? sched.intervalValue.map(d => (typeof d === 'string' ? d.toLowerCase() : d)) : [];

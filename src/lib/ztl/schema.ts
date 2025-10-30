@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
-export const ZTLExercise = z
-  .object({
+const ZTLExerciseBase = z.object({
     id: z.string(),
     name: z.string(),
     sets: z.number().int().positive().optional(),
@@ -11,8 +10,9 @@ export const ZTLExercise = z
     target_duration_s: z.number().positive().optional(),
     target_intensity: z.enum(['zone1', 'zone2', 'zone3', 'zone4', 'zone5']).optional(),
     rest_s: z.number().int().nonnegative().optional(),
-  })
-  .refine(
+});
+
+export const ZTLExercise = ZTLExerciseBase.refine(
     (e) =>
       // either strength targets or duration/intensity
       ((e.target_weight_kg !== undefined || e.target_reps !== undefined || e.target_rpe !== undefined) &&
@@ -99,7 +99,7 @@ export const ZTLPatch = z.object({
         program_id: z.string(),
         workout_id: z.string(),
         exercise_id: z.string(),
-        set_target: ZTLExercise.partial().optional(),
+        set_target: ZTLExerciseBase.partial().optional(),
       }),
       z.object({ op: z.literal('add-program'), program: ZTLProgram }),
       z.object({ op: z.literal('update-program'), program_id: z.string(), program: ZTLProgram.partial() }),

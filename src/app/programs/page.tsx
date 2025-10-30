@@ -191,11 +191,18 @@ export default function ProgramsPage() {
                 {
                   id: newId,
                   name: data.value.meta.name,
+                  description: undefined,
+                  startDate: new Date().toISOString().split('T')[0],
+                  endDate: undefined,
+                  durationType: 'fixed',
+                  status: 'active',
+                  goal: data.value.meta.goal,
+                  tags: Array.isArray(data.value.meta.tags) ? data.value.meta.tags : [],
                   workouts: [],
                   createdAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
                   userId: 'user_1',
-                  // ...additional fields mapping
+                  isTemplate: false,
                 },
               ]);
               alert('Программа успешно импортирована!');
