@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { PomodoroTimer } from './pomodoro-timer';
 import type { Habit, Day, HabitCategory } from '@/lib/types';
+import { isHabitDueToday } from '@/lib/habits';
 import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { AddHabitDialog } from './add-habit-dialog';
@@ -107,11 +108,9 @@ export function HabitTracker() {
   };
 
   const todaysHabits = useMemo(() => {
-    if (!today || !trackedHabits) return [];
-    return trackedHabits.filter(habit => {
-      return !habit.days || habit.days.length === 0 || habit.days.includes(today);
-    });
-  }, [trackedHabits, today]);
+    if (!trackedHabits) return [];
+    return trackedHabits.filter(h => isHabitDueToday(h));
+  }, [trackedHabits]);
 
   const sortedHabits = useMemo(() => {
     return [...todaysHabits].sort((a, b) => {

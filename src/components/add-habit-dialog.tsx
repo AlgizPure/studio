@@ -31,6 +31,10 @@ const habitSchema = z.object({
   goal: z.string().optional(),
   days: z.array(z.string()).optional(),
   usePomodoro: z.boolean().default(false).optional(),
+  // V2 fields (optional, backward compatible)
+  type: z.enum(['boolean', 'quantity', 'duration']).default('boolean').optional(),
+  targetValue: z.number().min(0).optional(),
+  targetUnit: z.string().optional(),
 });
 
 type HabitFormValues = z.infer<typeof habitSchema>;
@@ -77,6 +81,9 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
               goal: '',
               days: [],
               usePomodoro: false,
+              type: 'boolean',
+              targetValue: undefined,
+              targetUnit: undefined,
           });
       }
     }
@@ -104,7 +111,18 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
               days: data.days as Day[],
               pomodoro: data.usePomodoro ? (habitToEdit.pomodoro || { cycles: 1 }) : undefined,
           };
-          onHabitUpdate(updatedHabit);
+          // Attach V2 fields in a backward-compatible way
+          const updatedWithV2 = {
+            ...updatedHabit,
+            ...(data.type && { type: data.type }),
+            ...(data.type === 'quantity' && data.targetValue != null && {
+              target: { type: 'quantity', value: data.targetValue, unit: data.targetUnit || undefined },
+            }),
+            ...(data.type === 'duration' && data.targetValue != null && {
+              target: { type: 'duration', value: data.targetValue, unit: data.targetUnit || 'min' },
+            }),
+          } as any;
+          onHabitUpdate(updatedWithV2 as Habit);
           toast({
               title: 'Habit Updated',
               description: `${data.name} has been updated.`,
@@ -118,7 +136,17 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
             days: data.days as Day[],
             ...(data.usePomodoro && { pomodoro: { cycles: 1 } }),
           };
-          onHabitAdd(newHabit);
+          const newWithV2 = {
+            ...newHabit,
+            ...(data.type && { type: data.type }),
+            ...(data.type === 'quantity' && data.targetValue != null && {
+              target: { type: 'quantity', value: data.targetValue, unit: data.targetUnit || undefined },
+            }),
+            ...(data.type === 'duration' && data.targetValue != null && {
+              target: { type: 'duration', value: data.targetValue, unit: data.targetUnit || 'min' },
+            }),
+          } as any;
+          onHabitAdd(newWithV2 as Omit<Habit, 'id'>);
           toast({
             title: 'Habit Added',
             description: `${data.name} has been added to your list.`,
@@ -229,6 +257,56 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
               <Input id="goal" placeholder="e.g., 8 glasses" className="col-span-3" {...register('goal')} />
             </div>
             {errors.goal && <p className="col-start-2 col-span-3 text-sm text-destructive">{errors.goal.message}</p>}
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="type" className="text-right">
+              Type
+            </Label>
+            <Controller
+              name="type"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={(v) => field.onChange(v)} value={field.value || 'boolean'}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Habit Type</SelectLabel>
+                      <SelectItem value="boolean">Boolean</SelectItem>
+                      <SelectItem value="quantity">Quantity</SelectItem>
+                      <SelectItem value="duration">Duration</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+
+          {/* Target fields for quantity/duration */}
+          <Controller
+            name="type"
+            control={control}
+            render={({ field }) => {
+              const t = field.value || 'boolean';
+              if (t === 'quantity' || t === 'duration') {
+                return (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="targetValue" className="text-right">
+                      {t === 'quantity' ? 'Target value' : 'Minutes'}
+                    </Label>
+                    <div className="col-span-3 grid grid-cols-3 gap-2">
+                      <Input type="number" step="1" id="targetValue" placeholder={t === 'quantity' ? 'e.g., 2000' : 'e.g., 20'} {...register('targetValue', { valueAsNumber: true })} />
+                      <div className="col-span-2">
+                        <Input id="targetUnit" placeholder={t === 'quantity' ? 'e.g., ml, km, steps' : 'min'} {...register('targetUnit')} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            }}
+          />
 
             <div className="grid grid-cols-4 items-start gap-4">
               <Label className="text-right pt-2">
