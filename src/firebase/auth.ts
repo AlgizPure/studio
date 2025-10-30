@@ -6,7 +6,8 @@ import {
     signInWithEmailAndPassword,
     signInWithPopup,
     GoogleAuthProvider,
-    signOut as firebaseSignOut
+    signOut as firebaseSignOut,
+    signInWithRedirect
 } from 'firebase/auth';
 
 export const signUpWithEmail = async (auth: Auth, email: string, password: string) => {
@@ -19,7 +20,15 @@ export const signInWithEmail = async (auth: Auth, email: string, password: strin
 
 export const signInWithGoogle = async (auth: Auth) => {
     const provider = new GoogleAuthProvider();
-    return await signInWithPopup(auth, provider);
+    try {
+        return await signInWithPopup(auth, provider);
+    } catch (e: any) {
+        if (e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user') {
+            await signInWithRedirect(auth, provider);
+            return;
+        }
+        throw e;
+    }
 };
 
 export const signOut = async (auth: Auth) => {

@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { PomodoroTimer } from './pomodoro-timer';
 import type { Habit, Day, HabitCategory } from '@/lib/types';
-import { isHabitDueToday } from '@/lib/habits';
+import { isHabitDueToday, formatHabitTarget } from '@/lib/habits';
 import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { AddHabitDialog } from './add-habit-dialog';
@@ -160,7 +160,9 @@ export function HabitTracker() {
                     >
                       {habit.name}
                     </Label>
-                    <p className="text-xs text-muted-foreground">{habit.goal}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatHabitTarget(habit) || habit.goal}
+                    </p>
                   </div>
                   {habit.pomodoro && <PomodoroTimer cycles={habit.pomodoro.cycles} disabled={!!habit.completed} />}
                 </div>

@@ -1,6 +1,6 @@
 import { addDays, differenceInCalendarDays, isWithinInterval } from 'date-fns';
 import type { Day, Habit as HabitLegacy } from './types';
-import type { HabitV2, HabitSchedule, HabitIntervalType, HabitLog } from './types';
+import type { HabitV2, HabitSchedule, HabitIntervalType, HabitLog, HabitStreak } from './types';
 
 const dayMap: Record<Day, number> = {
   Monday: 1,
@@ -92,6 +92,21 @@ export function isHabitDueNow(habit: HabitV2 | HabitLegacy, date: Date = new Dat
   return isWithinTimeWindow(date, h.schedule?.timeWindow);
 }
 
+export function formatHabitTarget(habit: HabitV2 | HabitLegacy): string | null {
+  const h: any = habit as any;
+  if (h?.target?.type === 'quantity') {
+    const v = h.target.value;
+    const u = h.target.unit || '';
+    if (typeof v === 'number') return `${v}${u ? ' ' + u : ''}`;
+  }
+  if (h?.target?.type === 'duration') {
+    const v = h.target.value;
+    const u = h.target.unit || 'min';
+    if (typeof v === 'number') return `${v} ${u}`;
+  }
+  return null;
+}
+
 // ===============================
 // Analytics helpers (pure)
 // ===============================
@@ -152,6 +167,68 @@ export function calculateHabitStrengthScore(params: {
     0.1 * longestStreakFactor
   ) * 100;
   return Math.round(score);
+}
+
+// ===============================
+// Streak helpers (pure)
+// ===============================
+
+export function computeStreakFromLogs(logs: HabitLog[]): { current: number; longest: number; lastCompletedDate?: string } {
+  const sorted = [...logs].filter(l => !!l.date).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  let current = 0;
+  let longest = 0;
+  let lastCompletedDate: string | undefined;
+  let prevDate: Date | undefined;
+  for (const l of sorted) {
+    if (l.status === 'done') {
+      const d = new Date(l.date);
+      if (!prevDate) {
+        current = 1;
+      } else {
+        const diff = differenceInCalendarDays(d, prevDate);
+        if (diff === 1) {
+          current += 1;
+        } else if (diff > 1) {
+          current = 1;
+        }
+      }
+      prevDate = new Date(l.date);
+      lastCompletedDate = l.date;
+      if (current > longest) longest = current;
+    }
+  }
+  return { current, longest, lastCompletedDate };
+}
+
+export function updateStreakOnLog(streak: HabitStreak | undefined, log: HabitLog): HabitStreak {
+  const s: HabitStreak = streak || { habitId: log.habitId, current: 0, longest: 0 };
+  if (log.status === 'done') {
+    const today = new Date(log.date);
+    const last = s.lastCompletedDate ? new Date(s.lastCompletedDate) : undefined;
+    if (!last) {
+      s.current = 1;
+    } else {
+      const diff = differenceInCalendarDays(today, last);
+      if (diff === 1) s.current += 1;
+      else if (diff > 1) s.current = 1;
+    }
+    s.lastCompletedDate = log.date;
+    if (s.current > s.longest) s.longest = s.current;
+  } else if (log.status === 'skipped') {
+    // skipped without token may break streak externally; we don't reduce here
+  }
+  return { ...s };
+}
+
+export function applySkipToken(streak: HabitStreak, availableTokens: number): { updated: HabitStreak; tokensLeft: number } {
+  if (availableTokens <= 0) return { updated: streak, tokensLeft: 0 };
+  const tokensLeft = availableTokens - 1;
+  // Intentionally keep streak.current unchanged
+  return { updated: { ...streak }, tokensLeft };
+}
+
+export function freezeStreak(streak: HabitStreak, untilDateISO: string): HabitStreak {
+  return { ...streak, frozenUntil: untilDateISO };
 }
 
 
