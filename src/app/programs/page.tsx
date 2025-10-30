@@ -4,15 +4,68 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProgramCard } from '@/components/programs/program-card';
 import { AddProgramDialog } from '@/components/add-program-dialog';
+import { ImportProgramDialog } from '@/components/import-program-dialog';
 import { mockPrograms } from '@/lib/mock-programs';
 import { useState } from 'react';
 import type { Program } from '@/lib/types';
 import { DialogTrigger } from '@/components/ui/dialog';
 
+// Collision detection/diff/patch utilities:
+function diffPrograms(oldProg: any, newProg: any) {
+  if (!oldProg) return 'Program is new.';
+  const oldJSON = JSON.stringify(oldProg, null, 2);
+  const newJSON = JSON.stringify(newProg, null, 2);
+  if (oldJSON === newJSON) return 'No changes.';
+  return `Old:\n${oldJSON}\n\nNew:\n${newJSON}`;
+}
+
+function applyPatch(programs: Program[], patch: any): Program[] {
+  let next = [...programs];
+  for (const op of patch.patch || []) {
+    if (op.op === 'add-program' && op.program) {
+      if (!next.some(p => p.id === op.program.meta.id)) {
+        next.push({
+          ...op.program,
+          id: op.program.meta.id,
+          name: op.program.meta.name,
+          workouts: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          userId: 'user_1',
+        });
+      }
+    }
+    if (op.op === 'update-program' && op.program_id) {
+      const idx = next.findIndex(p => p.id === op.program_id);
+      if (idx >= 0) {
+        next[idx] = { ...next[idx], ...op.program };
+      }
+    }
+    if (op.op === 'remove-exercise' && op.program_id && op.workout_id && op.exercise_id) {
+      const idx = next.findIndex(p => p.id === op.program_id);
+      if (idx >= 0 && Array.isArray(next[idx].workouts)) {
+        next[idx].workouts = next[idx].workouts.map(w =>
+          w.workoutId === op.workout_id
+            ? {
+                ...w,
+                exercises: Array.isArray((w as any).exercises)
+                  ? (w as any).exercises.filter((e: any) => e.exerciseId !== op.exercise_id)
+                  : [],
+              }
+            : w
+        );
+      }
+    }
+    // Could add update-exercise...
+  }
+  return next;
+}
+
 export default function ProgramsPage() {
   const [programs, setPrograms] = useState<Program[]>(mockPrograms);
   const [editingProgram, setEditingProgram] = useState<Program | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const handleAddProgram = (programData: Omit<Program, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'workouts'>) => {
     const newProgram: Program = {
@@ -65,10 +118,13 @@ export default function ProgramsPage() {
             Create and manage your workout programs
           </p>
         </div>
-        <Button onClick={openNewProgramDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Program
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => setImportOpen(true)}>Import Program</Button>
+          <Button onClick={openNewProgramDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Program
+          </Button>
+        </div>
       </div>
       
        <AddProgramDialog 
@@ -105,6 +161,58 @@ export default function ProgramsPage() {
           ))}
         </div>
       )}
+
+      <ImportProgramDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={async (data: any) => {
+          if (data.kind === 'program') {
+            const newId = data.value.meta?.id ?? data.value.id;
+            const duplicate = programs.find(p => p.id === newId);
+            if (duplicate) {
+              const diff = diffPrograms(duplicate, data.value);
+              const overwrite = window.confirm(`Программа с ID "${newId}" уже существует. Перезаписать?\n\nDiff:\n${diff}`);
+              if (!overwrite) return;
+              setPrograms(prev => prev.map(p =>
+                p.id === newId
+                  ? {
+                      ...p,
+                      name: data.value.meta.name,
+                      workouts: [],
+                      updatedAt: new Date().toISOString(),
+                      // ...other fields if needed from ZTL
+                    }
+                  : p
+              ));
+              alert('Программа успешно обновлена!');
+            } else {
+              setPrograms(prev => [
+                ...prev,
+                {
+                  id: newId,
+                  name: data.value.meta.name,
+                  description: undefined,
+                  startDate: new Date().toISOString().split('T')[0],
+                  endDate: undefined,
+                  durationType: 'fixed',
+                  status: 'active',
+                  goal: data.value.meta.goal,
+                  tags: Array.isArray(data.value.meta.tags) ? data.value.meta.tags : [],
+                  workouts: [],
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  userId: 'user_1',
+                  isTemplate: false,
+                },
+              ]);
+              alert('Программа успешно импортирована!');
+            }
+          } else if (data.kind === 'patch') {
+            setPrograms(p => applyPatch(p, data.value));
+            alert('Изменения по патчу применены.');
+          }
+        }}
+      />
     </div>
   );
 }
