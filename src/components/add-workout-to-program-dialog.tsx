@@ -86,14 +86,14 @@ export function AddWorkoutToProgramDialog({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="workout" className="space-y-4 flex-grow overflow-y-auto">
+          <TabsContent value="workout" className="space-y-4 flex-grow overflow-y-auto p-1">
             <WorkoutBuilder
               onSave={handleWorkoutSave}
               onCancel={handleCancel}
             />
           </TabsContent>
 
-          <TabsContent value="schedule" className="space-y-4 flex-grow overflow-y-auto">
+          <TabsContent value="schedule" className="space-y-4 flex-grow overflow-y-auto p-1">
             {workout && (
               <div className="flex flex-col h-full">
                 <div className="flex-grow">
@@ -102,7 +102,7 @@ export function AddWorkoutToProgramDialog({
                     onChange={setSchedule}
                   />
                 </div>
-                <DialogFooter className="mt-4">
+                <DialogFooter className="mt-4 pt-4 border-t">
                   <Button variant="outline" onClick={() => setCurrentTab('workout')}>
                     Back to Builder
                   </Button>

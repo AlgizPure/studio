@@ -18,9 +18,9 @@ import { useToast } from '@/hooks/use-toast';
 export default function ProgramDetailPage({ 
   params 
 }: { 
-  params: Promise<{ programId: string }> 
+  params: { programId: string };
 }) {
-  const { programId } = React.use(params);
+  const { programId } = params;
   const router = useRouter();
   const firestore = useFirestore();
   const { user } = useUser();
