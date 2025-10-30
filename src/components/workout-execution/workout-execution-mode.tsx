@@ -9,6 +9,7 @@ import type { WorkoutExtended, WorkoutLog, CycleLog, ExerciseLog, SetLog, Workou
 import { Progress } from '@/components/ui/progress';
 import { SetTracker } from './set-tracker';
 import { RestTimer } from './rest-timer';
+import { WorkoutFeedbackDialog } from '@/components/workout-feedback-dialog';
 
 interface WorkoutExecutionModeProps {
   workout: WorkoutExtended;
@@ -74,8 +75,9 @@ export function WorkoutExecutionMode({
       cycles: cycleLogs,
       totalVolume: calculateTotalVolume(),
     };
-
-    onComplete(log);
+    // Show feedback dialog; on submit attach and forward
+    setPendingLog(log);
+    setShowFeedback(true);
   };
 
   const calculateTotalVolume = () => {
@@ -201,6 +203,16 @@ export function WorkoutExecutionMode({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [pendingLog, setPendingLog] = useState<Omit<WorkoutLog, 'id' | 'createdAt' | 'updatedAt' | 'userId'> | null>(null);
+
+  const handleFeedbackSubmit = (feedback: string, tags: string[]) => {
+    if (!pendingLog) return;
+    onComplete({ ...pendingLog, userFeedback: feedback || undefined, feedbackTags: tags && tags.length ? tags : undefined } as any);
+    setPendingLog(null);
+    setShowFeedback(false);
+  };
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       {/* Header */}
@@ -287,6 +299,13 @@ export function WorkoutExecutionMode({
           <X className="h-4 w-4" />
         </Button>
       </div>
+
+      <WorkoutFeedbackDialog
+        open={showFeedback}
+        onOpenChange={setShowFeedback}
+        onSubmit={handleFeedbackSubmit}
+        workoutName={workout.name}
+      />
     </div>
   );
 }

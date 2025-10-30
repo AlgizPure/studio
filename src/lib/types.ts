@@ -231,4 +231,6 @@ export type WorkoutLog = {
   totalVolume?: number; // килограммы (сумма weight * reps)
   createdAt: string;
   updatedAt: string;
+  userFeedback?: string;
+  feedbackTags?: string[];
 };
