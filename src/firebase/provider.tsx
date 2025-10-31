@@ -4,6 +4,7 @@ import React, { DependencyList, createContext, useContext, ReactNode, useMemo } 
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { Auth, User } from 'firebase/auth';
+import { FirebaseStorage } from 'firebase/storage';
 import { useUser as useAuthUser, type AppUser } from './auth/use-user';
 
 
@@ -11,6 +12,7 @@ export interface FirebaseContextState {
   firebaseApp: FirebaseApp | null;
   firestore: Firestore | null;
   auth: Auth | null;
+  storage: FirebaseStorage | null;
 }
 
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
@@ -20,12 +22,14 @@ export const FirebaseProvider: React.FC<{ children: ReactNode } & FirebaseContex
   firebaseApp,
   firestore,
   auth,
+  storage,
 }) => {
   const contextValue = useMemo(() => ({
     firebaseApp,
     firestore,
     auth,
-  }), [firebaseApp, firestore, auth]);
+    storage,
+  }), [firebaseApp, firestore, auth, storage]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
@@ -58,6 +62,12 @@ export const useFirebaseApp = (): FirebaseApp => {
   const { firebaseApp } = useFirebase();
   if (!firebaseApp) throw new Error("FirebaseApp not available.");
   return firebaseApp;
+};
+
+export const useStorage = (): FirebaseStorage => {
+  const { storage } = useFirebase();
+  if (!storage) throw new Error("Storage service not available.");
+  return storage;
 };
 
 export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T {
