@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUser, useFirestore } from '@/firebase/provider';
+import { CLAUDE_INSTRUCTIONS_MD } from '@/lib/claude';
 import { buildHabitExport } from '@/lib/export';
 
 export function ExportDialog() {
@@ -15,6 +16,7 @@ export function ExportDialog() {
   const [from, setFrom] = useState<string>('');
   const [to, setTo] = useState<string>('');
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleExport = async () => {
     if (!user || !firestore) return;
@@ -32,6 +34,14 @@ export function ExportDialog() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const handleCopyClaude = async () => {
+    try {
+      await navigator.clipboard.writeText(CLAUDE_INSTRUCTIONS_MD);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
   };
 
   return (
@@ -56,6 +66,7 @@ export function ExportDialog() {
         </div>
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={handleCopyClaude}>{copied ? 'Copied!' : 'Copy Claude Instructions'}</Button>
           <Button type="button" onClick={handleExport} disabled={busy}>{busy ? 'Building…' : 'Download JSON'}</Button>
         </DialogFooter>
       </DialogContent>

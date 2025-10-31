@@ -1,6 +1,6 @@
 import type { Habit, DailyReflection, HabitLog, HabitLogStatus } from './types';
 
-type ParsedEntry = {
+export type ParsedEntry = {
   habitId: string;
   habitName: string;
   extractedValue?: number;
@@ -10,7 +10,10 @@ type ParsedEntry = {
   confidence: number;
 };
 
-// Very simple mock parser: looks for habit names in text and first integer following the line
+/**
+ * Mock parser for development/testing.
+ * Looks for habit names in text and extracts simple patterns.
+ */
 export function parseReflectionMock(rawText: string, habits: Habit[]): ParsedEntry[] {
   const lines = rawText.split(/\r?\n/);
   const results: ParsedEntry[] = [];

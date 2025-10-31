@@ -11,8 +11,55 @@ service cloud.firestore {
 
     // Allow users to read and write their own user profile data,
     // and all documents and subcollections nested within it.
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    match /users/{userId} {
+      // Owner-only access
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      // HabitLogs: validate status enum and date format
+      match /habitLogs/{logId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId
+          && (request.resource == null || (
+            request.resource.data.status in ['done', 'partial', 'skipped', 'missed']
+            && request.resource.data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
+          ));
+      }
+
+      // DailyReflections: validate date format
+      match /dailyReflections/{reflectionId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId
+          && (request.resource == null || request.resource.data.date.matches('^\\d{4}-\\d{2}-\\d{2}$'));
+      }
+
+      // HabitInsights: validate type enum
+      match /habitInsights/{insightId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId
+          && (request.resource == null || request.resource.data.type in ['warning', 'recommendation', 'achievement']);
+      }
+
+      // ActiveSystems: just owner-only
+      match /activeSystems/{systemId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // HabitStreaks: owner-only
+      match /habitStreaks/{streakId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Habits: validate type enum if present (V2)
+      match /habits/{habitId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId
+          && (request.resource == null || (
+            !('type' in request.resource.data) || request.resource.data.type in ['boolean', 'quantity', 'duration', 'range']
+          ));
+      }
+
+      // All other subcollections: owner-only
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Allow any authenticated user to read from the top-level 'programs' collection

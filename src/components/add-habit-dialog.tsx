@@ -91,7 +91,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
     if (isOpen) {
       if (isEditMode && habitToEdit) {
         setValue('name', habitToEdit.name);
-        setValue('categoryId', habitToEdit.categoryId);
+        setValue('categoryId', habitToEdit.categoryId || '');
         setValue('goal', habitToEdit.goal);
         setValue('days', habitToEdit.days || []);
         setValue('usePomodoro', !!habitToEdit.pomodoro);

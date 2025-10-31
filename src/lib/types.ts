@@ -54,7 +54,11 @@ export type HabitCategory = {
   authorId?: string;
 }
 
-export type Habit = {
+/**
+ * Legacy Habit type (v1) - for backward compatibility
+ * Has discriminator field 'schemaVersion?: 1' or absence of 'type' field
+ */
+export type HabitLegacy = {
   id: string;
   name: string;
   categoryId: string;
@@ -65,7 +69,14 @@ export type Habit = {
     cycles: number;
   };
   authorId?: string;
+  schemaVersion?: 1; // discriminator
 };
+
+/**
+ * Union type: Habit can be either Legacy (v1) or V2
+ * Use isHabitV2() guard to discriminate
+ */
+export type Habit = HabitLegacy | HabitV2;
 
 export type ScheduleItem = {
   id: string;
@@ -281,7 +292,7 @@ export type HabitV2 = {
   name: string;
   categoryId?: string;
   tags?: string[];
-  type: HabitType;
+  type: HabitType; // discriminator field for V2
   target?: HabitTarget;
   schedule?: HabitSchedule;
   reminders?: Reminder[];
@@ -300,6 +311,14 @@ export type HabitV2 = {
   authorId?: string;
   createdAt?: string;
   updatedAt?: string;
+  schemaVersion?: 2; // optional discriminator
+  // Legacy compatibility fields (optional for migration)
+  completed?: boolean;
+  goal?: string;
+  days?: Day[];
+  pomodoro?: {
+    cycles: number;
+  };
 };
 
 export type HabitLogStatus = 'done' | 'partial' | 'skipped' | 'missed';

@@ -1,6 +1,7 @@
 import { addDays, differenceInCalendarDays, isWithinInterval } from 'date-fns';
-import type { Day, Habit as HabitLegacy } from './types';
+import type { Day, HabitLegacy, Habit } from './types';
 import type { HabitV2, HabitSchedule, HabitIntervalType, HabitLog, HabitStreak } from './types';
+import { isHabitV2 } from './habits-guards';
 
 const dayMap: Record<Day, number> = {
   Monday: 1,
@@ -40,8 +41,8 @@ function isWithinTimeWindow(now: Date, timeWindow?: { start: string; end: string
   return minutes >= startMins || minutes <= endMins;
 }
 
-export function isHabitDueToday(habit: HabitV2 | HabitLegacy, date: Date = new Date()): boolean {
-  const h: HabitV2 = (habit as HabitV2).type ? (habit as HabitV2) : toHabitV2(habit as HabitLegacy);
+export function isHabitDueToday(habit: Habit, date: Date = new Date()): boolean {
+  const h: HabitV2 = isHabitV2(habit) ? habit : toHabitV2(habit);
 
   // date range
   if (h.schedule?.startDate || h.schedule?.endDate) {
@@ -55,10 +56,12 @@ export function isHabitDueToday(habit: HabitV2 | HabitLegacy, date: Date = new D
   const intervalType: HabitIntervalType | undefined = h.schedule?.intervalType;
   if (!intervalType) {
     // legacy behavior: due every day if no days specified
-    const legacy = habit as HabitLegacy;
-    if (!legacy.days || legacy.days.length === 0) return true;
-    const weekday = date.toLocaleString('en-US', { weekday: 'long' }) as Day;
-    return legacy.days.includes(weekday);
+    if (!isHabitV2(habit)) {
+      if (!habit.days || habit.days.length === 0) return true;
+      const weekday = date.toLocaleString('en-US', { weekday: 'long' }) as Day;
+      return habit.days.includes(weekday);
+    }
+    return true;
   }
 
   if (intervalType === 'days_of_week') {
@@ -86,22 +89,27 @@ export function isHabitDueToday(habit: HabitV2 | HabitLegacy, date: Date = new D
   return true;
 }
 
-export function isHabitDueNow(habit: HabitV2 | HabitLegacy, date: Date = new Date()): boolean {
-  const h: HabitV2 = (habit as HabitV2).type ? (habit as HabitV2) : toHabitV2(habit as HabitLegacy);
+export function isHabitDueNow(habit: Habit, date: Date = new Date()): boolean {
+  const h: HabitV2 = isHabitV2(habit) ? habit : toHabitV2(habit);
   if (!isHabitDueToday(h, date)) return false;
   return isWithinTimeWindow(date, h.schedule?.timeWindow);
 }
 
-export function formatHabitTarget(habit: HabitV2 | HabitLegacy): string | null {
-  const h: any = habit as any;
-  if (h?.target?.type === 'quantity') {
-    const v = h.target.value;
-    const u = h.target.unit || '';
+export function formatHabitTarget(habit: Habit): string | null {
+  if (!isHabitV2(habit)) {
+    // Legacy: use goal field
+    return habit.goal || null;
+  }
+  const target = habit.target;
+  if (!target) return null;
+  if (target.type === 'quantity') {
+    const v = target.value;
+    const u = target.unit || '';
     if (typeof v === 'number') return `${v}${u ? ' ' + u : ''}`;
   }
-  if (h?.target?.type === 'duration') {
-    const v = h.target.value;
-    const u = h.target.unit || 'min';
+  if (target.type === 'duration') {
+    const v = target.value;
+    const u = target.unit || 'min';
     if (typeof v === 'number') return `${v} ${u}`;
   }
   return null;

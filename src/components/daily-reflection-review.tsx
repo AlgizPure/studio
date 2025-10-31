@@ -12,6 +12,9 @@ import type { Habit, HabitLogStatus } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { parseReflectionMock } from '@/lib/reflection';
+import { parseDailyReflection } from '@/ai/flows/parse-reflection';
+import { isHabitV2 } from '@/lib/habits-guards';
+import { validateAndCreateHabitLog } from '@/lib/habits-validators';
 
 interface DailyReflectionReviewProps {
   habits: Habit[];
@@ -40,14 +43,33 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
     const ref = doc(firestore, `users/${user.uid}/dailyReflections/${dateStr}`);
     const snap = await getDoc(ref);
     const rawText = snap.exists() ? (snap.data()?.rawText as string) : '';
-    const parsed = parseReflectionMock(rawText || '', habits || []);
-    setEntries(parsed.map(p => ({
-      habitId: p.habitId,
-      habitName: p.habitName,
-      status: p.suggestedStatus,
-      value: p.extractedValue != null ? String(p.extractedValue) : '',
-      durationMin: p.extractedDuration != null ? String(p.extractedDuration) : '',
-    })));
+    if (!rawText) {
+      setEntries([]);
+      return;
+    }
+    
+    // Use real AI parsing with fallback to mock
+    try {
+      const parsed = await parseDailyReflection(rawText, habits || []);
+      setEntries(parsed.map(p => ({
+        habitId: p.habitId,
+        habitName: p.habitName,
+        status: p.suggestedStatus,
+        value: p.extractedValue != null ? String(p.extractedValue) : '',
+        durationMin: p.extractedDuration != null ? String(p.extractedDuration) : '',
+      })));
+    } catch (error) {
+      console.error('[DailyReflectionReview] Parsing error:', error);
+      // Fallback to mock
+      const parsed = parseReflectionMock(rawText, habits || []);
+      setEntries(parsed.map(p => ({
+        habitId: p.habitId,
+        habitName: p.habitName,
+        status: p.suggestedStatus,
+        value: p.extractedValue != null ? String(p.extractedValue) : '',
+        durationMin: p.extractedDuration != null ? String(p.extractedDuration) : '',
+      })));
+    }
   };
 
   useEffect(() => {
@@ -64,21 +86,24 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
       // write logs
       const logsCol = collection(firestore, `users/${user.uid}/habitLogs`);
       for (const e of entries) {
-        const matched = (habits || []).find(h => h.id === e.habitId) as any;
-        const contextData = matched?.contextParams ? matched.contextParams : undefined;
-        await addDoc(logsCol, {
+        const matched = (habits || []).find(h => h.id === e.habitId);
+        const contextData = matched && isHabitV2(matched) && matched.contextParams ? matched.contextParams : undefined;
+        
+        const logData = {
           habitId: e.habitId,
           date: dateStr,
           status: e.status,
           value: e.value ? Number(e.value) : undefined,
           durationMin: e.durationMin ? Number(e.durationMin) : undefined,
           ...(contextData && { contextData }),
-          extractedFrom: 'reflection',
+          extractedFrom: 'reflection' as const,
           aiConfidence: 0.7,
           manuallyEdited: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
+        };
+        
+        // Validate before writing
+        const validated = validateAndCreateHabitLog(logData);
+        await addDoc(logsCol, validated);
       }
       // update reflection doc
       const ref = doc(firestore, `users/${user.uid}/dailyReflections/${dateStr}`);

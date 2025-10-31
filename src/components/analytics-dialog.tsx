@@ -51,21 +51,23 @@ export function AnalyticsDialog() {
     () => (user ? collection(firestore, `users/${user.uid}/habitLogs`) : null),
     [user, firestore]
   );
-  const { data: rawLogs = [] } = useCollection<HabitLog>(logsQuery);
+  const { data: rawLogs } = useCollection<HabitLog>(logsQuery);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
+  const safeRawLogs: HabitLog[] = (rawLogs ?? []) as unknown as HabitLog[];
+
   const logs = useMemo(() => {
-    if (!from && !to) return rawLogs;
+    if (!from && !to) return safeRawLogs;
     const f = from ? new Date(from) : undefined;
     const t = to ? new Date(to) : undefined;
-    return rawLogs.filter(l => {
+    return safeRawLogs.filter(l => {
       const d = new Date(l.date);
       if (f && d < f) return false;
       if (t && d > t) return false;
       return true;
     });
-  }, [rawLogs, from, to]);
+  }, [safeRawLogs, from, to]);
 
   const wheel = useMemo(() => computeWheelOfLife(logs), [logs]);
   const maslow = useMemo(() => computeMaslowBase(logs), [logs]);

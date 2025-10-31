@@ -6,6 +6,17 @@ import { Label } from '@/components/ui/label';
 import { PomodoroTimer } from './pomodoro-timer';
 import type { Habit, Day, HabitCategory } from '@/lib/types';
 import { isHabitDueToday, formatHabitTarget, computeStreakFromLogs, computeCompletionRate, computeConsistencyScore, calculateHabitStrengthScore } from '@/lib/habits';
+import {
+  isHabitV2,
+  getHabitTags,
+  getHabitPriority,
+  getHabitDifficulty,
+  getHabitTarget,
+  getHabitReminders,
+  getHabitStackingRule,
+  isQuantityHabit,
+  isDurationHabit,
+} from '@/lib/habits-guards';
 import type { HabitLog } from '@/lib/types';
 import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -27,6 +38,9 @@ import { ExportDialog } from './export-dialog';
 import { InsightsDialog } from './insights-dialog';
 import { ImportClaudeDialog } from './import-claude-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { HeatmapDialog } from './heatmap-dialog';
 
 export function HabitTracker() {
   const { user } = useUser();
@@ -54,6 +68,8 @@ export function HabitTracker() {
   const [today, setToday] = useState<Day | null>(null);
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
   const [logModal, setLogModal] = useState<{ open: boolean; habit: Habit | null }>(() => ({ open: false, habit: null }));
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'completion' | 'priority' | 'name'>('completion');
 
   useEffect(() => {
     const date = new Date();
@@ -78,19 +94,17 @@ export function HabitTracker() {
   const promptStackingIfAny = (trigger: Habit) => {
     if (!trackedHabits) return;
     const dependents = trackedHabits.filter((h) => {
-      const anyH = h as any;
-      const rule = anyH?.stackingRule as { triggerId: string; position: 'before'|'after'; delay?: number } | undefined;
+      const rule = getHabitStackingRule(h);
       if (!rule) return false;
       return rule.triggerId === trigger.id;
     });
     for (const dep of dependents) {
-      if (dep.completed) continue;
+      // Check legacy completed field
+      if (!isHabitV2(dep) && dep.completed) continue;
       if (!isHabitDueToday(dep)) continue;
-      const anyDep = dep as any;
-      const t = anyDep?.type as string | undefined;
       const proceed = typeof window !== 'undefined' ? window.confirm(`Start next habit: ${dep.name}?`) : false;
       if (!proceed) continue;
-      if (t === 'quantity' || t === 'duration') {
+      if (isQuantityHabit(dep) || isDurationHabit(dep)) {
         setLogModal({ open: true, habit: dep });
       } else {
         commitToggleCompletion(dep);
@@ -99,9 +113,7 @@ export function HabitTracker() {
   };
 
   const handleToggleCompletion = (habit: Habit) => {
-    const anyHabit = habit as any;
-    const type = anyHabit?.type as string | undefined;
-    if (type === 'quantity' || type === 'duration') {
+    if (isQuantityHabit(habit) || isDurationHabit(habit)) {
       setLogModal({ open: true, habit });
       return;
     }
@@ -114,35 +126,69 @@ export function HabitTracker() {
     try {
       const logsCol = collection(firestore, `users/${user.uid}/habitLogs`);
       const today = format(new Date(), 'yyyy-MM-dd');
-      const anyHabit = habit as any;
-      const type = anyHabit?.type as string | undefined;
-      const payload: any = {
+      const payload: {
+        habitId: string;
+        date: string;
+        status: 'done';
+        note?: string;
+        extractedFrom: 'manual';
+        value?: number;
+        durationMin?: number;
+        contextData?: Record<string, any>;
+        createdAt: string;
+        updatedAt: string;
+      } = {
         habitId: habit.id,
         date: today,
         status: 'done',
-        note: undefined,
         extractedFrom: 'manual',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      if (anyHabit?.contextParams) {
-        payload.contextData = anyHabit.contextParams;
+      if (isHabitV2(habit) && habit.contextParams) {
+        payload.contextData = habit.contextParams;
       }
-      if (type === 'duration' && typeof value === 'number') {
+      if (isDurationHabit(habit) && typeof value === 'number') {
         payload.durationMin = value;
         if (unit && unit !== 'min') payload.note = `unit: ${unit}`;
-      } else if (type === 'quantity' && typeof value === 'number') {
+      } else if (isQuantityHabit(habit) && typeof value === 'number') {
         payload.value = value;
         if (unit) payload.note = unit;
       }
-      await addDoc(logsCol, payload);
-    } catch (err) {
+      
+      // Validate before writing
+      const { validateAndCreateHabitLog } = await import('@/lib/habits-validators');
+      const validated = validateAndCreateHabitLog(payload);
+      
+      await addDoc(logsCol, validated);
+      toast({
+        title: 'Habit logged',
+        description: `Successfully logged ${habit.name}`,
+      });
+    } catch (err: any) {
+      // Handle validation errors
+      if (err && typeof err === 'object' && 'issues' in err) {
+        const zodErr = err as { issues: Array<{ message: string; path: (string | number)[] }> };
+        const firstIssue = zodErr.issues[0];
+        toast({
+          title: 'Validation error',
+          description: firstIssue ? `${firstIssue.path.join('.')}: ${firstIssue.message}` : 'Invalid habit log data',
+          variant: 'destructive',
+        });
+        return;
+      }
+      // Handle permission errors
       const permissionError = new FirestorePermissionError({
         operation: 'create',
         path: `users/${user?.uid}/habitLogs`,
         requestResourceData: {},
       });
       errorEmitter.emit('permission-error', permissionError);
+      toast({
+        title: 'Error',
+        description: 'Failed to create habit log',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -199,16 +245,44 @@ export function HabitTracker() {
 
   const todaysHabits = useMemo(() => {
     if (!trackedHabits) return [];
-    return trackedHabits.filter(h => isHabitDueToday(h));
+    let filtered = trackedHabits.filter(h => isHabitDueToday(h));
+    if (selectedTag) {
+      filtered = filtered.filter(h => {
+        const tags = getHabitTags(h);
+        return tags.includes(selectedTag);
+      });
+    }
+    return filtered;
+  }, [trackedHabits, selectedTag]);
+
+  const allTags = useMemo(() => {
+    if (!trackedHabits) return [];
+    const tagSet = new Set<string>();
+    for (const h of trackedHabits) {
+      const tags = getHabitTags(h);
+      tags.forEach(t => tagSet.add(t));
+    }
+    return Array.from(tagSet).sort();
   }, [trackedHabits]);
 
   const sortedHabits = useMemo(() => {
     return [...todaysHabits].sort((a, b) => {
+      if (sortBy === 'priority') {
+        const aP = getHabitPriority(a);
+        const bP = getHabitPriority(b);
+        if (aP && bP) return bP - aP;
+        if (aP) return -1;
+        if (bP) return 1;
+      }
+      if (sortBy === 'name') {
+        return a.name.localeCompare(b.name);
+      }
+      // default: completion
       if (a.completed && !b.completed) return 1;
       if (!a.completed && b.completed) return -1;
       return 0;
     });
-  }, [todaysHabits]);
+  }, [todaysHabits, sortBy]);
   
   const isLoading = habitsLoading || categoriesLoading;
 
@@ -262,10 +336,12 @@ export function HabitTracker() {
       const mm = String(now.getMinutes()).padStart(2, '0');
       const keyTime = `${hh}:${mm}`;
       for (const habit of trackedHabits) {
-        const anyHabit = habit as any;
-        const times: string[] = (anyHabit?.reminders?.[0]?.times as string[] | undefined) || [];
+        const reminders = getHabitReminders(habit);
+        const firstReminder = reminders[0];
+        const times: string[] = firstReminder?.times || [];
         if (!times.includes(keyTime)) continue;
-        if (habit.completed) continue;
+        // Check legacy completed field
+        if (!isHabitV2(habit) && habit.completed) continue;
         if (!isHabitDueToday(habit, now)) continue;
         const key = `${habit.id}:${keyTime}:${now.toDateString()}`;
         if (shown.has(key)) continue;
@@ -287,6 +363,7 @@ export function HabitTracker() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Daily Habits</CardTitle>
             <div className="flex items-center gap-2" aria-label="Header actions">
+              <HeatmapDialog habits={trackedHabits || []} />
               <SystemLibraryDialog />
               <AnalyticsDialog />
               <ExportDialog />
@@ -297,6 +374,41 @@ export function HabitTracker() {
               <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => setIsManageCategoriesOpen(true)} categories={habitCategories || []} habits={trackedHabits || []} />
             </div>
           </CardHeader>
+          {(allTags.length > 0 || true) && (
+            <div className="px-6 pb-2 flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground">Filter:</span>
+              <Button
+                variant={selectedTag === null ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedTag(null)}
+                className="h-6 text-xs"
+              >
+                All
+              </Button>
+              {allTags.map(tag => (
+                <Button
+                  key={tag}
+                  variant={selectedTag === tag ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                  className="h-6 text-xs"
+                >
+                  #{tag}
+                </Button>
+              ))}
+              <span className="ml-auto text-xs text-muted-foreground">Sort:</span>
+              <Select value={sortBy} onValueChange={(v: 'completion' | 'priority' | 'name') => setSortBy(v)}>
+                <SelectTrigger className="h-6 w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="completion">Completion</SelectItem>
+                  <SelectItem value="priority">Priority</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <CardContent className="space-y-2">
             {isLoading ? (
               <div className="space-y-3">
@@ -305,17 +417,45 @@ export function HabitTracker() {
                 <Skeleton className="h-12 w-full" />
               </div>
             ) : sortedHabits.map((habit) => {
+              const isCompleted = !isHabitV2(habit) ? habit.completed : false;
+              const target = getHabitTarget(habit);
+              const tags = getHabitTags(habit);
+              const priority = getHabitPriority(habit);
+              const difficulty = getHabitDifficulty(habit);
+              const reminders = getHabitReminders(habit);
+              const firstReminder = reminders[0];
+              const reminderTimes = firstReminder?.times || [];
+              const pomodoro = !isHabitV2(habit) ? habit.pomodoro : undefined;
+              
+              // Calculate streak display
+              const streakInfo = streaksMap.get(habit.id);
+              const streakDisplay = streakInfo ? `🔥 ${streakInfo.current} / 🏆 ${streakInfo.longest}` : null;
+
+              // Progress display for quantity/duration habits
+              let progressText = formatHabitTarget(habit) || (!isHabitV2(habit) ? habit.goal : undefined);
+              if (isHabitV2(habit) && target && (isQuantityHabit(habit) || isDurationHabit(habit))) {
+                const targetValue = target.value;
+                const targetUnit = target.unit;
+                if (typeof targetValue === 'number') {
+                  const prog = todaysProgress.get(habit.id);
+                  const val = isDurationHabit(habit) ? prog?.durationMin : prog?.value;
+                  if (typeof val === 'number') {
+                    progressText = `${val}/${targetValue}${targetUnit ? ' ' + targetUnit : isDurationHabit(habit) ? ' min' : ''}`;
+                  }
+                }
+              }
+
               return (
                 <div 
                   key={habit.id} 
                   className={cn(
                     "flex items-center space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-all",
-                    habit.completed && "opacity-50"
+                    isCompleted && "opacity-50"
                   )}
                 >
                   <Checkbox 
                     id={habit.id} 
-                    checked={!!habit.completed}
+                    checked={!!isCompleted}
                     onCheckedChange={() => handleToggleCompletion(habit)}
                   />
                   <div className="flex-1">
@@ -323,51 +463,36 @@ export function HabitTracker() {
                       htmlFor={habit.id} 
                       className={cn(
                         "font-medium cursor-pointer",
-                        habit.completed && "line-through"
+                        isCompleted && "line-through"
                       )}
                     >
                       {habit.name}
                     </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {(() => {
-                        const anyHabit = habit as any;
-                        const t = anyHabit?.type as string | undefined;
-                        const target = (anyHabit?.target?.value as number | undefined) || undefined;
-                        const unit = (anyHabit?.target?.unit as string | undefined) || undefined;
-                        if ((t === 'quantity' || t === 'duration') && typeof target === 'number') {
-                          const prog = todaysProgress.get(habit.id);
-                          const val = t === 'duration' ? prog?.durationMin : prog?.value;
-                          if (typeof val === 'number') {
-                            return `${val}/${target}${unit ? ' ' + unit : t === 'duration' ? ' min' : ''}`;
-                          }
-                        }
-                        return formatHabitTarget(habit) || habit.goal;
-                      })()}
-                    </p>
+                    {progressText && (
+                      <p className="text-xs text-muted-foreground">
+                        {progressText}
+                      </p>
+                    )}
                     <div className="flex items-center gap-2 mt-1">
-                      {Array.isArray((habit as any)?.tags) && (habit as any).tags.map((t: string) => (
+                      {streakDisplay && (
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-orange-100 text-orange-800">{streakDisplay}</span>
+                      )}
+                      {tags.map((t: string) => (
                         <span key={t} className="text-[10px] px-2 py-0.5 rounded bg-muted text-muted-foreground">#{t}</span>
                       ))}
-                      {(habit as any)?.priority && (
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800">P{(habit as any).priority}</span>
+                      {priority && (
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800">P{priority}</span>
                       )}
-                      {(habit as any)?.difficulty && (
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-800">{(habit as any).difficulty}</span>
+                      {difficulty && (
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-800">{difficulty}</span>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {(() => {
-                      const anyHabit = habit as any;
-                      const reminders = (anyHabit?.reminders?.[0]?.times as string[] | undefined) || [];
-                      if (reminders.length > 0) {
-                        return (
-                          <span className="text-[10px] px-2 py-1 rounded-full bg-muted text-muted-foreground">⏰ {reminders.length}</span>
-                        );
-                      }
-                      return null;
-                    })()}
-                    {habit.pomodoro && <PomodoroTimer cycles={habit.pomodoro.cycles} disabled={!!habit.completed} />}
+                    {reminderTimes.length > 0 && (
+                      <span className="text-[10px] px-2 py-1 rounded-full bg-muted text-muted-foreground">⏰ {reminderTimes.length}</span>
+                    )}
+                    {pomodoro && <PomodoroTimer cycles={pomodoro.cycles} disabled={!!isCompleted} />}
                   </div>
                 </div>
               );
@@ -383,8 +508,8 @@ export function HabitTracker() {
         open={logModal.open}
         onOpenChange={(open) => setLogModal(s => ({ ...s, open }))}
         habitName={logModal.habit?.name || ''}
-        type={(logModal.habit as any)?.type === 'duration' ? 'duration' : 'quantity'}
-        unitPlaceholder={(logModal.habit as any)?.target?.unit}
+        type={logModal.habit ? (isDurationHabit(logModal.habit) ? 'duration' : 'quantity') : 'quantity'}
+        unitPlaceholder={logModal.habit ? (getHabitTarget(logModal.habit)?.unit) : undefined}
         onSubmit={async (val, unit) => {
           if (logModal.habit) {
             await createHabitLog(logModal.habit, val, unit);
