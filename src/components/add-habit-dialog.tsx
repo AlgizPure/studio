@@ -22,6 +22,10 @@ import { useState, useEffect } from 'react';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from './ui/select';
+import { useFirestore, useMemoFirebase, useUser } from '@/firebase/provider';
+import { collection } from 'firebase/firestore';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import type { AnalysisSystem } from '@/lib/types';
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -35,6 +39,15 @@ const habitSchema = z.object({
   type: z.enum(['boolean', 'quantity', 'duration']).default('boolean').optional(),
   targetValue: z.number().min(0).optional(),
   targetUnit: z.string().optional(),
+  reminderTimes: z.array(z.string()).default([]).optional(),
+  stackingEnabled: z.boolean().default(false).optional(),
+  stackingTriggerId: z.string().optional(),
+  stackingPosition: z.enum(['before', 'after']).optional(),
+  stackingDelay: z.number().min(0).optional(),
+  // tags/priority/difficulty
+  tags: z.array(z.string()).default([]).optional(),
+  priority: z.number().min(1).max(5).optional(),
+  difficulty: z.enum(['easy','medium','hard']).optional(),
 });
 
 type HabitFormValues = z.infer<typeof habitSchema>;
@@ -47,12 +60,20 @@ interface AddHabitDialogProps {
   trigger?: React.ReactNode;
   openManageCategories: () => void;
   categories: HabitCategory[];
+  habits?: Habit[];
 }
 
-export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habitToEdit, trigger, openManageCategories, categories }: AddHabitDialogProps) {
+export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habitToEdit, trigger, openManageCategories, categories, habits = [] }: AddHabitDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const isEditMode = !!habitToEdit;
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const activeQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/activeSystems`) : null),
+    [user, firestore]
+  );
+  const { data: activeSystems } = useCollection<any>(activeQuery);
 
   const {
     register,
@@ -84,6 +105,14 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
               type: 'boolean',
               targetValue: undefined,
               targetUnit: undefined,
+              reminderTimes: [],
+              stackingEnabled: false,
+              stackingTriggerId: undefined,
+              stackingPosition: undefined,
+              stackingDelay: undefined,
+              tags: [],
+              priority: 3,
+              difficulty: 'medium',
           });
       }
     }
@@ -102,6 +131,21 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
 
   const onSubmit: SubmitHandler<HabitFormValues> = (data) => {
     try {
+      // collect system params to contextParams
+      const contextParams: Record<string, Record<string, any>> = {};
+      (activeSystems || []).forEach((sys) => {
+        const sysParams: Record<string, any> = {};
+        Object.keys((data as any) || {}).forEach((k) => {
+          const prefix = `sys_${sys.systemId}_`;
+          if (k.startsWith(prefix)) {
+            const pid = k.substring(prefix.length);
+            (sysParams as any)[pid] = (data as any)[k];
+          }
+        });
+        if (Object.keys(sysParams).length > 0) {
+          contextParams[sys.systemId] = sysParams;
+        }
+      });
       if(isEditMode && habitToEdit && onHabitUpdate) {
           const updatedHabit: Habit = {
               ...habitToEdit,
@@ -121,6 +165,20 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
             ...(data.type === 'duration' && data.targetValue != null && {
               target: { type: 'duration', value: data.targetValue, unit: data.targetUnit || 'min' },
             }),
+            ...(data.reminderTimes && data.reminderTimes.length > 0 && {
+              reminders: [{ id: 'default', times: data.reminderTimes }],
+            }),
+            ...((data.stackingEnabled && data.stackingTriggerId && data.stackingPosition) && {
+              stackingRule: {
+                triggerId: data.stackingTriggerId,
+                position: data.stackingPosition,
+                ...(typeof data.stackingDelay === 'number' ? { delay: data.stackingDelay } : {}),
+              },
+            }),
+            ...(Object.keys(contextParams).length > 0 && { contextParams }),
+            ...(data.tags && data.tags.length > 0 && { tags: data.tags }),
+            ...(typeof data.priority === 'number' && { priority: data.priority }),
+            ...(data.difficulty && { difficulty: data.difficulty }),
           } as any;
           onHabitUpdate(updatedWithV2 as Habit);
           toast({
@@ -145,6 +203,20 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
             ...(data.type === 'duration' && data.targetValue != null && {
               target: { type: 'duration', value: data.targetValue, unit: data.targetUnit || 'min' },
             }),
+            ...(data.reminderTimes && data.reminderTimes.length > 0 && {
+              reminders: [{ id: 'default', times: data.reminderTimes }],
+            }),
+            ...((data.stackingEnabled && data.stackingTriggerId && data.stackingPosition) && {
+              stackingRule: {
+                triggerId: data.stackingTriggerId,
+                position: data.stackingPosition,
+                ...(typeof data.stackingDelay === 'number' ? { delay: data.stackingDelay } : {}),
+              },
+            }),
+            ...(Object.keys(contextParams).length > 0 && { contextParams }),
+            ...(data.tags && data.tags.length > 0 && { tags: data.tags }),
+            ...(typeof data.priority === 'number' && { priority: data.priority }),
+            ...(data.difficulty && { difficulty: data.difficulty }),
           } as any;
           onHabitAdd(newWithV2 as Omit<Habit, 'id'>);
           toast({
@@ -304,9 +376,209 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
                   </div>
                 );
               }
-              return null;
+              return <div className="hidden" />;
             }}
           />
+
+          {/* Reminders */}
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label className="text-right pt-2">Reminders</Label>
+            <div className="col-span-3 space-y-2">
+              <Controller
+                name="reminderTimes"
+                control={control}
+                render={({ field }) => (
+                  <div className="space-y-2">
+                    {(field.value || []).map((t: string, idx: number) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Input
+                          value={t}
+                          placeholder="HH:MM"
+                          onChange={(e) => {
+                            const next = [...(field.value || [])];
+                            next[idx] = e.target.value;
+                            field.onChange(next);
+                          }}
+                        />
+                        <Button type="button" variant="ghost" onClick={() => {
+                          const next = [...(field.value || [])];
+                          next.splice(idx, 1);
+                          field.onChange(next);
+                        }}>Remove</Button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="secondary" onClick={() => field.onChange([...(field.value || []), '08:00'])}>+ Add time</Button>
+                  </div>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Stacking */}
+          {/* Tags / Priority / Difficulty */}
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label className="text-right pt-2">Tags</Label>
+            <Controller
+              name="tags"
+              control={control}
+              render={({ field }) => (
+                <div className="col-span-3 space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {(field.value || []).map((t: string, idx: number) => (
+                      <div key={idx} className="flex items-center gap-2 px-2 py-1 rounded bg-muted text-xs">
+                        <span>#{t}</span>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => {
+                          const next = [...(field.value || [])];
+                          next.splice(idx,1);
+                          field.onChange(next);
+                        }}>x</Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Input placeholder="add tag and press Enter" onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const val = (e.target as HTMLInputElement).value.trim();
+                      if (!val) return;
+                      field.onChange([...(field.value || []), val]);
+                      (e.target as HTMLInputElement).value = '';
+                    }
+                  }} />
+                </div>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Priority</Label>
+            <Input className="col-span-3" type="number" step="1" min={1} max={5} {...register('priority', { valueAsNumber: true })} />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Difficulty</Label>
+            <Controller
+              name="difficulty"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={(v)=>field.onChange(v)} value={field.value}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select difficulty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label className="text-right pt-2">Stacking</Label>
+            <div className="col-span-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <Controller
+                  name="stackingEnabled"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox id="stackingEnabled" checked={!!field.value} onCheckedChange={field.onChange} />
+                  )}
+                />
+                <Label htmlFor="stackingEnabled" className="text-sm font-normal">Enable habit stacking</Label>
+              </div>
+              <Controller
+                name="stackingTriggerId"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={(v) => field.onChange(v)} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select trigger habit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Habits</SelectLabel>
+                        {habits.map(h => (
+                          <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <Controller
+                name="stackingPosition"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={(v) => field.onChange(v)} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Before or After" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="before">Before</SelectItem>
+                        <SelectItem value="after">After</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="stackingDelay" className="text-right">Delay (min)</Label>
+                <Input id="stackingDelay" className="col-span-3" type="number" step="1" placeholder="e.g., 5" {...register('stackingDelay', { valueAsNumber: true })} />
+              </div>
+            </div>
+          </div>
+
+          {/* Active systems parameters */}
+          {(activeSystems || []).length > 0 && (
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">Analysis systems</div>
+              {(activeSystems || []).map((sys) => (
+                <div key={sys.systemId} className="space-y-2 p-2 rounded border">
+                  <div className="text-sm font-medium">{sys.systemId}</div>
+                  {(sys.parameters || sys.habitParameters || []).map((p: any) => (
+                    <div key={p.id} className="grid grid-cols-4 items-center gap-4">
+                      <Label className="text-right">{p.label || p.id}</Label>
+                      <div className="col-span-3">
+                        {p.type === 'select' ? (
+                          <Controller
+                            name={`sys_${sys.systemId}_${p.id}` as any}
+                            control={control}
+                            render={({ field }) => (
+                              <Select onValueChange={(v) => field.onChange(v)} value={field.value}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    {(p.options || []).map((opt: any) => (
+                                      <SelectItem key={opt.value} value={opt.value}>{opt.label || opt.value}</SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        ) : p.type === 'number' || p.type === 'slider' ? (
+                          <Input type="number" step="1" {...register(`sys_${sys.systemId}_${p.id}` as any, { valueAsNumber: true })} />
+                        ) : p.type === 'checkbox' ? (
+                          <Controller
+                            name={`sys_${sys.systemId}_${p.id}` as any}
+                            control={control}
+                            render={({ field }) => (
+                              <Checkbox checked={!!field.value} onCheckedChange={field.onChange} />
+                            )}
+                          />
+                        ) : (
+                          <Input {...register(`sys_${sys.systemId}_${p.id}` as any)} />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
 
             <div className="grid grid-cols-4 items-start gap-4">
               <Label className="text-right pt-2">
