@@ -1,4 +1,5 @@
 import { AnalyticsCharts } from '@/components/analytics-charts';
+import { AIInsightsCard } from '@/components/analytics/ai-insights-card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { useUser } from '@/firebase/provider';
@@ -72,6 +73,8 @@ export default function AnalyticsPage() {
           Export for Claude Analysis
         </Button>
       </div>
+      
+      <AIInsightsCard />
       
       <AnalyticsCharts />
       

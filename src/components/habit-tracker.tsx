@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { PomodoroTimer } from './pomodoro-timer';
-import type { Habit, Day, HabitCategory } from '@/lib/types';
+import type { Habit, Day, HabitCategory, HabitStreak } from '@/lib/types';
 import { isHabitDueToday, formatHabitTarget, computeStreakFromLogs, computeCompletionRate, computeConsistencyScore, calculateHabitStrengthScore } from '@/lib/habits';
 import {
   isHabitV2,
@@ -41,11 +41,22 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HeatmapDialog } from './heatmap-dialog';
+import { NotificationPermissionDialog } from './notification-permission-dialog';
+import { NotificationCenter } from './notification-center';
+import { StreaksDialog } from './streaks-dialog';
+import { TodayHabitsV2 } from './today-habits-v2';
+import { LayoutGrid, List } from 'lucide-react';
 
 export function HabitTracker() {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [useV2Layout, setUseV2Layout] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('habit-tracker-layout') === 'v2';
+    }
+    return false;
+  });
 
   const habitsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
@@ -70,6 +81,14 @@ export function HabitTracker() {
   const [logModal, setLogModal] = useState<{ open: boolean; habit: Habit | null }>(() => ({ open: false, habit: null }));
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'completion' | 'priority' | 'name'>('completion');
+
+  const toggleLayout = () => {
+    const newLayout = !useV2Layout;
+    setUseV2Layout(newLayout);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('habit-tracker-layout', newLayout ? 'v2' : 'v1');
+    }
+  };
 
   useEffect(() => {
     const date = new Date();
@@ -287,7 +306,7 @@ export function HabitTracker() {
   const isLoading = habitsLoading || categoriesLoading;
 
   const streaksMap = useMemo(() => {
-    if (!trackedHabits || !habitLogs) return new Map<string, { current: number; longest: number; hss: number }>();
+    if (!trackedHabits || !habitLogs) return new Map<string, HabitStreak>();
     const byHabit = new Map<string, HabitLog[]>();
     for (const log of habitLogs) {
       if (!log.habitId) continue;
@@ -295,7 +314,7 @@ export function HabitTracker() {
       arr.push(log);
       byHabit.set(log.habitId, arr);
     }
-    const result = new Map<string, { current: number; longest: number; hss: number }>();
+    const result = new Map<string, HabitStreak>();
     const now = new Date();
     const from90 = new Date(now.getTime());
     from90.setDate(from90.getDate() - 90);
@@ -305,7 +324,7 @@ export function HabitTracker() {
       const completion = computeCompletionRate(logs, from90, now);
       const consistency = computeConsistencyScore(logs, from90, now);
       const hss = calculateHabitStrengthScore({ currentStreak: current, longestStreak: longest, completionRate90d: completion, consistencyScore: consistency });
-      result.set(h.id, { current, longest, hss });
+      result.set(h.id, { habitId: h.id, current, longest, hss });
     }
     return result;
   }, [trackedHabits, habitLogs]);
@@ -363,6 +382,13 @@ export function HabitTracker() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Daily Habits</CardTitle>
             <div className="flex items-center gap-2" aria-label="Header actions">
+              <NotificationPermissionDialog />
+              <NotificationCenter />
+              <StreaksDialog 
+                habits={trackedHabits || []} 
+                habitLogs={habitLogs || []} 
+                streaks={streaksMap}
+              />
               <HeatmapDialog habits={trackedHabits || []} />
               <SystemLibraryDialog />
               <AnalyticsDialog />
@@ -371,6 +397,14 @@ export function HabitTracker() {
               <ImportClaudeDialog />
               <DailyReflectionDialog habits={trackedHabits || []} />
               <DailyReflectionReview habits={trackedHabits || []} />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleLayout}
+                title={useV2Layout ? "Switch to Classic View" : "Switch to Enhanced View"}
+              >
+                {useV2Layout ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+              </Button>
               <AddHabitDialog onHabitAdd={handleAddHabit} openManageCategories={() => setIsManageCategoriesOpen(true)} categories={habitCategories || []} habits={trackedHabits || []} />
             </div>
           </CardHeader>
@@ -416,6 +450,22 @@ export function HabitTracker() {
                 <Skeleton className="h-12 w-full" />
                 <Skeleton className="h-12 w-full" />
               </div>
+            ) : useV2Layout ? (
+              <TodayHabitsV2
+                habits={trackedHabits || []}
+                habitLogs={habitLogs || []}
+                streaksMap={streaksMap}
+                todaysProgress={todaysProgress}
+                onComplete={handleToggleCompletion}
+                onSkip={(habit) => {
+                  // TODO: Implement skip with token choice
+                  toast({
+                    title: 'Skipped',
+                    description: `${habit.name} skipped for today`,
+                  });
+                }}
+                onOpenLog={(habit) => setLogModal({ open: true, habit })}
+              />
             ) : sortedHabits.map((habit) => {
               const isCompleted = !isHabitV2(habit) ? habit.completed : false;
               const target = getHabitTarget(habit);

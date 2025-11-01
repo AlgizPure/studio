@@ -78,3 +78,6 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T {
 export const useUser = (): { user: AppUser | null, isUserLoading: boolean } => {
   return useAuthUser();
 };
+
+// Export combined Firebase hook for convenience
+export { useFirebase };

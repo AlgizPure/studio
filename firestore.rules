@@ -47,6 +47,28 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
 
+      // AI Insights cache: owner-only, validate type enum
+      match /aiInsights/{cacheId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId
+          && (request.resource == null || request.resource.data.type in ['quick_insights', 'progressions']);
+      }
+
+      // AI Usage tracking: owner-only, validate date format
+      match /aiUsage/{dateId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId
+          && (request.resource == null || request.resource.data.date.matches('^\\d{4}-\\d{2}-\\d{2}$'));
+      }
+
+      // In-App Notifications: owner-only, validate type enum
+      match /notifications/{notificationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId
+          && (request.resource == null || request.resource.data.type in [
+            'habit_reminder', 'workout_complete', 'streak_milestone', 
+            'streak_broken', 'ai_insight', 'program_reminder', 
+            'achievement', 'system'
+          ]);
+      }
+
       // Habits: validate type enum if present (V2)
       match /habits/{habitId} {
         allow read: if request.auth != null && request.auth.uid == userId;

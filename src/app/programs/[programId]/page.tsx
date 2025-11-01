@@ -8,6 +8,7 @@ import { mockPrograms } from '@/lib/mock-programs';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AddWorkoutToProgramDialog } from '@/components/add-workout-to-program-dialog';
+import { ProgressionSuggestionsPanel } from '@/components/programs/progression-suggestions-panel';
 import type { WorkoutExtended, ProgramWorkout, Program, WorkoutLog } from '@/lib/types';
 import Link from 'next/link';
 import { WorkoutExecutionMode } from '@/components/workout-execution/workout-execution-mode';
@@ -170,6 +171,11 @@ export default function ProgramDetailPage({
           </Card>
         )}
       </div>
+
+      {/* AI Progression Suggestions */}
+      {program.status === 'active' && (
+        <ProgressionSuggestionsPanel program={program} />
+      )}
 
       {/* Workouts Section */}
       <Card className="glass">
