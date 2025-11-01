@@ -22,12 +22,18 @@ export type Exercise = {
   description: string;
   image: string;
   custom?: boolean;
-  time?: string;
-  days?: Day[];
   authorId?: string;
   lastCompleted?: string; // ISO date string
   distance?: number; // in kilometers
   parameters?: ExerciseParameter[];
+  
+  // Planned and actual duration
+  plannedDuration?: {
+    minutes: number;
+    seconds: number;
+  };
+  trackDuration?: boolean; // чекбокс "определять длительность упражнения"
+  actualDuration?: number; // фактическая длительность в секундах (readonly, вычисляется из ExerciseLog)
 };
 
 export type ExerciseLogValue = {
@@ -148,6 +154,7 @@ export type ProgramWorkout = {
       unit: 'days' | 'weeks' | 'months';
     };
     startOffset: number; // дней от начала программы
+    startTime?: string; // 'HH:MM' - время начала тренировки в расписании
   };
   completed: number; // сколько раз выполнено
   skipped: number; // сколько раз пропущено
@@ -156,8 +163,17 @@ export type ProgramWorkout = {
 // Расширенная структура Workout (совместима с существующей)
 export type WorkoutExtended = Omit<Workout, 'exercises'> & {
   targetMuscles?: string[]; // ['chest', 'triceps', 'shoulders']
-  estimatedDuration?: number; // минуты
+  estimatedDuration?: number; // минуты (вычисляется: сумма plannedDuration всех упражнений)
   cycles?: Cycle[]; // НОВОЕ: массив циклов
+  
+  // Статус и расписание для самодостаточных тренировок
+  status: 'active' | 'inactive'; // активная = в расписании
+  isStandalone?: boolean; // галочка "самостоятельная"
+  standaloneSchedule?: {
+    days: Day[];
+    startTime?: string; // 'HH:MM' - появляется при isStandalone = true
+  };
+  isHabit?: boolean; // галочка "привычка" - попадает в список привычек
 };
 
 // Цикл в тренировке
@@ -218,6 +234,7 @@ export type ExerciseLog = {
   skipped: boolean;
   startTime?: string;
   endTime?: string;
+  duration?: number; // длительность выполнения упражнения в секундах
 };
 
 export type CycleLog = {

@@ -1,0 +1,161 @@
+
+> nextn@0.1.0 dev
+> next dev --turbopack -p 9002
+
+   ▲ Next.js 15.3.3 (Turbopack)
+   - Local:        http://localhost:9002
+   - Network:      http://100.66.96.154:9002
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 4.4s
+ ○ Compiling / ...
+ GET /library 200 in 20474ms
+ GET / 200 in 47900ms
+ ✓ Compiled / in 48s
+ ○ Compiling /_not-found/page ...
+ ✓ Compiled /_not-found/page in 2.4s
+ GET /favicon.ico?favicon.56766c03.ico 200 in 1182ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 2652ms
+ GET / 200 in 432ms
+ GET / 200 in 3067ms
+ GET / 200 in 783ms
+ GET /programs 200 in 219ms
+ GET /schedule 200 in 219ms
+ GET /workout-history 200 in 213ms
+ GET /library 200 in 183ms
+ GET /library 200 in 650ms
+ ✓ Compiled in 379ms
+ ✓ Compiled in 165ms
+ ✓ Compiled in 209ms
+ ✓ Compiled in 130ms
+ ✓ Compiled in 155ms
+ ✓ Compiled in 358ms
+ ✓ Compiled in 130ms
+ ✓ Compiled in 123ms
+ ✓ Compiled in 300ms
+ ✓ Compiled in 196ms
+ ✓ Compiled in 164ms
+ ✓ Compiled in 102ms
+ ✓ Compiled in 159ms
+ ✓ Compiled in 193ms
+ ✓ Compiled in 294ms
+ ✓ Compiled in 224ms
+ ✓ Compiled in 215ms
+ ✓ Compiled in 215ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 3.3s
+ GET /library 500 in 4966ms
+ ✓ Compiled in 184ms
+ ✓ Compiled /library in 211ms
+ GET /library 200 in 1649ms
+ GET / 200 in 1636ms
+ GET / 200 in 349ms
+ GET /favicon.ico?favicon.56766c03.ico 200 in 439ms
+ ✓ Compiled in 153ms
+ ✓ Compiled in 154ms
+ ✓ Compiled in 131ms
+ ✓ Compiled in 224ms
+ ✓ Compiled in 113ms
+ ✓ Compiled in 127ms
+ GET / 200 in 259ms
+ GET /programs 200 in 240ms
+ GET / 200 in 264ms
+ GET / 200 in 232ms
+ GET /programs 200 in 197ms
+ ○ Compiling /programs/[programId] ...
+ ✓ Compiled /programs/[programId] in 7.4s
+ GET /programs/prog_1 200 in 9807ms
+ GET /programs/prog_1 200 in 327ms
+ GET /programs/prog_1 200 in 285ms
+ ✓ Compiled in 244ms
+ ✓ Compiled in 190ms
+ ✓ Compiled in 167ms
+ ✓ Compiled in 111ms
+ ✓ Compiled in 170ms
+ ✓ Compiled in 70ms
+ ✓ Compiled in 194ms
+ ✓ Compiled in 79ms
+ ✓ Compiled in 56ms
+ ✓ Compiled in 210ms
+ ✓ Compiled /programs/[programId] in 133ms
+ GET /programs/prog_1 200 in 636ms
+ GET / 200 in 677ms
+ GET /favicon.ico?favicon.56766c03.ico 200 in 417ms
+ ✓ Compiled in 83ms
+ ✓ Compiled in 84ms
+ ✓ Compiled in 61ms
+ ✓ Compiled in 132ms
+ ✓ Compiled in 122ms
+ ✓ Compiled in 82ms
+ ✓ Compiled in 107ms
+ ✓ Compiled in 102ms
+ ✓ Compiled in 203ms
+ ✓ Compiled in 1673ms
+ ✓ Compiled in 963ms
+ ○ Compiling /programs/[programId] ...
+ GET / 200 in 384ms
+ ✓ Compiled /programs/[programId] in 624ms
+ GET /programs/prog_1 200 in 1119ms
+ ✓ Compiled in 107ms
+ ✓ Compiled in 188ms
+ ✓ Compiled in 80ms
+ ✓ Compiled in 323ms
+ ✓ Compiled in 304ms
+ ✓ Compiled in 176ms
+ ✓ Compiled in 199ms
+ ✓ Compiled in 585ms
+ ✓ Compiled in 222ms
+ ✓ Compiled in 132ms
+ ✓ Compiled in 90ms
+ ✓ Compiled in 119ms
+ ✓ Compiled in 199ms
+ ✓ Compiled in 160ms
+ ✓ Compiled in 155ms
+ GET / 200 in 2722ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 621ms
+ GET /favicon.ico?favicon.56766c03.ico 200 in 558ms
+ ✓ Compiled in 1099ms
+ ✓ Compiled in 454ms
+ GET / 200 in 2117ms
+ ✓ Compiled in 125ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 487ms
+ GET /favicon.ico?favicon.56766c03.ico 200 in 529ms
+ ✓ Compiled in 626ms
+ ✓ Compiled in 152ms
+ ✓ Compiled in 150ms
+ ✓ Compiled in 187ms
+ ✓ Compiled in 88ms
+ GET / 200 in 2147ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 512ms
+ GET /favicon.ico?favicon.56766c03.ico 200 in 499ms
+ ✓ Compiled in 171ms
+ ✓ Compiled in 361ms
+ GET /programs/prog_1 200 in 737ms
+ GET / 200 in 1853ms
+ GET /favicon.ico?favicon.56766c03.ico 200 in 435ms
+ ✓ Compiled in 274ms
+ ✓ Compiled in 329ms
+ GET / 200 in 2607ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 442ms
+ ✓ Compiled in 210ms
+ GET /favicon.ico?favicon.56766c03.ico 200 in 457ms
+ ✓ Compiled in 188ms
+ GET / 200 in 2001ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 564ms
+ GET /favicon.ico?favicon.56766c03.ico 200 in 463ms
+ ✓ Compiled in 225ms
+ ✓ Compiled in 158ms
+ GET / 200 in 1351ms
+ GET / 200 in 243ms
+ GET /programs 200 in 229ms
+ ✓ Compiled /schedule in 246ms
+ GET /schedule 200 in 613ms
+ GET /workout-history 200 in 270ms
+ ✓ Compiled in 173ms
+ GET /library 200 in 404ms
+ ○ Compiling /analytics ...
+ GET / 200 in 950ms
+ ✓ Compiled /analytics in 11.6s
+ GET /analytics 200 in 12007ms
+ GET /analytics 200 in 194ms

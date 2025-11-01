@@ -1,0 +1,45 @@
+ ⨯ ./src/components/add-exercise-dialog.tsx:215:6
+Parsing ecmascript source code failed
+[0m [90m 213 |[39m[0m
+[0m [90m 214 |[39m   [36mreturn[39m ([0m
+[0m[31m[1m>[22m[39m[90m 215 |[39m     [33m<[39m[33mDialog[39m open[33m=[39m{isOpen} onOpenChange[33m=[39m{setIsOpen}[33m>[39m[0m
+[0m [90m     |[39m      [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[0m
+[0m [90m 216 |[39m       [33m<[39m[33mDialogTrigger[39m asChild[33m>[39m[0m
+[0m [90m 217 |[39m         {dialogTrigger}[0m
+[0m [90m 218 |[39m       [33m<[39m[33m/[39m[33mDialogTrigger[39m[33m>[39m[0m
+
+Unexpected token `Dialog`. Expected jsx identifier
+
+
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ Error: Attempted to call useUser() from the server but useUser is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.
+    at <unknown> (src\firebase\provider.tsx\proxy.mjs:43:23)
+    at AnalyticsPage (src\app\analytics\page.tsx:14:25)
+  41 | );
+  42 | export const useUser = registerClientReference(
+> 43 |     function() { throw new Error("Attempted to call useUser() from the server but useUser is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component."); },
+     |                       ^
+  44 |     "[project]/src/firebase/provider.tsx <module evaluation>",
+  45 |     "useUser",
+  46 | ); {
+  digest: '1366549368'
+}
+ ⨯ Error: Attempted to call useUser() from the server but useUser is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.
+    at <unknown> (src\firebase\provider.tsx\proxy.mjs:43:23)
+    at AnalyticsPage (src\app\analytics\page.tsx:14:25)
+  41 | );
+  42 | export const useUser = registerClientReference(
+> 43 |     function() { throw new Error("Attempted to call useUser() from the server but useUser is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component."); },
+     |                       ^
+  44 |     "[project]/src/firebase/provider.tsx <module evaluation>",
+  45 |     "useUser",
+  46 | ); {
+  digest: '1366549368'
+}

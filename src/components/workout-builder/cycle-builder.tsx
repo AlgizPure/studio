@@ -1,16 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, GripVertical } from 'lucide-react';
-import type { Cycle, CycleType, CycleExercise, Exercise } from '@/lib/types';
+import { Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Trash2, GripVertical, Plus } from 'lucide-react';
+import type { Cycle, CycleType, CycleExercise, Exercise, ExerciseCategory } from '@/lib/types';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { collection } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { AddExerciseDialog } from '@/components/add-exercise-dialog';
+import { ManageCategoriesDialog } from '@/components/manage-categories-dialog';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 import { DraggableExercise } from './draggable-exercise';
 import {
   DndContext,
@@ -38,11 +42,27 @@ interface CycleBuilderProps {
 export function CycleBuilder({ cycle, onUpdate, onDelete, dragHandleProps }: CycleBuilderProps) {
   const { user } = useUser();
   const firestore = useFirestore();
+  const [isAddExerciseDialogOpen, setIsAddExerciseDialogOpen] = useState(false);
+  const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
+  const dialogTriggerRef = React.useRef<HTMLButtonElement>(null);
+  
+  useEffect(() => {
+    if (isAddExerciseDialogOpen && dialogTriggerRef.current) {
+      dialogTriggerRef.current.click();
+    }
+  }, [isAddExerciseDialogOpen]);
+  
   const exercisesQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
     [user, firestore]
   );
   const { data: exercises } = useCollection<Exercise>(exercisesQuery);
+  
+  const exerciseCategoriesQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
+    [user, firestore]
+  );
+  const { data: exerciseCategories } = useCollection<ExerciseCategory>(exerciseCategoriesQuery);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -65,6 +85,10 @@ export function CycleBuilder({ cycle, onUpdate, onDelete, dragHandleProps }: Cyc
 
   const handleAddExercise = (exerciseId: string) => {
     if (!exerciseId) return;
+    if (exerciseId === 'create-new') {
+      setIsAddExerciseDialogOpen(true);
+      return;
+    }
     const newExercise: CycleExercise = {
       exerciseId,
       order: cycle.exercises.length,
@@ -75,6 +99,68 @@ export function CycleBuilder({ cycle, onUpdate, onDelete, dragHandleProps }: Cyc
     onUpdate({
       ...cycle,
       exercises: [...cycle.exercises, newExercise],
+    });
+  };
+
+  const handleExerciseAdd = (newExercise: Omit<Exercise, 'id'>) => {
+    if (!user || !firestore) return;
+    const exercisesCollection = collection(firestore, `users/${user.uid}/exercises`);
+    addDoc(exercisesCollection, { ...newExercise, authorId: user.uid })
+      .then((docRef) => {
+        // After exercise is created, add it to the cycle
+        const newCycleExercise: CycleExercise = {
+          exerciseId: docRef.id,
+          order: cycle.exercises.length,
+          targetReps: '8-12',
+          restAfter: 60,
+        };
+        onUpdate({
+          ...cycle,
+          exercises: [...cycle.exercises, newCycleExercise],
+        });
+        setIsAddExerciseDialogOpen(false);
+      })
+      .catch((err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          operation: 'create',
+          path: exercisesCollection.path,
+          requestResourceData: newExercise,
+        }));
+      });
+  };
+
+  const handleAddCategory = (name: string) => {
+    if (!user || !firestore) return;
+    const categoriesCollection = collection(firestore, `users/${user.uid}/exerciseCategories`);
+    addDoc(categoriesCollection, { name }).catch((err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'create',
+        path: categoriesCollection.path,
+        requestResourceData: { name },
+      }));
+    });
+  };
+
+  const handleUpdateCategory = (category: ExerciseCategory) => {
+    if (!user || !firestore || !category.id) return;
+    const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, category.id);
+    updateDoc(categoryDoc, { name: category.name }).catch((err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'update',
+        path: categoryDoc.path,
+        requestResourceData: { name: category.name },
+      }));
+    });
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    if (!user || !firestore) return;
+    const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId);
+    deleteDoc(categoryDoc).catch((err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        operation: 'delete',
+        path: categoryDoc.path,
+      }));
     });
   };
 
@@ -199,15 +285,51 @@ export function CycleBuilder({ cycle, onUpdate, onDelete, dragHandleProps }: Cyc
               <SelectValue placeholder="Add exercise from library..." />
             </SelectTrigger>
             <SelectContent>
-              {exercises?.map((ex) => (
-                <SelectItem key={ex.id} value={ex.id}>
-                  {ex.name}
+              <SelectGroup>
+                <SelectLabel>Add Exercise</SelectLabel>
+                <SelectItem value="create-new">
+                  <span className="flex items-center">
+                    <Plus className="mr-2 h-4 w-4" /> Create new exercise...
+                  </span>
                 </SelectItem>
-              ))}
+                {exercises && exercises.length > 0 && (
+                  <>
+                    <SelectLabel className="mt-2">From Library</SelectLabel>
+                    {exercises.map((ex) => (
+                      <SelectItem key={ex.id} value={ex.id}>
+                        {ex.name}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>
       </CardContent>
+      <AddExerciseDialog
+        onExerciseAdd={(exercise) => {
+          handleExerciseAdd(exercise);
+          setIsAddExerciseDialogOpen(false);
+        }}
+        categories={exerciseCategories || []}
+        openManageCategories={() => setIsManageCategoriesOpen(true)}
+        trigger={
+          <button 
+            ref={dialogTriggerRef}
+            style={{ display: 'none' }}
+          />
+        }
+      />
+      <ManageCategoriesDialog
+        open={isManageCategoriesOpen}
+        onOpenChange={setIsManageCategoriesOpen}
+        categories={exerciseCategories || []}
+        onAdd={handleAddCategory}
+        onUpdate={handleUpdateCategory}
+        onDelete={handleDeleteCategory}
+        categoryType="Exercise"
+      />
     </Card>
   );
 }

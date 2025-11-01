@@ -47,16 +47,31 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
 
-      // AI Insights cache: owner-only, validate type enum
+      // AI Insights cache: owner-only, validate type enum and structure
       match /aiInsights/{cacheId} {
         allow read, write: if request.auth != null && request.auth.uid == userId
-          && (request.resource == null || request.resource.data.type in ['quick_insights', 'progressions']);
+          && (request.resource == null || (
+            request.resource.data.type in ['quick_insights', 'progressions']
+            && request.resource.data.hasAll(['type', 'data'])
+            && request.resource.data.generatedAt is timestamp
+            && request.resource.data.expiresAt is timestamp
+            && (!('tokensUsed' in request.resource.data) || request.resource.data.tokensUsed is number)
+          ));
       }
 
-      // AI Usage tracking: owner-only, validate date format
+      // AI Usage tracking: owner-only, validate date format and structure
       match /aiUsage/{dateId} {
         allow read, write: if request.auth != null && request.auth.uid == userId
-          && (request.resource == null || request.resource.data.date.matches('^\\d{4}-\\d{2}-\\d{2}$'));
+          && (request.resource == null || (
+            request.resource.data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
+            && request.resource.data.date == dateId
+            && request.resource.data.insightsCount is number
+            && request.resource.data.progressionsCount is number
+            && request.resource.data.tokensUsed is number
+            && request.resource.data.insightsCount >= 0
+            && request.resource.data.progressionsCount >= 0
+            && request.resource.data.tokensUsed >= 0
+          ));
       }
 
       // In-App Notifications: owner-only, validate type enum

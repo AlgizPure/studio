@@ -16,6 +16,7 @@ const navItems = [
   { href: '/schedule', label: 'Schedule', icon: CalendarDays },
   { href: '/workout-history', label: 'History', icon: History },
   { href: '/library', label: 'Exercise Library', icon: Dumbbell },
+  { href: '/workouts', label: 'Workouts Library', icon: Dumbbell },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
