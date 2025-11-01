@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { SiteHeader } from '@/components/site-header';
 import { Sidebar } from '@/components/sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { FirebaseClientProvider } from '@/firebase';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 

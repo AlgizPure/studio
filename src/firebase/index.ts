@@ -1,41 +1,25 @@
-'use client';
+// This file acts as a single entry point for all Firebase-related functionality.
+// It re-exports providers, hooks, and utilities for easy import throughout the app.
 
-import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+// Export initialization function
+export { initializeFirebase } from './init';
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
-export function initializeFirebase() {
-  if (!getApps().length) {
-    // If the config object is not fully populated, Firebase will try to initialize from the environment.
-    // This is the recommended way for App Hosting.
-    // As a fallback for local development, we use the config file.
-    let firebaseApp;
-    try {
-      firebaseApp = initializeApp();
-    } catch (e) {
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
-      firebaseApp = initializeApp(firebaseConfig);
-    }
-    return getSdks(firebaseApp);
-  }
-  return getSdks(getApp());
-}
+// Export core providers and hooks
+export { FirebaseProvider, useFirebase, useFirebaseApp, useFirestore, useAuth, useStorage } from './provider';
 
-export function getSdks(firebaseApp: FirebaseApp) {
-  return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp),
-    storage: getStorage(firebaseApp)
-  };
-}
+// Export Authentication hooks
+export { useUser } from './auth/use-user';
+export type { User } from 'firebase/auth';
 
-export * from './provider';
-export * from './client-provider';
+// Export Firestore hooks and utilities
+export { useDoc } from './firestore/use-doc';
+export { useCollection } from './firestore/use-collection';
+export { useMemoFirebase } from './provider';
+
+// Export Storage hooks
+export { useUploadFile } from './storage/use-upload-file';
+export { useDownloadUrl } from './storage/use-download-url';
+
+// Export error handling utilities
 export * from './errors';
 export { errorEmitter } from './error-emitter';
