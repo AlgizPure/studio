@@ -162,10 +162,10 @@ export default function SchedulePage() {
               </CardContent>
             </Card>
           ) : (
-            <DailySchedule 
-              programs={programs}
-              workouts={workouts}
-              habits={habits || []} 
+            <DailySchedule
+              programs={programs || undefined}
+              workouts={workouts || undefined}
+              habits={habits || []}
               habitCategories={habitCategories || []}
               openManageHabitCategories={() => setIsManageHabitCategoriesOpen(true)}
             />

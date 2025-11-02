@@ -26,7 +26,7 @@ import {
 } from '@dnd-kit/sortable';
 
 interface WorkoutBuilderProps {
-  workout?: WorkoutExtended;
+  workout?: Partial<WorkoutExtended>;
   onSave: (workout: Omit<WorkoutExtended, 'id'>) => void;
   onCancel: () => void;
 }
@@ -56,6 +56,7 @@ export function WorkoutBuilder({ workout, onSave, onCancel }: WorkoutBuilderProp
       cycles: orderedCycles,
       targetMuscles: [],
       estimatedDuration: 60,
+      status: workout?.status || 'inactive',
     };
     
     onSave(workoutData);

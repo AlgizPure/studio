@@ -76,7 +76,7 @@ Return a structured JSON response with entries array matching the schema.`,
       habits: input.habits,
     });
     // Genkit returns a wrapper; use .output for typed result
-    // @ts-expect-error genkit type wrapper
+    // @ts-expect-error - Genkit type wrapper issue
     return result.output ?? result;
   } catch (error) {
     console.error('[parse-reflection] AI parsing error:', error);

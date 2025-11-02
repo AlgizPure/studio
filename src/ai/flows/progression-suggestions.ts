@@ -121,9 +121,9 @@ Return structured JSON response matching the schema.`,
     if (tokensUsed > 0) {
       (result as any).tokensUsed = tokensUsed;
     }
-    
+
     // Genkit returns a wrapper; use .output for typed result
-    // @ts-expect-error genkit type wrapper
+    // @ts-expect-error - Genkit type wrapper issue
     return result.output ?? result;
   } catch (error) {
     console.error('[progression-suggestions] AI generation error:', error);
