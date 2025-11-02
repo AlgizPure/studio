@@ -41,7 +41,9 @@ export function ExportDialog() {
       await navigator.clipboard.writeText(CLAUDE_INSTRUCTIONS_MD);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {}
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+    }
   };
 
   return (

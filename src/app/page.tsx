@@ -13,7 +13,7 @@ import type { AppUser } from '@/firebase/auth/use-user';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { startOfWeek, isWithinInterval, isToday, isYesterday, formatISO } from 'date-fns';
-import type { Exercise, Habit } from '@/lib/types';
+import type { Exercise, Habit, WorkoutExtended } from '@/lib/types';
 import { useMemo, useEffect } from 'react';
 import { collection, doc, updateDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -80,6 +80,11 @@ export default function DashboardPage() {
   );
   const { data: habits } = useCollection<Habit>(habitsQuery);
 
+  const workoutsQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/workouts`) : null),
+    [user, firestore]
+  );
+  const { data: workouts } = useCollection<WorkoutExtended>(workoutsQuery);
 
   const weeklyStats = useMemo(() => {
     const now = new Date();
@@ -87,11 +92,11 @@ export default function DashboardPage() {
     const endOfThisWeek = new Date(startOfThisWeek);
     endOfThisWeek.setDate(endOfThisWeek.getDate() + 6);
 
-    const scheduledWorkoutsThisWeek = (exercises || []).filter(ex => 
-      (ex.days || []).length > 0
+    const scheduledWorkoutsThisWeek = (workouts || []).filter(w =>
+      w.status === 'active' && w.isStandalone && (w.standaloneSchedule?.days || []).length > 0
     );
 
-    const completedWorkoutsThisWeek = (exercises || []).filter(ex => 
+    const completedWorkoutsThisWeek = (exercises || []).filter(ex =>
       ex.lastCompleted && isWithinInterval(new Date(ex.lastCompleted), { start: startOfThisWeek, end: endOfThisWeek })
     );
 
@@ -113,7 +118,7 @@ export default function DashboardPage() {
       habitCompletion: habitCompletionPercentage,
       runningDistance: runningDistanceThisWeek.toFixed(1),
     }
-  }, [exercises, habits]);
+  }, [exercises, habits, workouts]);
 
   const anyActivityCompletedToday = useMemo(() => {
     const habitCompleted = (habits || []).some(h => h.completed);
