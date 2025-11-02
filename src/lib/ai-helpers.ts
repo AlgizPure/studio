@@ -214,6 +214,7 @@ export async function checkAndUpdateUsage(
   // Update usage
   const updatedUsage: AIUsage = {
     ...usage,
+    date: today,
     insightsCount: type === 'insights' ? usage.insightsCount + 1 : usage.insightsCount,
     progressionsCount: type === 'progressions' ? usage.progressionsCount + 1 : usage.progressionsCount,
   };

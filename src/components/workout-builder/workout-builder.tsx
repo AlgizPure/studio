@@ -88,87 +88,96 @@ export function WorkoutBuilder({ workout, onSave, onCancel }: WorkoutBuilderProp
   };
 
   return (
-    <div className="space-y-6">
-      {/* Workout Details */}
-      <Card className="glass">
-        <CardHeader>
-          <CardTitle>Workout Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="workout-name">Name *</Label>
-            <Input
-              id="workout-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Upper Body Push"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="workout-description">Description</Label>
-            <Textarea
-              id="workout-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the workout..."
-              rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ minHeight: 0 }}>
+        <div className="space-y-6 pb-4">
+          {/* Workout Details */}
+          <Card className="glass">
+            <CardHeader>
+              <CardTitle>Workout Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="workout-name">Name *</Label>
+                <Input
+                  id="workout-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g., Upper Body Push"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="workout-description">Description</Label>
+                <Textarea
+                  id="workout-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe the workout..."
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Cycles */}
-      <Card className="glass">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Cycles</CardTitle>
-            <Button onClick={handleAddCycle} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Cycle
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {cycles.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-              <p>No cycles yet</p>
-              <p className="text-sm mt-2">Add a cycle to start building your workout</p>
-            </div>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={cycles.map((c) => c.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-4">
-                  {cycles.map((cycle, index) => (
-                    <DraggableCycle
-                      key={cycle.id}
-                      cycle={cycle}
-                      onUpdate={(updatedCycle) => {
-                        const newCycles = [...cycles];
-                        newCycles[index] = updatedCycle;
-                        setCycles(newCycles);
-                      }}
-                      onDelete={() => {
-                        setCycles(cycles.filter((c) => c.id !== cycle.id));
-                      }}
-                    />
-                  ))}
+          {/* Cycles */}
+          <Card className="glass">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Cycles</CardTitle>
+                <Button 
+                  onClick={handleAddCycle} 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 border border-input hover:border-primary hover:bg-transparent hover:text-foreground"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Cycle
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {cycles.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                  <p>No cycles yet</p>
+                  <p className="text-sm mt-2">Add a cycle to start building your workout</p>
                 </div>
-              </SortableContext>
-            </DndContext>
-          )}
-        </CardContent>
-      </Card>
+              ) : (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={cycles.map((c) => c.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-4">
+                      {cycles.map((cycle, index) => (
+                        <DraggableCycle
+                          key={cycle.id}
+                          cycle={cycle}
+                          onUpdate={(updatedCycle) => {
+                            const newCycles = [...cycles];
+                            newCycles[index] = updatedCycle;
+                            setCycles(newCycles);
+                          }}
+                          onDelete={() => {
+                            setCycles(cycles.filter((c) => c.id !== cycle.id));
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-2 pt-4 sticky bottom-0 bg-background/90 py-2">
+      <div className="flex justify-end gap-2 pt-4 pb-6 border-t bg-background flex-shrink-0">
         <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>

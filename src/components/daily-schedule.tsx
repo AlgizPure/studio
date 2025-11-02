@@ -8,47 +8,39 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from './ui/badge';
 import type { LucideIcon } from 'lucide-react';
-import type { Exercise, Habit, HabitCategory, ExerciseCategory } from '@/lib/types';
+import { useMemo } from 'react';
+import type { Habit, HabitCategory, Program, WorkoutExtended, Day } from '@/lib/types';
 import { Target, Pencil, Dumbbell } from 'lucide-react';
-import { AddExerciseDialog } from './add-exercise-dialog';
+import { buildDailySchedule } from '@/lib/utils/schedule-builder';
 import { AddHabitDialog } from './add-habit-dialog';
 import { Button } from './ui/button';
 import { PomodoroIcon } from './pomodoro-icon';
 
-type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
-
 const weeklySchedule: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 interface DailyScheduleProps {
-    exercises: Exercise[];
+    programs?: Program[];
+    workouts?: WorkoutExtended[];
     habits: Habit[];
     habitCategories: HabitCategory[];
-    exerciseCategories: ExerciseCategory[];
-    onExerciseAdd: (exercise: Omit<Exercise, 'id' | 'authorId'>) => void;
-    onHabitAdd: (habit: Omit<Habit, 'id' | 'authorId'>) => void;
-    onExerciseUpdate: (exercise: Exercise) => void;
-    onHabitUpdate: (habit: Habit) => void;
-    onExerciseDelete: (exerciseId: string) => void;
-    onHabitDelete: (habitId: string) => void;
     openManageHabitCategories: () => void;
-    openManageExerciseCategories: () => void;
 }
 
 export function DailySchedule({ 
-    exercises, 
+    programs = [],
+    workouts = [],
     habits, 
     habitCategories,
-    exerciseCategories,
-    onExerciseAdd, 
-    onHabitAdd,
-    onExerciseUpdate,
-    onHabitUpdate,
-    onExerciseDelete,
-    onHabitDelete,
     openManageHabitCategories,
-    openManageExerciseCategories,
 }: DailyScheduleProps) {
   const today = new Date().toLocaleString('en-US', { weekday: 'long' });
+  
+  // Создаем карту тренировок для быстрого доступа
+  const workoutsMap = useMemo(() => {
+    const map = new Map<string, WorkoutExtended>();
+    workouts.forEach(w => map.set(w.id, w));
+    return map;
+  }, [workouts]);
   
   return (
     <>
@@ -59,29 +51,54 @@ export function DailySchedule({
         <CardContent>
           <Accordion type="single" collapsible defaultValue={today} className="w-full">
             {weeklySchedule.map((day) => {
-              const dailyHabits = habits.filter(habit => habit.days?.includes(day));
-              const dailyExercises = exercises.filter(ex => ex.days?.includes(day));
+              // Получаем дату для этого дня недели
+              const todayDate = new Date();
+              const currentDay = todayDate.getDay();
+              const dayIndex = weeklySchedule.indexOf(day);
+              const diff = dayIndex - (currentDay === 0 ? 7 : currentDay) + 1;
+              const dayDate = new Date(todayDate);
+              dayDate.setDate(todayDate.getDate() + diff);
+              
+              // Получаем запланированные тренировки на этот день
+              const scheduledWorkouts = buildDailySchedule(programs, workouts, dayDate);
+              
+              // Фильтруем привычки для этого дня
+              const dailyHabits = habits.filter(habit => {
+                if ('type' in habit && habit.type) {
+                  // HabitV2
+                  if (habit.schedule?.intervalType === 'days_of_week') {
+                    return habit.schedule.days?.includes(day);
+                  }
+                  return true;
+                }
+                // Legacy
+                return habit.days?.includes(day);
+              });
               
               const allItems = [
                 ...dailyHabits.map(habit => ({
                   id: habit.id,
-                  time: habitCategories.find(c => c.id === habit.categoryId)?.name || 'Habit',
-                  activityType: 'Habit',
+                  time: habitCategories.find(c => c.id === habit.categoryId)?.name || 'Any time',
+                  activityType: 'Habit' as const,
                   activityName: habit.name,
-                  duration: habit.goal || '',
+                  duration: ('goal' in habit ? habit.goal : '') || '',
                   icon: Target,
                   raw: habit,
-                  isPomodoro: !!habit.pomodoro,
+                  isPomodoro: !!('pomodoro' in habit ? habit.pomodoro : false),
                 })),
-                ...dailyExercises.map(ex => ({
-                    id: ex.id,
-                    time: ex.time || 'Any time',
-                    activityType: 'Workout',
-                    activityName: ex.name,
-                    duration: exerciseCategories.find(c => c.id === ex.categoryId)?.name || 'Workout',
+                ...scheduledWorkouts.map(scheduled => {
+                  const workout = workoutsMap.get(scheduled.workoutId);
+                  return {
+                    id: scheduled.workoutId,
+                    time: scheduled.startTime || 'Any time',
+                    activityType: 'Workout' as const,
+                    activityName: workout?.name || 'Workout',
+                    duration: workout?.estimatedDuration ? `${workout.estimatedDuration} min` : '',
                     icon: Dumbbell,
-                    raw: ex,
-                }))
+                    raw: { workoutId: scheduled.workoutId, programId: scheduled.programId },
+                    isPaused: scheduled.status === 'paused',
+                  };
+                })
               ].sort((a, b) => {
                 const aTime = (a.time || '99:99').split(' ')[0];
                 const bTime = (b.time || '99:99').split(' ')[0];
@@ -118,27 +135,20 @@ export function DailySchedule({
                                     <p className="text-sm text-muted-foreground">{item.time}</p>
                                 </div>
                                 {(item as any).isPomodoro ? <PomodoroIcon className="mr-2"/> : null}
+                                {(item as any).isPaused && (
+                                  <Badge variant="outline" className="mr-2 opacity-50">Paused</Badge>
+                                )}
                                 <Badge variant={item.activityType === 'Habit' ? 'secondary' : 'outline'} className="mr-2">{item.duration}</Badge>
                                 
-                                {item.activityType === 'Habit' ? (
+                                {item.activityType === 'Habit' && (
                                     <AddHabitDialog
                                         habitToEdit={item.raw as Habit}
-                                        onHabitUpdate={onHabitUpdate}
-                                        onHabitDelete={onHabitDelete}
-                                        onHabitAdd={onHabitAdd}
+                                        onHabitUpdate={() => {}}
+                                        onHabitDelete={() => {}}
+                                        onHabitAdd={() => {}}
                                         trigger={editTrigger}
                                         openManageCategories={openManageHabitCategories}
                                         categories={habitCategories}
-                                    />
-                                ) : (
-                                    <AddExerciseDialog
-                                        exerciseToEdit={item.raw as Exercise}
-                                        onExerciseUpdate={onExerciseUpdate}
-                                        onExerciseDelete={onExerciseDelete}
-                                        onExerciseAdd={onExerciseAdd}
-                                        trigger={editTrigger}
-                                        openManageCategories={openManageExerciseCategories}
-                                        categories={exerciseCategories}
                                     />
                                 )}
                               </div>

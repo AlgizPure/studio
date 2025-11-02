@@ -90,6 +90,11 @@ export function AIInsightsCard() {
     ? new Date(insights.cacheUntil).getTime() - Date.now() < 24 * 60 * 60 * 1000
     : true;
 
+  // Don't render if user is not authenticated
+  if (!user) {
+    return null;
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -108,6 +113,7 @@ export function AIInsightsCard() {
               variant="outline"
               size="sm"
               onClick={() => setTimeframe(timeframe === '2weeks' ? '4weeks' : '2weeks')}
+              disabled={!insights && !loading}
             >
               {timeframe === '2weeks' ? '2W' : '4W'}
             </Button>
@@ -126,10 +132,15 @@ export function AIInsightsCard() {
       </CardHeader>
       <CardContent>
         {!insights && !loading && (
-          <Button onClick={fetchInsights} className="w-full">
-            <Sparkles className="mr-2 h-4 w-4" />
-            Get AI Insights
-          </Button>
+          <div className="space-y-3">
+            <Button onClick={fetchInsights} className="w-full">
+              <Sparkles className="mr-2 h-4 w-4" />
+              Get AI Insights
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Analyze your recent workouts to get personalized recommendations
+            </p>
+          </div>
         )}
 
         {loading && (
@@ -145,36 +156,43 @@ export function AIInsightsCard() {
               {insights.summary}
             </div>
 
-            <div className="space-y-3">
-              {insights.insights
-                .sort((a, b) => a.priority - b.priority)
-                .map((insight, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-lg border p-3 space-y-1"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2 flex-1">
-                        {getIcon(insight.type)}
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm">{insight.title}</h4>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {insight.description}
-                          </p>
-                          {insight.relatedProgram && (
-                            <Badge variant="outline" className="mt-2">
-                              {insight.relatedProgram}
-                            </Badge>
-                          )}
+            {insights.insights.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
+                <p className="text-sm">No insights available yet.</p>
+                <p className="text-xs mt-1">Complete more workouts to get AI recommendations.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {insights.insights
+                  .sort((a, b) => a.priority - b.priority)
+                  .map((insight, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-lg border p-3 space-y-1"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start gap-2 flex-1">
+                          {getIcon(insight.type)}
+                          <div className="flex-1">
+                            <h4 className="font-medium text-sm">{insight.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {insight.description}
+                            </p>
+                            {insight.relatedProgram && (
+                              <Badge variant="outline" className="mt-2">
+                                {insight.relatedProgram}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
+                        <Badge variant={getVariant(insight.type)}>
+                          P{insight.priority}
+                        </Badge>
                       </div>
-                      <Badge variant={getVariant(insight.type)}>
-                        P{insight.priority}
-                      </Badge>
                     </div>
-                  </div>
-                ))}
-            </div>
+                  ))}
+              </div>
+            )}
 
             {insights.generatedAt && (
               <div className="text-xs text-muted-foreground pt-2 border-t">

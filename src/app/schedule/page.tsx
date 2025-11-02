@@ -5,9 +5,8 @@ import { useCollection } from '@/firebase/firestore/use-collection';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { DailySchedule } from '@/components/daily-schedule';
-import { AddExerciseDialog } from '@/components/add-exercise-dialog';
 import { AddHabitDialog } from '@/components/add-habit-dialog';
-import type { Exercise, Habit, HabitCategory, ExerciseCategory } from '@/lib/types';
+import type { Habit, HabitCategory, Program, WorkoutExtended } from '@/lib/types';
 import { ManageCategoriesDialog } from '@/components/manage-categories-dialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -21,11 +20,17 @@ export default function SchedulePage() {
   const firestore = useFirestore();
 
   // Data fetching from Firestore
-  const exercisesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
+  const programsQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/programs`) : null),
     [user, firestore]
   );
-  const { data: exercises, isLoading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
+  const { data: programs, isLoading: programsLoading } = useCollection<Program>(programsQuery);
+
+  const workoutsQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/workouts`) : null),
+    [user, firestore]
+  );
+  const { data: workouts, isLoading: workoutsLoading } = useCollection<WorkoutExtended>(workoutsQuery);
 
   const habitsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
@@ -39,58 +44,10 @@ export default function SchedulePage() {
   );
   const { data: habitCategories, isLoading: habitCatLoading } = useCollection<HabitCategory>(habitCatQuery);
   
-  const exerciseCatQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
-    [user, firestore]
-  );
-  const { data: exerciseCategories, isLoading: exerciseCatLoading } = useCollection<ExerciseCategory>(exerciseCatQuery);
-
-
   const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
-  const [isManageExerciseCategoriesOpen, setIsManageExerciseCategoriesOpen] = useState(false);
   
-  const isLoading = exercisesLoading || habitsLoading || habitCatLoading || exerciseCatLoading;
+  const isLoading = programsLoading || workoutsLoading || habitsLoading || habitCatLoading;
 
-  // Exercise CRUD
-  const handleAddExercise = (exerciseData: Omit<Exercise, 'id' | 'authorId'>) => {
-    if (!user || !firestore) return;
-    const exercisesCollection = collection(firestore, `users/${user.uid}/exercises`);
-    const dataToSave = { ...exerciseData, authorId: user.uid };
-    addDoc(exercisesCollection, dataToSave).catch(async (err) => {
-      const permissionError = new FirestorePermissionError({
-        operation: 'create',
-        path: exercisesCollection.path,
-        requestResourceData: dataToSave,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-    });
-  };
-
-  const handleUpdateExercise = (exercise: Exercise) => {
-    if (!user || !firestore || !exercise.id) return;
-    const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
-    const { id, ...exerciseData } = exercise;
-    updateDoc(exerciseDoc, exerciseData).catch(async (err) => {
-      const permissionError = new FirestorePermissionError({
-        operation: 'update',
-        path: exerciseDoc.path,
-        requestResourceData: exerciseData,
-      });
-      errorEmitter.emit('permission-error', permissionError);
-    });
-  };
-
-  const handleDeleteExercise = (exerciseId: string) => {
-    if (!user || !firestore) return;
-    const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exerciseId);
-    deleteDoc(exerciseDoc).catch(async (err) => {
-       const permissionError = new FirestorePermissionError({
-        operation: 'delete',
-        path: exerciseDoc.path,
-      });
-       errorEmitter.emit('permission-error', permissionError);
-    });
-  };
   
   // Habit CRUD
   const handleAddHabit = (habitData: Omit<Habit, 'id' | 'authorId'>) => {
@@ -170,41 +127,6 @@ export default function SchedulePage() {
     });
   };
   
-  const handleAddExerciseCategory = (name: string) => {
-    if (!user || !firestore) return;
-    const catCollection = collection(firestore, `users/${user.uid}/exerciseCategories`);
-    addDoc(catCollection, { name }).catch(async (err) => {
-       const permissionError = new FirestorePermissionError({
-        operation: 'create',
-        path: catCollection.path,
-        requestResourceData: { name },
-      });
-       errorEmitter.emit('permission-error', permissionError);
-    });
-  };
-  const handleUpdateExerciseCategory = (category: ExerciseCategory) => {
-    if (!user || !firestore || !category.id) return;
-    const catDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, category.id);
-    updateDoc(catDoc, { name: category.name }).catch(async (err) => {
-      const permissionError = new FirestorePermissionError({
-        operation: 'update',
-        path: catDoc.path,
-        requestResourceData: { name: category.name },
-      });
-      errorEmitter.emit('permission-error', permissionError);
-    });
-  };
-  const handleDeleteExerciseCategory = (categoryId: string) => {
-     if (!user || !firestore) return;
-    const catDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId);
-    deleteDoc(catDoc).catch(async (err) => {
-        const permissionError = new FirestorePermissionError({
-        operation: 'delete',
-        path: catDoc.path,
-      });
-        errorEmitter.emit('permission-error', permissionError);
-    });
-  };
 
   return (
     <>
@@ -225,12 +147,6 @@ export default function SchedulePage() {
                 openManageCategories={() => setIsManageHabitCategoriesOpen(true)}
                 trigger={<Button variant="ghost" size="sm"><Plus className="mr-2 h-4 w-4" />Habit</Button>}
                  />
-              <AddExerciseDialog 
-                onExerciseAdd={handleAddExercise}
-                categories={exerciseCategories || []}
-                openManageCategories={() => setIsManageExerciseCategoriesOpen(true)}
-                trigger={<Button variant="ghost" size="sm"><Plus className="mr-2 h-4 w-4" />Exercise</Button>}
-                />
           </div>
         </div>
         <div className="space-y-6">
@@ -247,18 +163,11 @@ export default function SchedulePage() {
             </Card>
           ) : (
             <DailySchedule 
-              exercises={exercises || []}
+              programs={programs}
+              workouts={workouts}
               habits={habits || []} 
               habitCategories={habitCategories || []}
-              exerciseCategories={exerciseCategories || []}
-              onExerciseAdd={handleAddExercise} 
-              onHabitAdd={handleAddHabit}
-              onExerciseUpdate={handleUpdateExercise}
-              onHabitUpdate={handleUpdateHabit}
-              onExerciseDelete={handleDeleteExercise}
-              onHabitDelete={handleDeleteHabit}
               openManageHabitCategories={() => setIsManageHabitCategoriesOpen(true)}
-              openManageExerciseCategories={() => setIsManageExerciseCategoriesOpen(true)}
             />
           )}
         </div>
@@ -271,15 +180,6 @@ export default function SchedulePage() {
         onUpdate={handleUpdateHabitCategory}
         onDelete={handleDeleteHabitCategory}
         categoryType="Habit"
-      />
-      <ManageCategoriesDialog 
-        open={isManageExerciseCategoriesOpen} 
-        onOpenChange={setIsManageExerciseCategoriesOpen}
-        categories={exerciseCategories || []}
-        onAdd={handleAddExerciseCategory}
-        onUpdate={handleUpdateExerciseCategory}
-        onDelete={handleDeleteExerciseCategory}
-        categoryType="Exercise"
       />
     </>
   );

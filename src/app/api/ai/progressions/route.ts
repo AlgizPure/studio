@@ -74,10 +74,11 @@ export async function POST(req: NextRequest) {
         const today = new Date().toISOString().split('T')[0];
         const usageDoc = await firestore.collection(`users/${userId}/aiUsage`).doc(today).get();
         const currentUsage = usageDoc.exists && usageDoc.data()
-          ? usageDoc.data() as { insightsCount: number; progressionsCount: number; tokensUsed: number }
-          : { insightsCount: 0, progressionsCount: 0, tokensUsed: 0 };
+          ? usageDoc.data() as { date: string; insightsCount: number; progressionsCount: number; tokensUsed: number }
+          : { date: today, insightsCount: 0, progressionsCount: 0, tokensUsed: 0 };
         await firestore.collection(`users/${userId}/aiUsage`).doc(today).set({
           ...currentUsage,
+          date: today,
           tokensUsed: (currentUsage.tokensUsed || 0) + tokensUsed,
         }, { merge: true });
       }

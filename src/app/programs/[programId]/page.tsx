@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Play } from 'lucide-react';
@@ -12,27 +12,55 @@ import { ProgressionSuggestionsPanel } from '@/components/programs/progression-s
 import type { WorkoutExtended, ProgramWorkout, Program, WorkoutLog } from '@/lib/types';
 import Link from 'next/link';
 import { WorkoutExecutionMode } from '@/components/workout-execution/workout-execution-mode';
-import { useUser, useFirestore } from '@/firebase';
-import { addDoc, collection } from 'firebase/firestore';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { addDoc, collection, doc } from 'firebase/firestore';
+import { useDoc } from '@/firebase/firestore/use-doc';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProgramDetailPage({ 
   params 
 }: { 
-  params: { programId: string };
+  params: Promise<{ programId: string }>;
 }) {
-  const { programId } = params;
+  const { programId } = use(params);
   const router = useRouter();
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
 
-  // In a real app, this would also fetch detailed workout objects
-  const [program, setProgram] = useState<Program | undefined>(
-    mockPrograms.find(p => p.id === programId)
+  // Load program from Firestore
+  const programDocRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, `users/${user.uid}/programs/${programId}`) : null),
+    [user, firestore, programId]
   );
+  const { data: programFromFirestore, isLoading: isLoadingProgram } = useDoc<Program>(programDocRef);
+
+  // Fallback to mock data if Firestore doesn't have it
+  const [program, setProgram] = useState<Program | undefined>(
+    programFromFirestore || mockPrograms.find(p => p.id === programId)
+  );
+
+  // Update program when Firestore data loads
+  useEffect(() => {
+    if (programFromFirestore) {
+      setProgram(programFromFirestore);
+    }
+  }, [programFromFirestore]);
+
   const [isAddWorkoutOpen, setIsAddWorkoutOpen] = useState(false);
   const [executingWorkout, setExecutingWorkout] = useState<WorkoutExtended | null>(null);
+
+  // Show loading state while fetching from Firestore
+  if (isLoadingProgram && !program) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading program...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleWorkoutComplete = async (log: Omit<WorkoutLog, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
     if (!user || !firestore) {
@@ -173,7 +201,7 @@ export default function ProgramDetailPage({
       </div>
 
       {/* AI Progression Suggestions */}
-      {program.status === 'active' && (
+      {program.status === 'active' && program.workouts.length > 0 && user && (
         <ProgressionSuggestionsPanel program={program} />
       )}
 

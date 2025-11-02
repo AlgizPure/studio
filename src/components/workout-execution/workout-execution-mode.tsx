@@ -1,15 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Play, Pause, CheckCircle2, X } from 'lucide-react';
-import type { WorkoutExtended, WorkoutLog, CycleLog, ExerciseLog, SetLog, WorkoutExecutionStatus } from '@/lib/types';
+import type { WorkoutExtended, WorkoutLog, CycleLog, ExerciseLog, SetLog, WorkoutExecutionStatus, Exercise } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { SetTracker } from './set-tracker';
 import { RestTimer } from './rest-timer';
 import { WorkoutFeedbackDialog } from '@/components/workout-feedback-dialog';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
+import { collection } from 'firebase/firestore';
 
 interface WorkoutExecutionModeProps {
   workout: WorkoutExtended;
@@ -24,6 +27,21 @@ export function WorkoutExecutionMode({
   onComplete,
   onCancel,
 }: WorkoutExecutionModeProps) {
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  // Загружаем упражнения для проверки trackDuration
+  const exercisesQuery = useMemoFirebase(
+    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
+    [user, firestore]
+  );
+  const { data: exercises } = useCollection<Exercise>(exercisesQuery);
+  const exercisesMap = useMemo(() => {
+    const map = new Map<string, Exercise>();
+    exercises?.forEach(ex => map.set(ex.id, ex));
+    return map;
+  }, [exercises]);
+
   const [status, setStatus] = useState<WorkoutExecutionStatus>('not_started');
   const [startTime, setStartTime] = useState<string | null>(null);
   const [currentCycleIndex, setCurrentCycleIndex] = useState(0);
@@ -36,6 +54,9 @@ export function WorkoutExecutionMode({
 
   const [isResting, setIsResting] = useState(false);
   const [restDuration, setRestDuration] = useState(0);
+
+  // Трекинг времени для упражнений
+  const exerciseStartTimes = useRef<Map<string, number>>(new Map());
 
   // Timer
   useEffect(() => {
@@ -97,6 +118,60 @@ export function WorkoutExecutionMode({
   const currentCycleDef = workout.cycles?.[currentCycleIndex];
   const currentExerciseDef = currentCycleDef?.exercises[currentExerciseIndex];
 
+  // Начинаем трекинг при переходе к упражнению
+  useEffect(() => {
+    if (currentExerciseDef && status === 'in_progress' && !isResting) {
+      const exerciseId = currentExerciseDef.exerciseId;
+      const exercise = exercisesMap.get(exerciseId);
+      
+      if (exercise?.trackDuration) {
+        const exerciseKey = `${currentCycleDef?.id}-${exerciseId}-${currentCycleRepetition}`;
+        
+        // Проверяем, не начали ли уже трекинг
+        if (!exerciseStartTimes.current.has(exerciseKey)) {
+          exerciseStartTimes.current.set(exerciseKey, Date.now());
+          
+          // Обновляем ExerciseLog с startTime
+          setCycleLogs(prevLogs => {
+            const updatedLogs = JSON.parse(JSON.stringify(prevLogs));
+            let cycleLog = updatedLogs.find(
+              (log: CycleLog) => log.cycleId === currentCycleDef!.id && 
+                     log.cycleNumber === currentCycleRepetition
+            );
+            
+            if (!cycleLog) {
+              cycleLog = {
+                cycleId: currentCycleDef!.id,
+                cycleNumber: currentCycleRepetition,
+                exercises: [],
+                completed: false,
+              };
+              updatedLogs.push(cycleLog);
+            }
+            
+            let exerciseLog = cycleLog.exercises.find(
+              (ex: ExerciseLog) => ex.exerciseId === exerciseId
+            );
+            
+            if (!exerciseLog) {
+              exerciseLog = {
+                exerciseId,
+                sets: [],
+                skipped: false,
+                startTime: new Date().toISOString(),
+              };
+              cycleLog.exercises.push(exerciseLog);
+            } else if (!exerciseLog.startTime) {
+              exerciseLog.startTime = new Date().toISOString();
+            }
+            
+            return updatedLogs;
+          });
+        }
+      }
+    }
+  }, [currentCycleIndex, currentCycleRepetition, currentExerciseIndex, status, isResting, currentCycleDef, currentExerciseDef, exercisesMap]);
+
   const handleSetComplete = (setLog: Omit<SetLog, 'timestamp'>) => {
     const newLog = {...setLog, timestamp: new Date().toISOString()};
 
@@ -148,30 +223,66 @@ export function WorkoutExecutionMode({
   };
   
   const moveToNextExercise = () => {
-      if (currentExerciseIndex < (currentCycleDef?.exercises.length || 0) - 1) {
-          setCurrentExerciseIndex(prev => prev + 1);
-          setCurrentSetIndex(0);
-      } else {
-          if (currentCycleRepetition < (currentCycleDef?.repetitions || 1) - 1) {
-              setCurrentCycleRepetition(prev => prev + 1);
-              setCurrentExerciseIndex(0);
-              setCurrentSetIndex(0);
-          } else {
-              if (currentCycleIndex < (workout.cycles?.length || 0) - 1) {
-                  setCurrentCycleIndex(prev => prev + 1);
-                  setCurrentCycleRepetition(0);
-                  setCurrentExerciseIndex(0);
-                  setCurrentSetIndex(0);
-              } else {
-                  handleCompleteWorkout();
+    // Завершаем трекинг текущего упражнения, если он был включен
+    if (currentExerciseDef && status === 'in_progress') {
+      const exercise = exercisesMap.get(currentExerciseDef.exerciseId);
+      if (exercise?.trackDuration) {
+        const exerciseKey = `${currentCycleDef!.id}-${currentExerciseDef.exerciseId}-${currentCycleRepetition}`;
+        const startTime = exerciseStartTimes.current.get(exerciseKey);
+        
+        if (startTime) {
+          const duration = Math.floor((Date.now() - startTime) / 1000); // в секундах
+          
+          setCycleLogs(prevLogs => {
+            const updatedLogs = JSON.parse(JSON.stringify(prevLogs));
+            const cycleLog = updatedLogs.find(
+              (log: CycleLog) => log.cycleId === currentCycleDef!.id && 
+                     log.cycleNumber === currentCycleRepetition
+            );
+            
+            if (cycleLog) {
+              const exerciseLog = cycleLog.exercises.find(
+                (ex: ExerciseLog) => ex.exerciseId === currentExerciseDef.exerciseId
+              );
+              
+              if (exerciseLog) {
+                exerciseLog.endTime = new Date().toISOString();
+                exerciseLog.duration = duration;
               }
-          }
+            }
+            
+            return updatedLogs;
+          });
+          
+          exerciseStartTimes.current.delete(exerciseKey);
+        }
       }
-      
-      if(currentCycleDef?.restAfter) {
-        setRestDuration(currentCycleDef.restAfter);
-        setIsResting(true);
-      }
+    }
+
+    if (currentExerciseIndex < (currentCycleDef?.exercises.length || 0) - 1) {
+        setCurrentExerciseIndex(prev => prev + 1);
+        setCurrentSetIndex(0);
+    } else {
+        if (currentCycleRepetition < (currentCycleDef?.repetitions || 1) - 1) {
+            setCurrentCycleRepetition(prev => prev + 1);
+            setCurrentExerciseIndex(0);
+            setCurrentSetIndex(0);
+        } else {
+            if (currentCycleIndex < (workout.cycles?.length || 0) - 1) {
+                setCurrentCycleIndex(prev => prev + 1);
+                setCurrentCycleRepetition(0);
+                setCurrentExerciseIndex(0);
+                setCurrentSetIndex(0);
+            } else {
+                handleCompleteWorkout();
+            }
+        }
+    }
+    
+    if(currentCycleDef?.restAfter) {
+      setRestDuration(currentCycleDef.restAfter);
+      setIsResting(true);
+    }
   }
   
   const handleRestComplete = () => {

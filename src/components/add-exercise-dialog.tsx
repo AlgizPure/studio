@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGr
 import { useForm, SubmitHandler, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Exercise, Day, ExerciseCategory, ExerciseParameter } from '@/lib/types';
+import type { Exercise, ExerciseCategory, ExerciseParameter } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
@@ -27,8 +27,6 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { nanoid } from 'nanoid';
 import { Separator } from './ui/separator';
 
-const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const hoursOfDay = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 
 const parameterSchema = z.object({
   id: z.string(),
@@ -42,8 +40,11 @@ const exerciseSchema = z.object({
   categoryId: z.string().min(1, 'Category is required'),
   description: z.string().min(1, 'Description is required'),
   image: z.string().url().optional().or(z.literal('')),
-  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format.').optional(),
-  days: z.array(z.string()).optional(),
+  plannedDuration: z.object({
+    minutes: z.number().min(0).max(59),
+    seconds: z.number().min(0).max(59),
+  }).optional(),
+  trackDuration: z.boolean().optional(),
   parameters: z.array(parameterSchema).optional(),
 });
 
@@ -64,6 +65,9 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
   const { toast } = useToast();
   const isEditMode = !!exerciseToEdit;
   const customImage = PlaceHolderImages.find(p => p.id === 'custom')?.imageUrl || 'https://picsum.photos/seed/custom/600/400';
+  
+  // Create a stable key for Select to force re-render when categories change
+  const categoriesKey = useMemo(() => categories.map(c => c.id).join(','), [categories]);
 
   const {
     register,
@@ -93,8 +97,8 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
             categoryId: exerciseToEdit.categoryId,
             description: exerciseToEdit.description,
             image: exerciseToEdit.image,
-            time: exerciseToEdit.time || '00:00',
-            days: exerciseToEdit.days || [],
+            plannedDuration: exerciseToEdit.plannedDuration || undefined,
+            trackDuration: exerciseToEdit.trackDuration || false,
             parameters: exerciseToEdit.parameters || [],
         });
       } else {
@@ -103,8 +107,8 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
           categoryId: '',
           description: '',
           image: customImage,
-          time: '00:00',
-          days: [],
+          plannedDuration: undefined,
+          trackDuration: false,
           parameters: [],
         });
       }
@@ -123,7 +127,6 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
           const updatedExercise: Exercise = {
               ...exerciseToEdit,
               ...finalData,
-              days: data.days as Day[],
           };
           onExerciseUpdate(updatedExercise);
           toast({
@@ -134,7 +137,6 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
           const newExercise: Omit<Exercise, 'id'> = {
               ...finalData,
               custom: true,
-              days: data.days as Day[],
           };
           onExerciseAdd(newExercise);
           toast({
@@ -148,7 +150,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
             variant: 'destructive',
             title: 'Error',
             description: 'There was an error saving the exercise.'
-        })
+        });
     }
   };
 
@@ -174,7 +176,6 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
 
   const handleCategoryChange = (value: string) => {
     if (value === 'add-new' && openManageCategories) {
-        setIsOpen(false);
         openManageCategories();
     } else {
         setValue('categoryId', value, { shouldValidate: true });
@@ -191,34 +192,39 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
 
   const isLibraryPage = currentPath.includes('/library');
 
-  const dialogTrigger = trigger ? trigger : (
-     isLibraryPage ? (
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Exercise
-            </Button>
-        ) : (
-            <Button variant="ghost" size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                New
-            </Button>
-        )
-  );
+  const dialogTrigger = useMemo(() => {
+    if (trigger) return trigger;
+    if (isLibraryPage) {
+      return (
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Exercise
+        </Button>
+      );
+    }
+    return (
+      <Button variant="ghost" size="sm">
+        <Plus className="mr-2 h-4 w-4" />
+        New
+      </Button>
+    );
+  }, [trigger, isLibraryPage]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {dialogTrigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader>
-            <DialogTitle className="font-headline">{isEditMode ? 'Edit Exercise' : 'Add Custom Exercise'}</DialogTitle>
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0 overflow-hidden">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full overflow-hidden">
+          <DialogHeader className="sticky top-0 z-20 bg-background px-6 pt-6 pb-4 border-b flex-shrink-0">
+            <DialogTitle className="font-headline pr-8">{isEditMode ? 'Edit Exercise' : 'Add Custom Exercise'}</DialogTitle>
             <DialogDescription>
               {isEditMode ? 'Update the details of your exercise.' : "Add a new exercise to your personal library. Click save when you're done."}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4 pr-4">
+          <div className="overflow-y-auto overflow-x-hidden" style={{ height: 'calc(90vh - 280px)', minHeight: 0 }}>
+            <div className="grid gap-4 py-4 pr-4 pl-6">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input id="name" placeholder="e.g., Kettlebell Swings" {...register('name')} />
@@ -231,7 +237,7 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
                 name="categoryId"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={handleCategoryChange} value={field.value}>
+                  <Select onValueChange={handleCategoryChange} value={field.value} key={categoriesKey}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
@@ -260,90 +266,88 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
               {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
             </div>
 
-             <div className="space-y-2">
-                <Label htmlFor="time">Start Time</Label>
-                <Controller
-                  name="time"
-                  control={control}
-                  render={({ field }) => (
-                    <div className="grid grid-cols-2 gap-2">
-                       <Select
-                        value={field.value?.split(':')[0] || '00'}
-                        onValueChange={(hour) => {
-                          const minute = field.value?.split(':')[1] || '00';
-                          field.onChange(`${hour}:${minute}`);
+            <div className="space-y-2">
+              <Label htmlFor="plannedDuration">Planned Duration (optional)</Label>
+              <Controller
+                name="plannedDuration"
+                control={control}
+                render={({ field }) => (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="plannedMinutes" className="text-xs text-muted-foreground">Minutes</Label>
+                      <Input
+                        id="plannedMinutes"
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="0"
+                        value={field.value?.minutes ?? ''}
+                        onChange={(e) => {
+                          const minutes = parseInt(e.target.value) || 0;
+                          field.onChange({
+                            minutes: Math.min(59, Math.max(0, minutes)),
+                            seconds: field.value?.seconds ?? 0,
+                          });
                         }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60">
-                           {hoursOfDay.map((hour) => (
-                            <SelectItem key={hour} value={hour}>
-                              {hour}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select
-                        value={field.value?.split(':')[1] || '00'}
-                        onValueChange={(minute) => {
-                          const hour = field.value?.split(':')[0] || '00';
-                          field.onChange(`${hour}:${minute}`);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="00">00</SelectItem>
-                          <SelectItem value="15">15</SelectItem>
-                          <SelectItem value="30">30</SelectItem>
-                          <SelectItem value="45">45</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      />
                     </div>
-                  )}
-                />
-                {errors.time && <p className="text-sm text-destructive">{errors.time.message}</p>}
-             </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="plannedSeconds" className="text-xs text-muted-foreground">Seconds</Label>
+                      <Input
+                        id="plannedSeconds"
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="0"
+                        value={field.value?.seconds ?? ''}
+                        onChange={(e) => {
+                          const seconds = parseInt(e.target.value) || 0;
+                          field.onChange({
+                            minutes: field.value?.minutes ?? 0,
+                            seconds: Math.min(59, Math.max(0, seconds)),
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              />
+            </div>
 
             <div className="space-y-2">
-              <Label>Days</Label>
-              <div className="grid grid-cols-4 gap-2">
-                <Controller
-                  name="days"
-                  control={control}
-                  render={({ field }) => (
-                    <>
-                      {daysOfWeek.map((day) => (
-                        <div key={day} className="flex items-center gap-2">
-                          <Checkbox
-                            id={`day-${day}-${exerciseToEdit?.id || 'new'}`}
-                            checked={field.value?.includes(day)}
-                            onCheckedChange={(checked) => {
-                              const currentDays = field.value || [];
-                              if (checked) {
-                                field.onChange([...currentDays, day]);
-                              } else {
-                                field.onChange(currentDays.filter(d => d !== day));
-                              }
-                            }}
-                          />
-                          <Label htmlFor={`day-${day}-${exerciseToEdit?.id || 'new'}`} className="text-sm font-normal">{day.substring(0,3)}</Label>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                />
-              </div>
-              {errors.days && <p className="text-sm text-destructive">{errors.days.message}</p>}
+              <Controller
+                name="trackDuration"
+                control={control}
+                render={({ field }) => (
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="trackDuration"
+                      checked={field.value || false}
+                      onCheckedChange={(checked) => field.onChange(checked)}
+                    />
+                    <Label htmlFor="trackDuration" className="text-sm font-normal cursor-pointer">
+                      Track exercise duration
+                    </Label>
+                  </div>
+                )}
+              />
             </div>
 
             <Separator />
             
             <div className="space-y-2">
-              <Label>Trackable Parameters</Label>
+              <div className="flex items-center justify-between">
+                <Label>Trackable Parameters</Label>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 border border-input hover:border-primary hover:bg-transparent hover:text-foreground"
+                  onClick={() => append({ id: nanoid(5), name: '', unit: '', defaultValue: 0 })}
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Add Parameter
+                </Button>
+              </div>
                {fields.map((field, index) => (
                 <div key={field.id} className="p-2 border rounded-md space-y-2">
                     <div className="grid grid-cols-10 gap-2">
@@ -371,12 +375,10 @@ export function AddExerciseDialog({ onExerciseAdd, onExerciseUpdate, onExerciseD
                      {errors.parameters?.[index]?.unit && <p className="text-sm text-destructive">{errors.parameters[index]?.unit?.message}</p>}
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => append({ id: nanoid(5), name: '', unit: '', defaultValue: 0 })}>
-                <Plus className="mr-2 h-4 w-4" /> Add Parameter
-              </Button>
+            </div>
             </div>
           </div>
-          <DialogFooter className="pt-4">
+          <DialogFooter className="px-6 pb-6 pt-4 border-t bg-background shrink-0">
             {isEditMode && onExerciseDelete && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>

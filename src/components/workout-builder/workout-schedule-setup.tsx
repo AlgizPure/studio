@@ -30,6 +30,9 @@ export function WorkoutScheduleSetup({ schedule, onChange }: WorkoutScheduleSetu
       : 3
   );
   const [duration, setDuration] = useState(schedule?.duration || { value: 8, unit: 'weeks' as const });
+  const [startTime, setStartTime] = useState<string>(
+    schedule?.startTime || ''
+  );
 
   useEffect(() => {
     const value = intervalType === 'days_of_week' ? selectedDays : everyNDays;
@@ -38,13 +41,14 @@ export function WorkoutScheduleSetup({ schedule, onChange }: WorkoutScheduleSetu
       intervalValue: value,
       duration,
       startOffset: 0,
+      startTime: startTime || undefined,
     };
     if (intervalType === 'days_of_week' && selectedDays.length === 0) {
       onChange(null);
     } else {
       onChange(newSchedule);
     }
-  }, [intervalType, selectedDays, everyNDays, duration, onChange]);
+  }, [intervalType, selectedDays, everyNDays, duration, startTime, onChange]);
 
 
   const handleDaysChange = (day: Day, checked: boolean) => {
@@ -102,6 +106,22 @@ export function WorkoutScheduleSetup({ schedule, onChange }: WorkoutScheduleSetu
                   </Label>
                 </div>
               ))}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="day-all"
+                  checked={DAYS.every(day => selectedDays.includes(day))}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedDays(DAYS);
+                    } else {
+                      setSelectedDays([]);
+                    }
+                  }}
+                />
+                <Label htmlFor="day-all" className="cursor-pointer font-normal">
+                  All Days
+                </Label>
+              </div>
             </div>
           </div>
         )}
@@ -146,6 +166,51 @@ export function WorkoutScheduleSetup({ schedule, onChange }: WorkoutScheduleSetu
                 <SelectItem value="days">Days</SelectItem>
                 <SelectItem value="weeks">Weeks</SelectItem>
                 <SelectItem value="months">Months</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Start Time */}
+        <div>
+          <Label htmlFor="start-time">Start Time (optional)</Label>
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <Select
+              value={startTime ? startTime.split(':')[0] : ''}
+              onValueChange={(hour) => {
+                const minute = startTime ? startTime.split(':')[1] || '00' : '00';
+                setStartTime(`${hour}:${minute}`);
+              }}
+            >
+              <SelectTrigger id="start-time">
+                <SelectValue placeholder="Hour" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 24 }, (_, i) => {
+                  const hour = i.toString().padStart(2, '0');
+                  return (
+                    <SelectItem key={hour} value={hour}>
+                      {hour}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <Select
+              value={startTime ? startTime.split(':')[1] || '00' : '00'}
+              onValueChange={(minute) => {
+                const hour = startTime ? startTime.split(':')[0] || '00' : '00';
+                setStartTime(`${hour}:${minute}`);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Minute" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="00">00</SelectItem>
+                <SelectItem value="15">15</SelectItem>
+                <SelectItem value="30">30</SelectItem>
+                <SelectItem value="45">45</SelectItem>
               </SelectContent>
             </Select>
           </div>

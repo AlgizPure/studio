@@ -14,12 +14,13 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
-import { useState, useMemo } from 'react';
-import type { Exercise, Habit, ExerciseCategory, HabitCategory, Day } from '@/lib/types';
+import { useMemo } from 'react';
+import type { Habit, HabitCategory, Day, Program, WorkoutExtended } from '@/lib/types';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { collection, doc, updateDoc } from 'firebase/firestore';
-import { addDays, format } from 'date-fns';
+import { addDays } from 'date-fns';
+import { buildDailySchedule } from '@/lib/utils/schedule-builder';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -28,23 +29,24 @@ export function PlanTomorrowDialog() {
     const { user } = useUser();
     const firestore = useFirestore();
 
-    const exercisesQuery = useMemoFirebase(
-      () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
+    // Загружаем программы и тренировки для отображения запланированных тренировок
+    const programsQuery = useMemoFirebase(
+      () => (user ? collection(firestore, `users/${user.uid}/programs`) : null),
       [user, firestore]
     );
-    const { data: exercises } = useCollection<Exercise>(exercisesQuery);
+    const { data: programs } = useCollection<Program>(programsQuery);
+
+    const workoutsQuery = useMemoFirebase(
+      () => (user ? collection(firestore, `users/${user.uid}/workouts`) : null),
+      [user, firestore]
+    );
+    const { data: workouts } = useCollection<WorkoutExtended>(workoutsQuery);
     
     const habitsQuery = useMemoFirebase(
       () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
       [user, firestore]
     );
     const { data: habits } = useCollection<Habit>(habitsQuery);
-    
-    const exerciseCatQuery = useMemoFirebase(
-      () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
-      [user, firestore]
-    );
-    const { data: exerciseCategories } = useCollection<ExerciseCategory>(exerciseCatQuery);
     
     const habitCatQuery = useMemoFirebase(
       () => (user ? collection(firestore, `users/${user.uid}/habitCategories`) : null),
@@ -53,68 +55,70 @@ export function PlanTomorrowDialog() {
     const { data: habitCategories } = useCollection<HabitCategory>(habitCatQuery);
     
     const tomorrow = useMemo(() => {
-        const tomorrowDate = addDays(new Date(), 1);
-        return format(tomorrowDate, 'EEEE') as Day;
+        return addDays(new Date(), 1);
     }, []);
 
-    const isExerciseScheduled = (exercise: Exercise) => (exercise.days || []).includes(tomorrow);
-    const isHabitScheduled = (habit: Habit) => (habit.days || []).includes(tomorrow);
+    const tomorrowDay = useMemo(() => 
+      tomorrow.toLocaleString('en-US', { weekday: 'long' }) as Day,
+      [tomorrow]
+    );
 
-    const { scheduledExercises, unscheduledExercises } = useMemo(() => {
-        const scheduled = (exercises || []).filter(isExerciseScheduled);
-        const unscheduled = (exercises || []).filter(ex => !isExerciseScheduled(ex));
-        return { scheduledExercises: scheduled, unscheduledExercises: unscheduled };
-    }, [exercises, tomorrow]);
+    // Получаем запланированные тренировки на завтра
+    const scheduledWorkouts = useMemo(() => {
+      if (!programs || !workouts) return [];
+      return buildDailySchedule(programs, workouts, tomorrow);
+    }, [programs, workouts, tomorrow]);
+
+    // Карта тренировок для отображения
+    const workoutsMap = useMemo(() => {
+      const map = new Map<string, WorkoutExtended>();
+      workouts?.forEach(w => map.set(w.id, w));
+      return map;
+    }, [workouts]);
+
+    const isHabitScheduled = (habit: Habit) => {
+      if ('type' in habit && habit.type) {
+        // HabitV2
+        if (habit.schedule?.intervalType === 'days_of_week') {
+          return habit.schedule.days?.includes(tomorrowDay);
+        }
+        return true;
+      }
+      // Legacy
+      return (habit.days || []).includes(tomorrowDay);
+    };
 
     const { scheduledHabits, unscheduledHabits } = useMemo(() => {
         const scheduled = (habits || []).filter(isHabitScheduled);
         const unscheduled = (habits || []).filter(h => !isHabitScheduled(h));
         return { scheduledHabits: scheduled, unscheduledHabits: unscheduled };
-    }, [habits, tomorrow]);
-
-
-    const handleExerciseToggle = (exercise: Exercise) => {
-        if (!user || !firestore || !exercise.id) return;
-        const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
-
-        const currentDays = exercise.days || [];
-        const isScheduled = currentDays.includes(tomorrow);
-        
-        const updatedDays = isScheduled 
-            ? currentDays.filter(day => day !== tomorrow)
-            : [...currentDays, tomorrow];
-        
-        const updatedData = { days: updatedDays };
-        updateDoc(exerciseDoc, updatedData).catch(async (err) => {
-          const permissionError = new FirestorePermissionError({
-            operation: 'update',
-            path: exerciseDoc.path,
-            requestResourceData: updatedData,
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
-    }
+    }, [habits, tomorrowDay]);
 
     const handleHabitToggle = (habit: Habit) => {
         if (!user || !firestore || !habit.id) return;
         const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
-
-        const currentDays = habit.days || [];
-        const isScheduled = currentDays.includes(tomorrow);
         
-        const updatedDays = isScheduled 
-            ? currentDays.filter(day => day !== tomorrow)
-            : [...currentDays, tomorrow];
+        // Для legacy привычек обновляем days
+        const isLegacy = !('type' in habit);
+        if (isLegacy) {
+          const currentDays = (habit as any).days || [];
+          const isScheduled = currentDays.includes(tomorrowDay);
+          
+          const updatedDays = isScheduled 
+              ? currentDays.filter((day: Day) => day !== tomorrowDay)
+              : [...currentDays, tomorrowDay];
 
-        const updatedData = { days: updatedDays };
-        updateDoc(habitDoc, updatedData).catch(async (err) => {
-          const permissionError = new FirestorePermissionError({
-            operation: 'update',
-            path: habitDoc.path,
-            requestResourceData: updatedData,
+          const updatedData = { days: updatedDays };
+          updateDoc(habitDoc, updatedData).catch(async (err) => {
+            const permissionError = new FirestorePermissionError({
+              operation: 'update',
+              path: habitDoc.path,
+              requestResourceData: updatedData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
           });
-          errorEmitter.emit('permission-error', permissionError);
-        });
+        }
+        // Для V2 привычек нужна отдельная логика через HabitLog
     }
 
 
@@ -129,48 +133,34 @@ export function PlanTomorrowDialog() {
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="font-headline">Plan for Tomorrow ({tomorrow})</DialogTitle>
+          <DialogTitle className="font-headline">Plan for Tomorrow ({tomorrowDay})</DialogTitle>
           <DialogDescription>
-            Select your exercises and habits for tomorrow. Your changes are saved automatically.
+            Review your scheduled workouts and plan your habits for tomorrow.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
           <div className="flex flex-col space-y-4">
-            <h3 className="font-semibold text-lg">Exercises</h3>
+            <h3 className="font-semibold text-lg">Scheduled Workouts</h3>
             <ScrollArea className="h-[45vh] pr-4">
               <div className="space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">Scheduled</p>
-                {scheduledExercises.map((exercise) => (
-                  <div key={exercise.id} className="flex items-center p-3 rounded-lg border bg-card/50">
-                    <Checkbox 
-                        id={`ex-${exercise.id}`} 
-                        className="mr-4" 
-                        checked={true}
-                        onCheckedChange={() => handleExerciseToggle(exercise)}
-                    />
-                    <div className="flex-1">
-                      <Label htmlFor={`ex-${exercise.id}`} className="font-medium cursor-pointer">{exercise.name}</Label>
-                      <p className="text-xs text-muted-foreground">{(exerciseCategories || []).find(c => c.id === exercise.categoryId)?.name}</p>
-                    </div>
-                  </div>
-                ))}
-                 {scheduledExercises.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Nothing scheduled yet.</p>}
-                <Separator className="my-4" />
-                <p className="text-sm font-medium text-muted-foreground">Unscheduled</p>
-                {unscheduledExercises.map((exercise) => (
-                  <div key={exercise.id} className="flex items-center p-3 rounded-lg border bg-card/50 opacity-70 hover:opacity-100 transition-opacity">
-                    <Checkbox 
-                        id={`ex-add-${exercise.id}`} 
-                        className="mr-4" 
-                        checked={false}
-                        onCheckedChange={() => handleExerciseToggle(exercise)}
-                    />
-                    <div className="flex-1">
-                      <Label htmlFor={`ex-add-${exercise.id}`} className="font-medium cursor-pointer">{exercise.name}</Label>
-                      <p className="text-xs text-muted-foreground">{(exerciseCategories || []).find(c => c.id === exercise.categoryId)?.name}</p>
-                    </div>
-                  </div>
-                ))}
+                {scheduledWorkouts.length > 0 ? (
+                  scheduledWorkouts.map((scheduled) => {
+                    const workout = workoutsMap.get(scheduled.workoutId);
+                    return (
+                      <div key={scheduled.workoutId} className="flex items-center p-3 rounded-lg border bg-card/50">
+                        <div className="flex-1">
+                          <Label className="font-medium">{workout?.name || 'Workout'}</Label>
+                          <p className="text-xs text-muted-foreground">
+                            {scheduled.startTime || 'Any time'} &middot; {workout?.estimatedDuration ? `${workout.estimatedDuration} min` : ''}
+                            {scheduled.status === 'paused' && ' (Paused)'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-2">No workouts scheduled for tomorrow.</p>
+                )}
               </div>
             </ScrollArea>
           </div>
@@ -189,7 +179,7 @@ export function PlanTomorrowDialog() {
                     />
                     <div className="flex-1">
                       <Label htmlFor={`hb-${habit.id}`} className="font-medium cursor-pointer">{habit.name}</Label>
-                      <p className="text-xs text-muted-foreground">{habit.goal}</p>
+                      <p className="text-xs text-muted-foreground">{('goal' in habit ? habit.goal : '') || ''}</p>
                     </div>
                   </div>
                 ))}
@@ -206,7 +196,7 @@ export function PlanTomorrowDialog() {
                     />
                     <div className="flex-1">
                       <Label htmlFor={`hb-add-${habit.id}`} className="font-medium cursor-pointer">{habit.name}</Label>
-                      <p className="text-xs text-muted-foreground">{habit.goal}</p>
+                      <p className="text-xs text-muted-foreground">{('goal' in habit ? habit.goal : '') || ''}</p>
                     </div>
                   </div>
                 ))}

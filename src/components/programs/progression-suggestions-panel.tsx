@@ -50,6 +50,11 @@ export function ProgressionSuggestionsPanel({ program }: ProgressionSuggestionsP
     suggestion: null,
   });
 
+  // Don't render if user is not authenticated or program is invalid
+  if (!user || !firestore || !program || program.status !== 'active' || !program.workouts || program.workouts.length === 0) {
+    return null;
+  }
+
   const fetchSuggestions = async () => {
     if (!user) return;
 
@@ -248,10 +253,15 @@ export function ProgressionSuggestionsPanel({ program }: ProgressionSuggestionsP
         </CardHeader>
         <CardContent>
           {!suggestions && !loading && (
-            <Button onClick={fetchSuggestions} className="w-full">
-              <TrendingUp className="mr-2 h-4 w-4" />
-              Get AI Progressions
-            </Button>
+            <div className="space-y-3">
+              <Button onClick={fetchSuggestions} className="w-full">
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Get AI Progressions
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Analyze your program and recent workouts to get personalized progression recommendations
+              </p>
+            </div>
           )}
 
           {loading && (
@@ -270,9 +280,10 @@ export function ProgressionSuggestionsPanel({ program }: ProgressionSuggestionsP
               )}
 
               {suggestions.suggestions.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No progression suggestions available at this time.
-                </p>
+                <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
+                  <p className="text-sm">No progression suggestions available.</p>
+                  <p className="text-xs mt-1">Complete more workouts to get AI recommendations.</p>
+                </div>
               ) : (
                 <Table>
                   <TableHeader>

@@ -70,39 +70,39 @@ export function AddWorkoutToProgramDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
           <DialogTitle>Add Workout to Program</DialogTitle>
           <DialogDescription>
             Create a new workout and configure its schedule in the program.
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow flex flex-col">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-1 flex flex-col overflow-hidden min-h-0 px-6">
+          <TabsList className="grid w-full grid-cols-2 mt-4 flex-shrink-0">
             <TabsTrigger value="workout">Workout Builder</TabsTrigger>
             <TabsTrigger value="schedule" disabled={!workout}>
               Schedule
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="workout" className="space-y-4 flex-grow overflow-y-auto p-1">
+          <TabsContent value="workout" className="flex-1 flex flex-col overflow-hidden pt-4" style={{ minHeight: 0 }}>
             <WorkoutBuilder
               onSave={handleWorkoutSave}
               onCancel={handleCancel}
             />
           </TabsContent>
 
-          <TabsContent value="schedule" className="space-y-4 flex-grow overflow-y-auto p-1">
+          <TabsContent value="schedule" className="flex-1 overflow-y-auto overflow-x-hidden pb-6 pt-4" style={{ minHeight: 0 }}>
             {workout && (
               <div className="flex flex-col h-full">
-                <div className="flex-grow">
+                <div className="flex-grow overflow-y-auto">
                   <WorkoutScheduleSetup
                     schedule={schedule || undefined}
                     onChange={setSchedule}
                   />
                 </div>
-                <DialogFooter className="mt-4 pt-4 border-t">
+                <DialogFooter className="mt-4 pt-4 border-t px-0">
                   <Button variant="outline" onClick={() => setCurrentTab('workout')}>
                     Back to Builder
                   </Button>
