@@ -19,13 +19,24 @@ import { collection, doc, updateDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
+/**
+ * Обновляет серию активности пользователя в Firestore.
+ * - Если сегодня была выполнена какая-либо активность и последняя активная дата не сегодня,
+ *   увеличивает или сбрасывает серию.
+ * - Если сегодня не было выполнено никаких активностей и последняя активная дата была не сегодня и не вчера,
+ *   сбрасывает серию до 0.
+ *
+ * @param {AppUser} user - Объект пользователя, содержащий данные о серии.
+ * @param {any} firestore - Экземпляр Firestore.
+ * @param {boolean} anyActivityCompletedToday - Флаг, указывающий, была ли сегодня выполнена какая-либо активность.
+ */
 function updateStreak(user: AppUser, firestore: any, anyActivityCompletedToday: boolean) {
     if (!user || !firestore) return;
   
     const userRef = doc(firestore, `users/${user.uid}`);
     const todayStr = formatISO(new Date(), { representation: 'date' });
   
-    // Logic to update streak
+    // Логика обновления серии
     if (anyActivityCompletedToday) {
       if (user.lastActiveDate !== todayStr) {
         let newStreak = 1;
@@ -46,7 +57,7 @@ function updateStreak(user: AppUser, firestore: any, anyActivityCompletedToday: 
         });
       }
     } else {
-      // Logic to reset streak if needed
+      // Логика сброса серии при необходимости
       if (user.lastActiveDate && !isToday(new Date(user.lastActiveDate)) && !isYesterday(new Date(user.lastActiveDate))) {
         if ((user.currentStreak || 0) > 0) {
            const updatedData = { currentStreak: 0 };
@@ -63,7 +74,12 @@ function updateStreak(user: AppUser, firestore: any, anyActivityCompletedToday: 
     }
 }
 
-
+/**
+ * Главная страница панели управления.
+ * Отображает обзор еженедельной статистики пользователя, сегодняшнее расписание и трекер привычек.
+ * Также обрабатывает логику входа/выхода из системы и состояния загрузки.
+ * @returns {JSX.Element} Компонент страницы панели управления.
+ */
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();

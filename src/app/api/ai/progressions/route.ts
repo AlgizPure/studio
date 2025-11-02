@@ -4,6 +4,21 @@ import { getRecentWorkouts, getExerciseHistory, getCachedInsights, saveInsightsC
 import { getFirebaseAdminApp } from '@/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
 
+/**
+ * Обрабатывает запросы POST для создания предложений по прогрессии для конкретной программы тренировок.
+ *
+ * Этот маршрут API:
+ * 1. Проверяет, предоставлены ли `userId` и `programId`.
+ * 2. Проверяет ограничения на использование ИИ для пользователя.
+ * 3. Пытается сначала получить кэшированные предложения.
+ * 4. Если кэш отсутствует, извлекает данные о программе, недавние тренировки и историю упражнений.
+ * 5. Вызывает поток `getProgressionSuggestions` для создания новых предложений.
+ * 6. Кэширует новые результаты и обновляет данные об использовании токенов.
+ * 7. Возвращает предложения в ответе JSON, указывая, были ли они из кэша.
+ *
+ * @param {NextRequest} req - Входящий объект запроса Next.js.
+ * @returns {Promise<NextResponse>} Ответ Next.js с предложениями по прогрессии или сообщением об ошибке.
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

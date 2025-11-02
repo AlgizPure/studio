@@ -10,6 +10,11 @@ import { useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { generateFullAnalysisExport, downloadMarkdownFile } from '@/lib/ztl/export-full-analysis';
 import { programToZTL, generateScheduledWorkouts, calculateCurrentWeek } from '@/lib/ztl/helpers';
 
+/**
+ * Страница аналитики для визуализации прогресса и тенденций тренировок.
+ * Включает в себя диаграммы, аналитические выводы ИИ и функцию экспорта.
+ * @returns {JSX.Element} Компонент страницы аналитики.
+ */
 export default function AnalyticsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -29,6 +34,10 @@ export default function AnalyticsPage() {
   const { data: workoutLogs } = useCollection<WorkoutLog>(workoutLogsQuery);
   const { data: programs } = useCollection<Program>(programsQuery);
 
+  /**
+   * Обрабатывает экспорт полного анализа в виде файла Markdown.
+   * Собирает данные о пользователе, тренировках и программах, генерирует отчет и запускает загрузку.
+   */
   const handleExport = async () => {
     if (!user) return;
     const activePrograms = await Promise.all(

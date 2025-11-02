@@ -10,6 +10,10 @@ import { collection, orderBy, query } from 'firebase/firestore';
 import type { WorkoutLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
+/**
+ * Страница истории тренировок, которая отображает список прошлых тренировок пользователя.
+ * @returns {JSX.Element} Компонент страницы истории тренировок.
+ */
 export default function WorkoutHistoryPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -27,19 +31,29 @@ export default function WorkoutHistoryPage() {
 
   const { data: workoutLogs, isLoading } = useCollection<WorkoutLog>(workoutLogsQuery);
 
+  /**
+   * Форматирует строку даты в локализованный формат.
+   * @param {string} dateString - Строка даты для форматирования.
+   * @returns {string} Отформатированная строка даты.
+   */
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('ru-RU', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
   };
 
+  /**
+   * Форматирует продолжительность в минутах в удобочитаемый формат.
+   * @param {number | undefined} minutes - Продолжительность в минутах.
+   * @returns {string} Отформатированная продолжительность.
+   */
   const formatDuration = (minutes?: number) => {
     if (!minutes) return 'N/A';
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+    return hours > 0 ? `${hours}ч ${mins}м` : `${mins}м`;
   };
 
   if (isLoading) {

@@ -4,6 +4,21 @@ import { getRecentWorkouts, getCachedInsights, saveInsightsCache, checkAndUpdate
 import { getFirebaseAdminApp } from '@/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
 
+/**
+ * Обрабатывает запросы POST для создания быстрых аналитических выводов на основе данных о тренировках пользователя.
+ *
+ * Этот маршрут API:
+ * 1. Проверяет, предоставлен ли `userId`.
+ * 2. Проверяет ограничения на использование ИИ для пользователя.
+ * 3. Пытается сначала получить кэшированные аналитические выводы.
+ * 4. Если кэш отсутствует, извлекает свежие данные о тренировках, программы и цели пользователя.
+ * 5. Вызывает поток `getQuickInsights` для создания новых аналитических выводов.
+ * 6. Кэширует новые результаты и обновляет данные об использовании токенов.
+ * 7. Возвращает аналитические выводы в ответе JSON, указывая, были ли они из кэша.
+ *
+ * @param {NextRequest} req - Входящий объект запроса Next.js.
+ * @returns {Promise<NextResponse>} Ответ Next.js с аналитическими выводами или сообщением об ошибке.
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

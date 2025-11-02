@@ -10,15 +10,26 @@ import { useState } from 'react';
 import type { Program } from '@/lib/types';
 import { DialogTrigger } from '@/components/ui/dialog';
 
-// Collision detection/diff/patch utilities:
+/**
+ * Сравнивает две программы и возвращает строковое представление различий.
+ * @param {any} oldProg - Старая версия программы.
+ * @param {any} newProg - Новая версия программы.
+ * @returns {string} Описание различий.
+ */
 function diffPrograms(oldProg: any, newProg: any) {
-  if (!oldProg) return 'Program is new.';
+  if (!oldProg) return 'Программа новая.';
   const oldJSON = JSON.stringify(oldProg, null, 2);
   const newJSON = JSON.stringify(newProg, null, 2);
-  if (oldJSON === newJSON) return 'No changes.';
-  return `Old:\n${oldJSON}\n\nNew:\n${newJSON}`;
+  if (oldJSON === newJSON) return 'Нет изменений.';
+  return `Старая:\n${oldJSON}\n\nНовая:\n${newJSON}`;
 }
 
+/**
+ * Применяет патч к списку программ.
+ * @param {Program[]} programs - Текущий список программ.
+ * @param {any} patch - Объект патча для применения.
+ * @returns {Program[]} Новый список программ после применения патча.
+ */
 function applyPatch(programs: Program[], patch: any): Program[] {
   let next = [...programs];
   for (const op of patch.patch || []) {
@@ -56,17 +67,26 @@ function applyPatch(programs: Program[], patch: any): Program[] {
         );
       }
     }
-    // Could add update-exercise...
+    // Можно добавить обновление упражнения...
   }
   return next;
 }
 
+/**
+ * Страница для управления программами тренировок.
+ * Позволяет пользователям просматривать, добавлять, редактировать, удалять, активировать и приостанавливать программы.
+ * @returns {JSX.Element} Компонент страницы программ.
+ */
 export default function ProgramsPage() {
   const [programs, setPrograms] = useState<Program[]>(mockPrograms);
   const [editingProgram, setEditingProgram] = useState<Program | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
+  /**
+   * Добавляет новую программу в состояние.
+   * @param {Omit<Program, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'workouts'>} programData - Данные новой программы.
+   */
   const handleAddProgram = (programData: Omit<Program, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'workouts'>) => {
     const newProgram: Program = {
       ...programData,
@@ -80,28 +100,47 @@ export default function ProgramsPage() {
     setPrograms([...programs, newProgram]);
   };
 
+  /**
+   * Открывает диалоговое окно для редактирования программы.
+   * @param {string} programId - ID программы для редактирования.
+   */
   const handleEdit = (programId: string) => {
     const program = programs.find(p => p.id === programId);
     setEditingProgram(program);
     setIsDialogOpen(true);
   };
 
+  /**
+   * Удаляет программу из состояния.
+   * @param {string} programId - ID программы для удаления.
+   */
   const handleDelete = (programId: string) => {
     setPrograms(programs.filter(p => p.id !== programId));
   };
 
+  /**
+   * Активирует программу.
+   * @param {string} programId - ID программы для активации.
+   */
   const handleActivate = (programId: string) => {
     setPrograms(programs.map(p => 
       p.id === programId ? { ...p, status: 'active' as const } : p
     ));
   };
 
+  /**
+   * Приостанавливает программу.
+   * @param {string} programId - ID программы для приостановки.
+   */
   const handlePause = (programId: string) => {
     setPrograms(programs.map(p => 
       p.id === programId ? { ...p, status: 'paused' as const } : p
     ));
   };
   
+  /**
+   * Открывает диалоговое окно для создания новой программы.
+   */
   const openNewProgramDialog = () => {
     setEditingProgram(undefined);
     setIsDialogOpen(true);

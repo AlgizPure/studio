@@ -9,18 +9,29 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
+/**
+ * Метаданные для приложения.
+ * @see https://nextjs.org/docs/app/api-reference/functions/generate-metadata
+ */
 export const metadata: Metadata = {
   title: 'Zenith Trainer',
-  description: 'Your personal AI-powered fitness and habit tracker.',
+  description: 'Ваш личный фитнес-трекер и трекер привычек на базе ИИ.',
 };
 
+/**
+ * Корневой макет для всего приложения.
+ * Он настраивает HTML-документ и включает основных поставщиков.
+ * @param {Readonly<{ children: React.ReactNode }>} props - Свойства для корневого макета.
+ * @param {React.ReactNode} props.children - Дочерние элементы для рендеринга внутри макета.
+ * @returns {JSX.Element} Обертка корневого макета.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ru" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

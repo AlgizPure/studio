@@ -1,7 +1,7 @@
 'use server';
 /**
- * AI-powered progression suggestions for workout programs using Genkit + Gemini.
- * Falls back to mock generator if NEXT_PUBLIC_AI_MOCK=1 or API key is missing.
+ * @fileoverview Предложения по прогрессии для программ тренировок с помощью ИИ с использованием Genkit + Gemini.
+ * Переключается на мок-генератор, если NEXT_PUBLIC_AI_MOCK=1 или отсутствует ключ API.
  */
 
 import { ai } from '@/ai/genkit';
@@ -10,6 +10,9 @@ import type { Program, WorkoutLog } from '@/lib/types';
 import { generateProgressionSuggestionsMock } from '@/lib/workout-ai-mocks';
 import type { ProgressionSuggestionsOutput } from '@/lib/workout-ai-mocks';
 
+/**
+ * Схема для предложения по прогрессии.
+ */
 const ProgressionSuggestionSchema = z.object({
   exerciseId: z.string(),
   exerciseName: z.string(),
@@ -22,6 +25,9 @@ const ProgressionSuggestionSchema = z.object({
   applyImmediately: z.boolean(),
 });
 
+/**
+ * Схема для входных данных предложений по прогрессии.
+ */
 const ProgressionSuggestionsInputSchema = z.object({
   program: z.object({
     id: z.string(),
@@ -58,16 +64,24 @@ const ProgressionSuggestionsInputSchema = z.object({
   })),
 });
 
+/**
+ * Схема для выходных данных предложений по прогрессии.
+ */
 const ProgressionSuggestionsOutputSchema = z.object({
   suggestions: z.array(ProgressionSuggestionSchema),
   globalRecommendation: z.string().optional(),
 });
 
+/**
+ * Тип для входных данных предложений по прогрессии.
+ */
 export type ProgressionSuggestionsInput = z.infer<typeof ProgressionSuggestionsInputSchema>;
-// ProgressionSuggestionsOutput is imported from workout-ai-mocks.ts
+// ProgressionSuggestionsOutput импортируется из workout-ai-mocks.ts
 
 /**
- * Real AI progression suggestions generation using Gemini via Genkit.
+ * Генерация предложений по прогрессии с помощью ИИ с использованием Gemini через Genkit.
+ * @param input - Входные данные для генерации предложений по прогрессии.
+ * @returns - Объект, содержащий предложения и глобальную рекомендацию.
  */
 async function generateProgressionSuggestionsWithAI(
   input: ProgressionSuggestionsInput
@@ -75,38 +89,38 @@ async function generateProgressionSuggestionsWithAI(
   const exerciseHistorySummary = Object.entries(input.exerciseHistory).slice(0, 10).map(([id, history]) => {
     const sessions = history.sessions;
     const lastSession = sessions[sessions.length - 1];
-    return `Exercise ${id}: ${sessions.length} sessions, last: ${lastSession.sets.length} sets @ ${lastSession.sets[0]?.weight || 'N/A'}kg, RPE ${lastSession.avgRPE.toFixed(1)}`;
+    return `Упражнение ${id}: ${sessions.length} сессий, последняя: ${lastSession.sets.length} подходов @ ${lastSession.sets[0]?.weight || 'N/A'}кг, RPE ${lastSession.avgRPE.toFixed(1)}`;
   }).join('\n');
 
   const prompt = ai.definePrompt({
     name: 'progressionSuggestionsPrompt',
     input: { schema: ProgressionSuggestionsInputSchema },
     output: { schema: ProgressionSuggestionsOutputSchema },
-    prompt: `You are an AI system for automatic load progression in strength training.
+    prompt: `Вы - система ИИ для автоматической прогрессии нагрузки в силовых тренировках.
 
-PROGRESSIVE OVERLOAD PRINCIPLES:
-1. If all sets completed with RPE ≤ 7.5: increase weight by 2.5-5%
-2. If all sets completed with RPE 8-9: maintain current weight
-3. If not all sets completed OR RPE > 9: decrease weight by 5-10%
-4. Priority: Safety > Progression
+ПРИНЦИПЫ ПРОГРЕССИВНОЙ ПЕРЕГРУЗКИ:
+1. Если все подходы выполнены с RPE ≤ 7.5: увеличьте вес на 2.5-5%
+2. Если все подходы выполнены с RPE 8-9: сохраняйте текущий вес
+3. Если не все подходы выполнены ИЛИ RPE > 9: уменьшите вес на 5-10%
+4. Приоритет: Безопасность > Прогрессия
 
-CONFIDENCE SCORE RULES:
-- 90-100: ≥5 recent sessions, stable patterns
-- 70-89: 3-4 sessions, moderate variability
-- <70: insufficient data, high variability
+ПРАВИЛА ОЦЕНКИ УВЕРЕННОСТИ:
+- 90-100: ≥5 последних сессий, стабильные закономерности
+- 70-89: 3-4 сессии, умеренная изменчивость
+- <70: недостаточно данных, высокая изменчивость
 
-REASONING FORMAT:
-"Last N sessions: [brief stats]. [Recommendation] because [justification]."
+ФОРМАТ ОБОСНОВАНИЯ:
+"Последние N сессий: [краткая статистика]. [Рекомендация], потому что [обоснование]."
 
-Example: "Last 5 sessions: 3x10 @ 100kg, RPE 7-7.5. Increase to 102.5kg because you consistently complete all sets with reserve."
+Пример: "Последние 5 сессий: 3x10 @ 100кг, RPE 7-7.5. Увеличьте до 102.5кг, потому что вы постоянно выполняете все подходы с запасом."
 
-PROGRAM: ${input.program.name} (${input.program.id})
+ПРОГРАММА: ${input.program.name} (${input.program.id})
 
-EXERCISE HISTORY:
+ИСТОРИЯ УПРАЖНЕНИЙ:
 ${exerciseHistorySummary}
 
-Generate specific progression suggestions for each exercise with sufficient data.
-Return structured JSON response matching the schema.`,
+Сгенерируйте конкретные предложения по прогрессии для каждого упражнения с достаточным количеством данных.
+Верните структурированный JSON-ответ, соответствующий схеме.`,
   });
 
   try {
@@ -116,43 +130,47 @@ Return structured JSON response matching the schema.`,
       exerciseHistory: input.exerciseHistory,
     });
     
-    // Extract token usage if available
+    // Извлечение использования токенов, если доступно
     const tokensUsed = (result as any)?.usage?.totalTokens || (result as any)?.tokensUsed || 0;
     if (tokensUsed > 0) {
       (result as any).tokensUsed = tokensUsed;
     }
     
-    // Genkit returns a wrapper; use .output for typed result
+    // Genkit возвращает обертку; используйте .output для типизированного результата
     // @ts-expect-error genkit type wrapper
     return result.output ?? result;
   } catch (error) {
-    console.error('[progression-suggestions] AI generation error:', error);
+    console.error('[progression-suggestions] Ошибка генерации ИИ:', error);
     throw error;
   }
 }
 
 /**
- * Main progression suggestions function with fallback logic.
+ * Основная функция предложений по прогрессии с логикой отката.
+ * @param program - Программа тренировок.
+ * @param recentWorkouts - Последние логи тренировок.
+ * @param exerciseHistory - История выполнения упражнений.
+ * @returns - Объект, содержащий предложения по прогрессии.
  */
 export async function getProgressionSuggestions(
   program: Program,
   recentWorkouts: WorkoutLog[],
   exerciseHistory: Record<string, { sessions: Array<{ date: string; sets: Array<{ reps: number; weight?: number; rpe?: number }>; avgRPE: number; totalVolume: number }> }>
 ): Promise<ProgressionSuggestionsOutput> {
-  // Check if mock mode is enabled
+  // Проверка, включен ли режим мок
   if (process.env.NEXT_PUBLIC_AI_MOCK === '1') {
-    console.log('[progression-suggestions] Using mock generator (NEXT_PUBLIC_AI_MOCK=1)');
+    console.log('[progression-suggestions] Используется мок-генератор (NEXT_PUBLIC_AI_MOCK=1)');
     return generateProgressionSuggestionsMock(program, recentWorkouts);
   }
 
-  // Check if API key is available
+  // Проверка, доступен ли ключ API
   if (!process.env.GOOGLE_GENAI_API_KEY) {
-    console.warn('[progression-suggestions] No GOOGLE_GENAI_API_KEY found, falling back to mock');
+    console.warn('[progression-suggestions] Не найден GOOGLE_GENAI_API_KEY, переключение на мок');
     return generateProgressionSuggestionsMock(program, recentWorkouts);
   }
 
   try {
-    // Prepare input
+    // Подготовка входных данных
     const input: ProgressionSuggestionsInput = {
       program: {
         id: program.id,
@@ -176,13 +194,13 @@ export async function getProgressionSuggestions(
       exerciseHistory,
     };
 
-    // Try AI generation with retry logic (3 attempts with exponential backoff)
+    // Попытка генерации ИИ с логикой повторных попыток (3 попытки с экспоненциальной задержкой)
     let lastError: Error | null = null;
     let tokensUsed = 0;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const result = await generateProgressionSuggestionsWithAI(input);
-        // Track token usage
+        // Отслеживание использования токенов
         tokensUsed = (result as any).tokensUsed || 0;
         if (tokensUsed > 0) {
           (result as any).tokensUsed = tokensUsed;
@@ -191,18 +209,18 @@ export async function getProgressionSuggestions(
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
         if (attempt < 2) {
-          // Exponential backoff: 100ms, 200ms, 400ms
+          // Экспоненциальная задержка: 100 мс, 200 мс, 400 мс
           await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, attempt)));
         }
       }
     }
 
-    // If all retries failed, fall back to mock
-    console.error('[progression-suggestions] AI generation failed after retries, falling back to mock:', lastError);
+    // Если все повторные попытки не увенчались успехом, переключиться на мок
+    console.error('[progression-suggestions] Генерация ИИ не удалась после повторных попыток, переключение на мок:', lastError);
     return generateProgressionSuggestionsMock(program, recentWorkouts);
   } catch (error) {
-    // Any other error, fall back to mock
-    console.error('[progression-suggestions] Unexpected error, falling back to mock:', error);
+    // Любая другая ошибка, переключиться на мок
+    console.error('[progression-suggestions] Непредвиденная ошибка, переключение на мок:', error);
     return generateProgressionSuggestionsMock(program, recentWorkouts);
   }
 }

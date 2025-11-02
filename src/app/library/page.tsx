@@ -13,6 +13,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
+/**
+ * Страница библиотеки упражнений, которая позволяет пользователям просматривать, создавать,
+ * обновлять и удалять упражнения и категории.
+ * @returns {JSX.Element} Компонент страницы библиотеки.
+ */
 export default function LibraryPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -33,6 +38,10 @@ export default function LibraryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
 
+  /**
+   * Добавляет новое упражнение в Firestore.
+   * @param {Omit<Exercise, 'id' | 'authorId'>} newExercise - Новое упражнение для добавления.
+   */
   const handleAddExercise = (newExercise: Omit<Exercise, 'id' | 'authorId'>) => {
     if (!user || !firestore) return;
     const exercisesCollection = collection(firestore, `users/${user.uid}/exercises`);
@@ -46,6 +55,10 @@ export default function LibraryPage() {
     });
   };
   
+  /**
+   * Обновляет существующее упражнение в Firestore.
+   * @param {Exercise} exercise - Упражнение для обновления.
+   */
   const handleUpdateExercise = async (exercise: Exercise) => {
     if (!user || !firestore || !exercise.id) return;
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
@@ -60,6 +73,10 @@ export default function LibraryPage() {
     });
   }
 
+  /**
+   * Удаляет упражнение из Firestore.
+   * @param {string} exerciseId - ID упражнения для удаления.
+   */
   const handleDeleteExercise = async (exerciseId: string) => {
     if (!user || !firestore) return;
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exerciseId);
@@ -72,6 +89,10 @@ export default function LibraryPage() {
     });
   }
 
+  /**
+   * Добавляет новую категорию упражнений в Firestore.
+   * @param {string} name - Название новой категории.
+   */
   const handleAddCategory = (name: string) => {
     if (!user || !firestore) return;
     const categoriesCollection = collection(firestore, `users/${user.uid}/exerciseCategories`);
@@ -85,6 +106,10 @@ export default function LibraryPage() {
     });
   };
 
+  /**
+   * Обновляет существующую категорию упражнений в Firestore.
+   * @param {ExerciseCategory} category - Категория для обновления.
+   */
   const handleUpdateCategory = (category: ExerciseCategory) => {
     if (!user || !firestore || !category.id) return;
     const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, category.id);
@@ -98,6 +123,10 @@ export default function LibraryPage() {
     });
   };
 
+  /**
+   * Удаляет категорию упражнений из Firestore.
+   * @param {string} categoryId - ID категории для удаления.
+   */
   const handleDeleteCategory = (categoryId: string) => {
     if (!user || !firestore) return;
     const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId);

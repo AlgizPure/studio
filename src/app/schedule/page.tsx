@@ -15,11 +15,15 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
+/**
+ * Страница расписания, отображающая еженедельный план активностей пользователя.
+ * @returns {JSX.Element} Компонент страницы расписания.
+ */
 export default function SchedulePage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  // Data fetching from Firestore
+  // Получение данных из Firestore
   const programsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/programs`) : null),
     [user, firestore]
@@ -49,7 +53,10 @@ export default function SchedulePage() {
   const isLoading = programsLoading || workoutsLoading || habitsLoading || habitCatLoading;
 
   
-  // Habit CRUD
+  /**
+   * Добавляет новую привычку в Firestore.
+   * @param {Omit<Habit, 'id' | 'authorId'>} habitData - Данные новой привычки.
+   */
   const handleAddHabit = (habitData: Omit<Habit, 'id' | 'authorId'>) => {
     if (!user || !firestore) return;
     const habitsCollection = collection(firestore, `users/${user.uid}/habits`);
@@ -64,6 +71,10 @@ export default function SchedulePage() {
     });
   };
 
+  /**
+   * Обновляет существующую привычку в Firestore.
+   * @param {Habit} habit - Привычка для обновления.
+   */
   const handleUpdateHabit = (habit: Habit) => {
      if (!user || !firestore || !habit.id) return;
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
@@ -78,6 +89,10 @@ export default function SchedulePage() {
     });
   };
 
+  /**
+   * Удаляет привычку из Firestore.
+   * @param {string} habitId - ID привычки для удаления.
+   */
   const handleDeleteHabit = (habitId: string) => {
     if (!user || !firestore) return;
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habitId);
@@ -90,7 +105,10 @@ export default function SchedulePage() {
     });
   };
   
-  // Category CRUD
+  /**
+   * Добавляет новую категорию привычек в Firestore.
+   * @param {string} name - Название новой категории.
+   */
   const handleAddHabitCategory = (name: string) => {
     if (!user || !firestore) return;
     const catCollection = collection(firestore, `users/${user.uid}/habitCategories`);
@@ -103,6 +121,11 @@ export default function SchedulePage() {
        errorEmitter.emit('permission-error', permissionError);
     });
   };
+
+  /**
+   * Обновляет существующую категорию привычек в Firestore.
+   * @param {HabitCategory} category - Категория для обновления.
+   */
   const handleUpdateHabitCategory = (category: HabitCategory) => {
     if (!user || !firestore || !category.id) return;
     const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, category.id);
@@ -115,6 +138,11 @@ export default function SchedulePage() {
         errorEmitter.emit('permission-error', permissionError);
     });
   };
+
+  /**
+   * Удаляет категорию привычек из Firestore.
+   * @param {string} categoryId - ID категории для удаления.
+   */
   const handleDeleteHabitCategory = (categoryId: string) => {
     if (!user || !firestore) return;
     const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, categoryId);

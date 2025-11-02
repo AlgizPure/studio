@@ -5,6 +5,12 @@ import { getFirebaseAdminApp } from '@/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
 import { programTemplates } from '@/lib/program-templates';
 
+/**
+ * Вызывает поток оптимизатора тренировок ИИ для создания персонализированного расписания.
+ * @param {AIRoutineOptimizerInput} input - Входные данные для оптимизатора, включая цели, доступность и предпочтения.
+ * @returns {Promise<{ success: boolean; data?: AIRoutineOptimizerOutput; error?: string }>} Объект, указывающий на успех,
+ * и содержащий либо оптимизированные данные о тренировках, либо сообщение об ошибке.
+ */
 export async function getOptimizedRoutine(
   input: AIRoutineOptimizerInput
 ): Promise<{ success: boolean; data?: AIRoutineOptimizerOutput; error?: string }> {
@@ -15,10 +21,15 @@ export async function getOptimizedRoutine(
     return { success: true, data: result };
   } catch (error) {
     console.error('[actions.ts] AI Routine Optimizer Error:', error);
-    return { success: false, error: 'Failed to generate a new routine. Please try again.' };
+    return { success: false, error: 'Не удалось сгенерировать новую программу. Пожалуйста, попробуйте еще раз.' };
   }
 }
 
+/**
+ * Заполняет базу данных Firestore предопределенными шаблонами программ, если они еще не существуют.
+ * Эта функция идемпотентна и выполняется только один раз.
+ * @returns {Promise<{ success: boolean; message: string }>} Объект, указывающий на успех и сообщение.
+ */
 export async function seedProgramTemplates(): Promise<{ success: boolean; message: string }> {
   console.log('[actions.ts] seedProgramTemplates called.');
   try {

@@ -16,6 +16,11 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { calculateWorkoutEstimatedDuration } from '@/lib/utils/workout-duration';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * Страница библиотеки тренировок, которая позволяет пользователям просматривать, создавать,
+ * обновлять, удалять и дублировать тренировки.
+ * @returns {JSX.Element} Компонент страницы тренировок.
+ */
 export default function WorkoutsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -38,6 +43,10 @@ export default function WorkoutsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newWorkout, setNewWorkout] = useState<Omit<WorkoutExtended, 'id'> | null>(null);
 
+  /**
+   * Сохраняет новую тренировку в Firestore.
+   * @param {Omit<WorkoutExtended, 'id'>} workoutData - Данные новой тренировки.
+   */
   const handleWorkoutSave = async (workoutData: Omit<WorkoutExtended, 'id'>) => {
     if (!user || !firestore) return;
 
@@ -70,14 +79,18 @@ export default function WorkoutsPage() {
     });
 
     toast({
-      title: 'Workout Created',
-      description: 'Workout has been added to your library.',
+      title: 'Тренировка создана',
+      description: 'Тренировка добавлена в вашу библиотеку.',
     });
 
     setNewWorkout(null);
     setIsCreateDialogOpen(false);
   };
 
+  /**
+   * Обновляет существующую тренировку в Firestore.
+   * @param {WorkoutExtended} workout - Тренировка для обновления.
+   */
   const handleUpdateWorkout = async (workout: WorkoutExtended) => {
     if (!user || !firestore || !workout.id) return;
     
@@ -102,6 +115,10 @@ export default function WorkoutsPage() {
     });
   };
 
+  /**
+   * Удаляет тренировку из Firestore.
+   * @param {string} workoutId - ID тренировки для удаления.
+   */
   const handleDeleteWorkout = async (workoutId: string) => {
     if (!user || !firestore) return;
     const workoutDoc = doc(firestore, `users/${user.uid}/workouts`, workoutId);
@@ -114,6 +131,10 @@ export default function WorkoutsPage() {
     });
   };
 
+  /**
+   * Дублирует тренировку в Firestore.
+   * @param {WorkoutExtended} workout - Тренировка для дублирования.
+   */
   const handleDuplicateWorkout = async (workout: WorkoutExtended) => {
     if (!user || !firestore) return;
     const workoutsCollection = collection(firestore, `users/${user.uid}/workouts`);
@@ -127,8 +148,8 @@ export default function WorkoutsPage() {
       errorEmitter.emit('permission-error', permissionError);
     });
     toast({
-      title: 'Workout Duplicated',
-      description: 'Workout has been duplicated.',
+      title: 'Тренировка продублирована',
+      description: 'Тренировка была продублирована.',
     });
   };
 
