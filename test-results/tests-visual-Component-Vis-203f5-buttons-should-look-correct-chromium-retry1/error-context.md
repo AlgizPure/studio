@@ -1,0 +1,74 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e7]:
+      - generic [ref=e9]:
+        - img [ref=e10]
+        - generic [ref=e13]: Zenith
+      - navigation [ref=e15]:
+        - list [ref=e16]:
+          - listitem [ref=e17]:
+            - link "Dashboard" [ref=e18] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e19]:
+                - img [ref=e20]
+                - generic [ref=e23]: Dashboard
+          - listitem [ref=e24]:
+            - link "Programs" [ref=e25] [cursor=pointer]:
+              - /url: /programs
+              - generic [ref=e26]:
+                - img [ref=e27]
+                - generic [ref=e31]: Programs
+          - listitem [ref=e32]:
+            - link "Schedule" [ref=e33] [cursor=pointer]:
+              - /url: /schedule
+              - generic [ref=e34]:
+                - img [ref=e35]
+                - generic [ref=e37]: Schedule
+          - listitem [ref=e38]:
+            - link "History" [ref=e39] [cursor=pointer]:
+              - /url: /workout-history
+              - generic [ref=e40]:
+                - img [ref=e41]
+                - generic [ref=e45]: History
+          - listitem [ref=e46]:
+            - link "Exercise Library" [ref=e47] [cursor=pointer]:
+              - /url: /library
+              - generic [ref=e48]:
+                - img [ref=e49]
+                - generic [ref=e55]: Exercise Library
+          - listitem [ref=e56]:
+            - link "Workouts Library" [ref=e57] [cursor=pointer]:
+              - /url: /workouts
+              - generic [ref=e58]:
+                - img [ref=e59]
+                - generic [ref=e65]: Workouts Library
+          - listitem [ref=e66]:
+            - link "Analytics" [ref=e67] [cursor=pointer]:
+              - /url: /analytics
+              - generic [ref=e68]:
+                - img [ref=e69]
+                - generic [ref=e71]: Analytics
+      - button "Theme Toggle theme" [ref=e73] [cursor=pointer]:
+        - img
+        - generic [ref=e74]: Theme
+        - generic [ref=e75]: Toggle theme
+    - generic [ref=e76]:
+      - banner [ref=e77]
+      - main [ref=e79]:
+        - generic [ref=e81]:
+          - heading "Welcome to Zenith Trainer" [level=2] [ref=e82]
+          - paragraph [ref=e83]: Your personal AI-powered fitness and habit tracker.
+          - generic [ref=e84]:
+            - link "Login" [ref=e85] [cursor=pointer]:
+              - /url: /login
+            - link "Sign Up" [ref=e86] [cursor=pointer]:
+              - /url: /signup
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=e87]
+  - button "Open Next.js Dev Tools" [ref=e93] [cursor=pointer]:
+    - img [ref=e94]
+```
