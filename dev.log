@@ -172,3 +172,45 @@
  ✓ Compiled in 95ms
  ✓ Compiled in 70ms
  ✓ Compiled in 91ms
+ GET / 200 in 3772ms
+ GET / 200 in 961ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 12.1s
+ GET /login 200 in 14616ms
+ GET /login 200 in 14681ms
+ GET /login 200 in 14692ms
+ GET /login 200 in 14730ms
+ GET /login 200 in 14745ms
+ GET /login 200 in 14914ms
+ ○ Compiling /signup ...
+ GET /login 200 in 1066ms
+ GET /login 200 in 606ms
+ GET /login 200 in 1286ms
+ ✓ Compiled /signup in 14.6s
+ GET /login 200 in 1532ms
+ GET /login 200 in 1528ms
+ GET /login 200 in 5359ms
+ GET /login 200 in 2622ms
+ GET /login 200 in 3941ms
+ GET / 200 in 2616ms
+ GET /login 200 in 2620ms
+ GET / 200 in 2652ms
+ GET / 200 in 2673ms
+ GET /programs 200 in 250ms
+ GET /library 200 in 209ms
+ ○ Compiling /workouts ...
+ ✓ Compiled /workouts in 5.6s
+ GET /workouts 200 in 5760ms
+ GET /workouts 200 in 395ms
+ GET /workout-history 200 in 417ms
+ GET /workouts 200 in 341ms
+ GET /workouts 200 in 218ms
+ GET /workouts 200 in 232ms
+ GET /workouts 200 in 203ms
+ GET /workouts 200 in 226ms
+ GET /library 200 in 204ms
+ GET /workouts 200 in 240ms
+ GET /library 200 in 209ms
+ GET /workouts 200 in 182ms
+ GET /programs 200 in 205ms
+ GET /favicon.ico?favicon.56766c03.ico 200 in 423ms
