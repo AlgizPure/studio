@@ -1,0 +1,353 @@
+# Zenith Trainer - Cursor AI Rules
+# Fitness tracking application with AI-powered insights
+# Stack: Next.js 15 + TypeScript + Firebase + Genkit AI + Radix UI + Tailwind CSS
+
+## Project Overview
+You are working on Zenith Trainer, a comprehensive fitness and habit tracking application with AI-powered insights, workout progression, and program management.
+
+## Core Technologies
+- **Framework**: Next.js 15.5.6 (App Router, React Server Components)
+- **Language**: TypeScript 5 (strict mode enabled)
+- **Styling**: Tailwind CSS 3.4 + tailwind-merge + class-variance-authority
+- **UI Components**: Radix UI primitives + custom shadcn/ui components
+- **Backend**: Firebase 11.9 (Auth, Firestore, Storage, Admin SDK)
+- **AI**: Google Genkit 1.20 with Google Generative AI
+- **Forms**: React Hook Form 7.54 + Zod 3.24 validation
+- **State**: React hooks, Firebase real-time subscriptions
+- **Testing**: Playwright (E2E), TypeScript type checking
+- **Package Manager**: npm
+
+## Code Style & Patterns
+
+### TypeScript
+- **ALWAYS use strict TypeScript** - no `any` types unless absolutely necessary
+- Use explicit return types for functions
+- Prefer `type` over `interface` for consistency
+- Use Zod schemas for runtime validation
+- Example:
+  ```typescript
+  type User = {
+    id: string;
+    name: string;
+  };
+
+  const getUser = (id: string): Promise<User> => {...}
+  ```
+
+### React & Next.js
+- **Prefer React Server Components (RSC)** by default
+- Use `'use client'` directive ONLY when:
+  - Using React hooks (useState, useEffect, etc.)
+  - Handling browser events
+  - Using context providers
+- Follow Next.js App Router conventions:
+  - `page.tsx` for routes
+  - `layout.tsx` for shared layouts
+  - `route.ts` for API routes
+  - `loading.tsx` for loading states
+- Use Next.js built-in features:
+  - `next/link` for navigation
+  - `next/image` for images
+  - Dynamic imports for code splitting
+- Minimize `useEffect` usage - prefer RSC data fetching
+- Use async/await in Server Components for data fetching
+
+### Component Patterns
+- **Functional components only** - no class components
+- Use composition over prop drilling
+- Keep components small and focused (< 200 lines)
+- Extract reusable logic into custom hooks
+- Props interface should be defined inline or as type above component
+- Example structure:
+  ```typescript
+  'use client';
+
+  import { useState } from 'react';
+  import { Button } from '@/components/ui/button';
+
+  interface MyComponentProps {
+    title: string;
+    onAction: () => void;
+  }
+
+  export function MyComponent({ title, onAction }: MyComponentProps) {
+    const [isLoading, setIsLoading] = useState(false);
+
+    return (
+      <div>
+        <h2>{title}</h2>
+        <Button onClick={onAction}>Action</Button>
+      </div>
+    );
+  }
+  ```
+
+### Firebase
+- **ALWAYS use Firebase hooks** from `/src/firebase/provider.tsx`:
+  - `useUser()` for authentication
+  - `useFirestore()` for Firestore instance
+  - `useCollection()` for real-time collections
+  - `useDoc()` for real-time documents
+- Handle Firebase errors properly using error emitter
+- Use `WithId<T>` type for documents with Firestore IDs
+- Structure Firestore paths: `users/{userId}/{collection}`
+- Use Firebase Admin SDK only in API routes (server-side)
+- Example:
+  ```typescript
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const workoutsQuery = useMemoFirebase(
+    () => user ? collection(firestore, `users/${user.uid}/workouts`) : null,
+    [user, firestore]
+  );
+
+  const { data: workouts } = useCollection<Workout>(workoutsQuery);
+  ```
+
+### AI & Genkit
+- Use Genkit flows for AI operations (in `/src/ai/flows/`)
+- Always handle AI errors gracefully with try-catch
+- Use `@ts-expect-error - Genkit type wrapper issue` for known Genkit type issues
+- Structure AI prompts with clear input/output schemas
+- Log AI operations with descriptive messages
+- Example:
+  ```typescript
+  try {
+    const result = await aiFlow({ input: data });
+    // @ts-expect-error - Genkit type wrapper issue
+    return result.output ?? result;
+  } catch (error) {
+    console.error('[ai-operation] Error:', error);
+    throw error;
+  }
+  ```
+
+### Styling with Tailwind
+- Use Tailwind utility classes for styling
+- Use `cn()` helper from `@/lib/utils` to merge classes
+- Follow mobile-first responsive design
+- Use CSS variables for theme colors (defined in globals.css)
+- Prefer Tailwind over inline styles or CSS modules
+- Use `class-variance-authority` for component variants
+- Example:
+  ```typescript
+  import { cn } from '@/lib/utils';
+
+  <div className={cn(
+    "flex items-center gap-4",
+    isActive && "bg-primary text-primary-foreground",
+    className
+  )}>
+  ```
+
+### UI Components (Radix UI + shadcn/ui)
+- Use existing UI components from `/src/components/ui/`
+- Don't recreate components that already exist
+- Follow Radix UI patterns for accessibility
+- Use compound components pattern
+- Available components:
+  - Button, Input, Textarea, Select, Checkbox, Switch
+  - Dialog, Alert Dialog, Popover, Tooltip, Toast
+  - Card, Tabs, Accordion, Separator, Skeleton
+  - Form components with React Hook Form integration
+
+### Forms & Validation
+- Use React Hook Form for form state management
+- Define Zod schemas for validation
+- Use `@hookform/resolvers/zod` for integration
+- Show validation errors inline
+- Example:
+  ```typescript
+  const schema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().email('Invalid email'),
+  });
+
+  type FormValues = z.infer<typeof schema>;
+
+  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+  });
+  ```
+
+### Error Handling
+- Use try-catch for async operations
+- **NEVER use empty catch blocks** - always log errors
+- Use custom error types from `/src/firebase/errors.ts`
+- Use error emitter for Firebase permission errors
+- Show user-friendly error messages with Toast
+- Example:
+  ```typescript
+  try {
+    await operation();
+  } catch (error) {
+    console.error('Operation failed:', error);
+    toast({
+      title: 'Error',
+      description: 'Something went wrong. Please try again.',
+      variant: 'destructive',
+    });
+  }
+  ```
+
+### File Organization
+- Group related components in folders
+- Use barrel exports (index.ts) sparingly
+- Keep utilities in `/src/lib/`
+- Keep types in `/src/lib/types.ts` or colocated with components
+- Keep AI flows in `/src/ai/flows/`
+- Keep Firebase hooks in `/src/firebase/`
+- Structure:
+  ```
+  src/
+  ├── app/                 # Next.js App Router pages
+  ├── components/          # React components
+  │   ├── ui/             # Base UI components (shadcn)
+  │   └── [feature]/      # Feature-specific components
+  ├── lib/                # Utilities and helpers
+  ├── firebase/           # Firebase configuration and hooks
+  ├── ai/                 # Genkit AI flows and prompts
+  └── hooks/              # Custom React hooks
+  ```
+
+## Naming Conventions
+- **Files**: kebab-case (e.g., `workout-builder.tsx`)
+- **Components**: PascalCase (e.g., `WorkoutBuilder`)
+- **Functions/Variables**: camelCase (e.g., `getUserWorkouts`)
+- **Types/Interfaces**: PascalCase (e.g., `WorkoutExtended`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_WORKOUTS`)
+- **Hooks**: camelCase with 'use' prefix (e.g., `useWorkouts`)
+
+## Import Order
+1. React and Next.js imports
+2. External library imports (alphabetically)
+3. Internal components (`@/components`)
+4. Internal utilities (`@/lib`)
+5. Types
+6. Styles
+
+Example:
+```typescript
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
+
+import { cn } from '@/lib/utils';
+import type { Workout } from '@/lib/types';
+```
+
+## Testing
+- Write E2E tests with Playwright in `/e2e/`
+- Use descriptive test names
+- Test user flows, not implementation details
+- Use `playwright.config.ts` configuration
+- Run tests with `npm run test:e2e`
+
+## Performance
+- Use `React.memo()` for expensive components
+- Use `useMemo()` and `useCallback()` appropriately
+- Lazy load heavy components with `next/dynamic`
+- Optimize images with `next/image`
+- Minimize client-side JavaScript
+- Use RSC for data fetching when possible
+
+## Security
+- **NEVER commit sensitive data** (API keys, credentials)
+- Store secrets in environment variables
+- Use Firebase Security Rules for access control
+- Validate all user inputs with Zod
+- Sanitize data before rendering
+- Use Firebase Admin SDK only in API routes
+
+## Environment Variables
+- Store in `.env.local` (never commit this file)
+- Use `NEXT_PUBLIC_` prefix for client-side variables
+- Reference `.env.example` for required variables
+- Required variables:
+  - Firebase config (NEXT_PUBLIC_FIREBASE_*)
+  - Google AI API key (GOOGLE_GENAI_API_KEY)
+
+## Git Practices
+- Write clear, descriptive commit messages
+- Use conventional commits format:
+  - `feat:` for new features
+  - `fix:` for bug fixes
+  - `docs:` for documentation
+  - `refactor:` for code refactoring
+  - `test:` for tests
+  - `chore:` for maintenance
+- Keep commits focused and atomic
+- Example: `feat: add workout progression suggestions with AI`
+
+## Documentation
+- Add JSDoc comments for complex functions
+- Keep README.md up to date
+- Document non-obvious code decisions
+- Use TODO comments sparingly and track them
+- Format:
+  ```typescript
+  /**
+   * Calculates workout progression based on history
+   * @param workoutId - The workout to analyze
+   * @param days - Number of days to look back
+   * @returns Progression suggestions
+   */
+  ```
+
+## Debugging
+- Use proper logging system (see `/src/lib/logger.ts` - TODO)
+- Use descriptive log messages
+- Include context in error logs
+- Use browser DevTools for client debugging
+- Use Next.js built-in error handling
+
+## Common Pitfalls to Avoid
+- ❌ Don't use `any` type - use `unknown` or proper types
+- ❌ Don't use `console.log` in production - use logger utility
+- ❌ Don't fetch data in `useEffect` - use RSC or React Query
+- ❌ Don't mutate state directly - use setState or reducer
+- ❌ Don't forget error boundaries for error handling
+- ❌ Don't use `var` - always use `const` or `let`
+- ❌ Don't ignore TypeScript errors - fix them properly
+- ❌ Don't use deprecated APIs - check documentation
+
+## AI Assistance Guidelines
+When I ask you to:
+- **"Create a component"** → Follow component patterns above
+- **"Add a feature"** → Update related tests and types
+- **"Fix a bug"** → Identify root cause, add tests, fix properly
+- **"Refactor code"** → Maintain functionality, improve structure
+- **"Add AI feature"** → Use Genkit flows, handle errors
+- **"Add Firebase feature"** → Use hooks, handle permissions
+
+## When in Doubt
+1. Check existing similar code in the project
+2. Refer to official documentation (Next.js, React, Firebase)
+3. Follow TypeScript strict mode guidelines
+4. Ask clarifying questions before making assumptions
+5. Prefer simplicity over cleverness
+
+## Project-Specific Notes
+- This is a fitness tracking app with workouts, habits, and programs
+- AI features use Google Gemini via Genkit
+- Real-time updates via Firebase subscriptions
+- Focus on user experience and performance
+- Accessibility is important (use Radix UI patterns)
+
+## References
+- Next.js Docs: https://nextjs.org/docs
+- React Docs: https://react.dev
+- TypeScript Handbook: https://www.typescriptlang.org/docs/
+- Firebase Docs: https://firebase.google.com/docs
+- Genkit Docs: https://firebase.google.com/docs/genkit
+- Radix UI: https://www.radix-ui.com
+- Tailwind CSS: https://tailwindcss.com
+
+---
+Last updated: 2025-01-03
+Project: Zenith Trainer v0.1.0
