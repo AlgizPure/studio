@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, SubmitHandler, Controller, type Path } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Habit, Day, HabitCategory } from '@/lib/types';
@@ -22,8 +22,19 @@ import { useState, useEffect } from 'react';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from './ui/select';
-import type { AnalysisSystem } from '@/lib/types';
+import type { AnalysisSystem, SystemParameter } from '@/lib/types';
 import { useUserCollection } from '@/hooks/use-user-collection';
+
+// Type for active systems with their parameters
+type ActiveSystemData = {
+  systemId: string;
+  systemVersion: string;
+  parameters?: SystemParameter[];
+  habitParameters?: SystemParameter[];
+};
+
+// Type for form data with dynamic system parameter fields
+type HabitFormWithSystemParams = HabitFormValues & Record<string, string | number | boolean | undefined>;
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -65,7 +76,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const isEditMode = !!habitToEdit;
-  const { data: activeSystems } = useUserCollection<any>('activeSystems');
+  const { data: activeSystems } = useUserCollection<ActiveSystemData>('activeSystems');
 
   const {
     register,
@@ -124,14 +135,18 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
   const onSubmit: SubmitHandler<HabitFormValues> = (data) => {
     try {
       // collect system params to contextParams
-      const contextParams: Record<string, Record<string, any>> = {};
+      const contextParams: Record<string, Record<string, string | number | boolean>> = {};
       (activeSystems || []).forEach((sys) => {
-        const sysParams: Record<string, any> = {};
-        Object.keys((data as any) || {}).forEach((k) => {
+        const sysParams: Record<string, string | number | boolean> = {};
+        const formData = data as HabitFormWithSystemParams;
+        Object.keys(formData || {}).forEach((k) => {
           const prefix = `sys_${sys.systemId}_`;
           if (k.startsWith(prefix)) {
             const pid = k.substring(prefix.length);
-            (sysParams as any)[pid] = (data as any)[k];
+            const value = formData[k];
+            if (value !== undefined && typeof value !== 'object') {
+              sysParams[pid] = value;
+            }
           }
         });
         if (Object.keys(sysParams).length > 0) {
@@ -171,7 +186,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
             ...(data.tags && data.tags.length > 0 && { tags: data.tags }),
             ...(typeof data.priority === 'number' && { priority: data.priority }),
             ...(data.difficulty && { difficulty: data.difficulty }),
-          } as any;
+          };
           onHabitUpdate(updatedWithV2 as Habit);
           toast({
               title: 'Habit Updated',
@@ -209,7 +224,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
             ...(data.tags && data.tags.length > 0 && { tags: data.tags }),
             ...(typeof data.priority === 'number' && { priority: data.priority }),
             ...(data.difficulty && { difficulty: data.difficulty }),
-          } as any;
+          };
           onHabitAdd(newWithV2 as Omit<Habit, 'id'>);
           toast({
             title: 'Habit Added',
@@ -528,7 +543,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
               {(activeSystems || []).map((sys) => (
                 <div key={sys.systemId} className="space-y-2 p-2 rounded border">
                   <div className="text-sm font-medium">{sys.systemId}</div>
-                  {(sys.parameters || sys.habitParameters || []).map((p: any) => (
+                  {(sys.parameters || sys.habitParameters || []).map((p: SystemParameter) => (
                     <div key={p.id} className="grid grid-cols-4 items-center gap-4">
                       <Label className="text-right">{p.label || p.id}</Label>
                       <div className="col-span-3">
@@ -537,13 +552,13 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
                             name={`sys_${sys.systemId}_${p.id}` as any}
                             control={control}
                             render={({ field }) => (
-                              <Select onValueChange={(v) => field.onChange(v)} value={field.value}>
+                              <Select onValueChange={(v) => field.onChange(v)} value={field.value as string}>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectGroup>
-                                    {(p.options || []).map((opt: any) => (
+                                    {(p.options || []).map((opt) => (
                                       <SelectItem key={opt.value} value={opt.value}>{opt.label || opt.value}</SelectItem>
                                     ))}
                                   </SelectGroup>

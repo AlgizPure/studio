@@ -1,11 +1,11 @@
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, type Firestore } from 'firebase/firestore';
 import type { AnalysisSystem, Habit, HabitExportV1, HabitLog, HabitStreak, HabitInsight } from './types';
 import { BUILTIN_SYSTEMS } from './systems';
 
 type DateRange = { from: string; to: string };
 
 export async function buildHabitExport(opts: {
-  firestore: any;
+  firestore: Firestore;
   userId: string;
   dateRange?: DateRange;
 }): Promise<HabitExportV1> {
@@ -16,11 +16,17 @@ export async function buildHabitExport(opts: {
   const insightsSnap = await getDocs(collection(firestore, `users/${userId}/habitInsights`));
   const activeSnap = await getDocs(collection(firestore, `users/${userId}/activeSystems`));
 
-  const habits = habitsSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as unknown as Habit[];
-  let logs = logsSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as unknown as HabitLog[];
-  const streaks = streaksSnap.docs.map(d => ({ ...(d.data() as any) })) as unknown as HabitStreak[];
-  const insights = insightsSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as unknown as HabitInsight[];
-  const activeSystems = activeSnap.docs.map(d => ({ systemId: (d.data() as any).systemId || d.id, systemVersion: '1.0' }));
+  const habits: Habit[] = habitsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Habit));
+  let logs: HabitLog[] = logsSnap.docs.map(d => ({ id: d.id, ...d.data() } as HabitLog));
+  const streaks: HabitStreak[] = streaksSnap.docs.map(d => d.data() as HabitStreak);
+  const insights: HabitInsight[] = insightsSnap.docs.map(d => ({ id: d.id, ...d.data() } as HabitInsight));
+  const activeSystems = activeSnap.docs.map(d => {
+    const data = d.data();
+    return {
+      systemId: (data.systemId as string) || d.id,
+      systemVersion: '1.0' as const
+    };
+  });
 
   if (dateRange) {
     const from = new Date(dateRange.from);
@@ -42,7 +48,7 @@ export async function buildHabitExport(opts: {
     version: '1.0',
     exportDate: new Date().toISOString(),
     userId,
-    habits: habits as any,
+    habits,
     logs,
     streaks,
     insights,
