@@ -22,7 +22,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { AddHabitDialog } from './add-habit-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
-import { useCollection } from '@/firebase/firestore/use-collection';
 import { useUser, useFirestore } from '@/firebase/provider';
 import { useUserCollection } from '@/hooks/use-user-collection';
 import { doc, updateDoc, addDoc, deleteDoc, collection } from 'firebase/firestore';

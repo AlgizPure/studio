@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { Dumbbell, Target } from 'lucide-react';
-import { useCollection } from '@/firebase/firestore/use-collection';
 import { useUser, useFirestore } from '@/firebase/provider';
 import { useUserCollection } from '@/hooks/use-user-collection';
 import type { Habit, Day, Program, WorkoutExtended } from '@/lib/types';
