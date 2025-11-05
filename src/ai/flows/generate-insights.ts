@@ -10,7 +10,7 @@ import type { HabitLog, HabitInsight, AnalysisSystem } from '@/lib/types';
 import { generateInsightsFromLogsMock } from '@/lib/insights';
 
 /**
- * Схема для инсайта по привычке.
+ * Схема Zod для объекта инсайта по привычке.
  * @property {string} id - Уникальный идентификатор.
  * @property {string} date - Дата в формате ГГГГ-ММ-ДД.
  * @property {string} systemId - Идентификатор системы анализа.
@@ -34,7 +34,7 @@ const HabitInsightSchema = z.object({
 });
 
 /**
- * Схема входных данных для генерации инсайтов.
+ * Схема Zod для входных данных флоу генерации инсайтов.
  * @property {Array<object>} logs - Массив логов привычек.
  * @property {Array<object>} activeSystems - Массив активных систем анализа.
  */
@@ -61,7 +61,7 @@ const GenerateInsightsInputSchema = z.object({
 });
 
 /**
- * Схема выходных данных для генерации инсайтов.
+ * Схема Zod для выходных данных флоу генерации инсайтов.
  * @property {Array<HabitInsight>} insights - Массив сгенерированных инсайтов.
  * @property {string} [summary] - Краткое резюме.
  */
@@ -74,7 +74,7 @@ export type GenerateInsightsInput = z.infer<typeof GenerateInsightsInputSchema>;
 export type GenerateInsightsOutput = z.infer<typeof GenerateInsightsOutputSchema>;
 
 /**
- * Генерация инсайтов с помощью AI (Gemini через Genkit).
+ * Внутренняя функция для генерации инсайтов с помощью AI (Gemini через Genkit).
  * @param {GenerateInsightsInput} input - Входные данные для генерации.
  * @returns {Promise<GenerateInsightsOutput>} - Обещание, которое разрешается сгенерированными инсайтами.
  * @throws {Error} - Если генерация с помощью AI не удалась.
@@ -84,19 +84,16 @@ async function generateInsightsWithAI(input: GenerateInsightsInput): Promise<Gen
     `- ${s.name} (ID: ${s.id}): ${s.description || 'Нет описания'}`
   ).join('\n');
   
-  // Подготовка сводки логов
   const logsSummary = input.logs.slice(0, 100).map(l => {
-    const date = l.date;
-    const status = l.status;
     const context = l.contextData ? JSON.stringify(l.contextData) : '';
-    return `Дата: ${date}, Статус: ${status}${context ? `, Контекст: ${context}` : ''}`;
+    return `Дата: ${l.date}, Статус: ${l.status}${context ? `, Контекст: ${context}` : ''}`;
   }).join('\n');
 
   const prompt = ai.definePrompt({
     name: 'generateInsightsPrompt',
     input: { schema: GenerateInsightsInputSchema },
     output: { schema: GenerateInsightsOutputSchema },
-    prompt: `Вы — AI-лайф-коуч, который анализирует логи выполнения привычек и генерирует действенные инсайты.
+    prompt: `Вы — AI-лайф-коуч, анализирующий логи привычек для генерации действенных инсайтов.
 
 Активные системы анализа:
 ${systemsList}
@@ -105,29 +102,18 @@ ${systemsList}
 ${logsSummary}
 
 Инструкции:
-1. Проанализируйте логи и выявите закономерности, дисбалансы или возможности.
-2. Для каждой активной системы проверьте, есть ли какие-либо предупреждения, рекомендации или достижения.
+1. Проанализируйте логи на предмет закономерностей, дисбалансов или возможностей.
+2. Для каждой активной системы проверьте наличие предупреждений, рекомендаций или достижений.
 3. Генерируйте инсайты на основе:
-   - Колесо жизни: проверьте, есть ли какие-либо жизненные области (здоровье, карьера, отношения, рост, финансы, отдых, окружение, духовность), которые постоянно слабы (<40% выполнения).
-   - Иерархия Маслоу: проверьте, являются ли базовые потребности (физиологические, безопасность) нестабильными (<60% выполнения).
-   - Любые другие активные системы: генерируйте инсайты на основе их конкретных параметров.
-4. Каждый инсайт должен иметь:
-   - type: 'warning' (срочные проблемы), 'recommendation' (предложения) или 'achievement' (положительные вехи)
-   - priority: 1-5 (5 — самый срочный)
-   - title: Короткий, действенный заголовок
-   - description: Подробное объяснение с конкретными данными
-   - data: Необязательные метрики/цифры для поддержки инсайта
+   - Колесо жизни: ищите области (<40% выполнения).
+   - Иерархия Маслоу: ищите нестабильность базовых потребностей (<60% выполнения).
+4. Каждый инсайт должен иметь тип, приоритет (1-5), заголовок и описание.
 5. Ограничьтесь 5 самыми важными инсайтами.
-
-Верните структурированный JSON-ответ с массивом инсайтов, соответствующим схеме.`,
+Верните структурированный JSON-ответ.`,
   });
 
   try {
-    const result = await prompt({
-      logs: input.logs,
-      activeSystems: input.activeSystems,
-    });
-    // Genkit возвращает обертку; используйте .output для типизированного результата
+    const result = await prompt(input);
     // @ts-expect-error - Проблема с оберткой типов Genkit
     return result.output ?? result;
   } catch (error) {
@@ -137,58 +123,43 @@ ${logsSummary}
 }
 
 /**
- * Основная функция генерации инсайтов с логикой отката.
+ * Основная функция для генерации инсайтов с отказоустойчивостью.
  * @param {HabitLog[]} logs - Массив логов привычек.
  * @param {AnalysisSystem[]} activeSystems - Массив активных систем анализа.
- * @returns {Promise<HabitInsight[]>} - Обещание, которое разрешается массивом сгенерированных инсайтов.
+ * @returns {Promise<HabitInsight[]>} - Массив сгенерированных инсайтов.
  */
 export async function generateInsights(
   logs: HabitLog[],
   activeSystems: AnalysisSystem[]
 ): Promise<HabitInsight[]> {
-  // Проверка, включен ли режим мок-данных
   if (process.env.NEXT_PUBLIC_AI_MOCK === '1') {
     console.log('[generate-insights] Используется мок-генератор (NEXT_PUBLIC_AI_MOCK=1)');
     return generateInsightsFromLogsMock(logs);
   }
 
-  // Проверка наличия API-ключа
   if (!process.env.GOOGLE_GENAI_API_KEY) {
-    console.warn('[generate-insights] Не найден GOOGLE_GENAI_API_KEY, используется мок');
+    console.warn('[generate-insights] GOOGLE_GENAI_API_KEY не найден, используется мок');
     return generateInsightsFromLogsMock(logs);
   }
 
   try {
-    // Подготовка входных данных
     const input: GenerateInsightsInput = {
-      logs: logs.map(l => ({
-        id: l.id,
-        habitId: l.habitId,
-        date: l.date,
-        status: l.status,
-        value: l.value,
-        durationMin: l.durationMin,
-        contextData: l.contextData,
-      })),
+      logs: logs.map(l => ({ ...l, id: l.id || 'unknown' })),
       activeSystems: activeSystems.map(s => ({
-        id: s.id,
-        name: s.name,
-        description: s.description,
+        ...s,
         habitParameters: (s.habitParameters || []).map(p => ({
-          id: p.id,
+          ...p,
           name: (p as any).name ?? p.label ?? p.id,
-          type: p.type,
         })),
       })),
     };
 
-    // Попытка генерации AI с логикой повторных попыток
+    // Логика повторных попыток
     let lastError: Error | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const result = await generateInsightsWithAI(input);
-        // Добавление ID, если они отсутствуют, и приведение приоритета к объединению 1..5
-        return result.insights.map(ins => ({
+        return (result.insights || []).map(ins => ({
           ...ins,
           id: (ins as any).id || crypto.randomUUID(),
           createdAt: (ins as any).createdAt || new Date().toISOString(),
@@ -196,17 +167,13 @@ export async function generateInsights(
         })) as HabitInsight[];
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
-        if (attempt < 2) {
-          await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, attempt)));
-        }
+        if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 100 * 2 ** attempt));
       }
     }
 
-    // Если все повторные попытки не увенчались успехом, вернуться к мок-данным
     console.error('[generate-insights] Генерация AI не удалась после повторных попыток, используется мок:', lastError);
     return generateInsightsFromLogsMock(logs);
   } catch (error) {
-    // Любая другая ошибка, вернуться к мок-данным
     console.error('[generate-insights] Непредвиденная ошибка, используется мок:', error);
     return generateInsightsFromLogsMock(logs);
   }
