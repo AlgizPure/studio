@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+/**
+ * @fileoverview Схемы Zod для валидации структуры ZTL (Zenith Training Language).
+ * Определяет типы для упражнений, циклов, тренировок, прогрессии и программ.
+ */
+
+/**
+ * @description Базовая схема для упражнения в ZTL.
+ * Включает все возможные поля для силовых и кардио упражнений.
+ */
 const ZTLExerciseBase = z.object({
     id: z.string(),
     name: z.string(),
@@ -12,9 +21,14 @@ const ZTLExerciseBase = z.object({
     rest_s: z.number().int().nonnegative().optional(),
 });
 
+/**
+ * @description Схема упражнения ZTL с валидацией.
+ * Упражнение должно иметь либо силовые цели (вес, повторения, RPE),
+ * либо цели на выносливость (длительность, интенсивность), но не оба типа одновременно.
+ */
 export const ZTLExercise = ZTLExerciseBase.refine(
     (e) =>
-      // either strength targets or duration/intensity
+      // либо силовые цели, либо длительность/интенсивность
       ((e.target_weight_kg !== undefined || e.target_reps !== undefined || e.target_rpe !== undefined) &&
         e.target_duration_s === undefined &&
         e.target_intensity === undefined) ||
@@ -25,6 +39,10 @@ export const ZTLExercise = ZTLExerciseBase.refine(
     }
   );
 
+/**
+ * @description Схема для цикла упражнений в ZTL.
+ * Цикл может быть обычным, круговым, суперсетом или дроп-сетом.
+ */
 export const ZTLCycle = z.object({
   type: z.enum(['normal', 'circuit', 'superset', 'dropset']),
   repetitions: z.number().int().positive().optional(),
@@ -32,6 +50,10 @@ export const ZTLCycle = z.object({
   exercises: z.array(ZTLExercise).min(1),
 });
 
+/**
+ * @description Схема для тренировки в ZTL.
+ * Тренировка состоит из одного или нескольких циклов упражнений.
+ */
 export const ZTLWorkout = z.object({
   id: z.string(),
   name: z.string(),
@@ -40,6 +62,10 @@ export const ZTLWorkout = z.object({
   cycles: z.array(ZTLCycle).min(1),
 });
 
+/**
+ * @description Схема для правил прогрессии в ZTL.
+ * Определяет, как должны изменяться параметры тренировок (например, вес) со временем.
+ */
 export const ZTLProgression = z.object({
   rules: z.array(
     z.object({
@@ -64,6 +90,10 @@ export const ZTLProgression = z.object({
     .optional(),
 });
 
+/**
+ * @description Основная схема для программы тренировок ZTL.
+ * Включает метаданные, расписание, список тренировок и правила прогрессии.
+ */
 export const ZTLProgram = z.object({
   meta: z.object({
     version: z.literal('1.0'),
@@ -91,6 +121,10 @@ export const ZTLProgram = z.object({
   progression: ZTLProgression.optional(),
 });
 
+/**
+ * @description Схема для ZTL Patch.
+ * Определяет набор операций для изменения существующей программы ZTL.
+ */
 export const ZTLPatch = z.object({
   patch: z.array(
     z.union([
@@ -108,13 +142,20 @@ export const ZTLPatch = z.object({
   ),
 });
 
+/**
+ * Валидирует данные на соответствие схеме ZTLProgram.
+ * @param {unknown} data - Данные для валидации.
+ * @returns {z.SafeParseReturnType<any, any>} Результат валидации.
+ */
 export function validateZTL(data: unknown) {
   return ZTLProgram.safeParse(data);
 }
 
+/**
+ * Валидирует данные на соответствие схеме ZTLPatch.
+ * @param {unknown} data - Данные для валидации.
+ * @returns {z.SafeParseReturnType<any, any>} Результат валидации.
+ */
 export function validateZTLPatch(data: unknown) {
   return ZTLPatch.safeParse(data);
 }
-
-
-

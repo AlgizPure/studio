@@ -15,11 +15,20 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
+/**
+ * @fileoverview Страница еженедельного расписания.
+ * Отображает и позволяет управлять еженедельными активностями, включая привычки и тренировки.
+ */
+
+/**
+ * Компонент страницы расписания.
+ * @returns {JSX.Element} - Страница расписания.
+ */
 export default function SchedulePage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  // Data fetching from Firestore
+  // Получение данных из Firestore
   const programsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/programs`) : null),
     [user, firestore]
@@ -49,7 +58,11 @@ export default function SchedulePage() {
   const isLoading = programsLoading || workoutsLoading || habitsLoading || habitCatLoading;
 
   
-  // Habit CRUD
+  // CRUD для привычек
+  /**
+   * Добавляет новую привычку.
+   * @param {Omit<Habit, 'id' | 'authorId'>} habitData - Данные новой привычки.
+   */
   const handleAddHabit = (habitData: Omit<Habit, 'id' | 'authorId'>) => {
     if (!user || !firestore) return;
     const habitsCollection = collection(firestore, `users/${user.uid}/habits`);
@@ -64,6 +77,10 @@ export default function SchedulePage() {
     });
   };
 
+  /**
+   * Обновляет существующую привычку.
+   * @param {Habit} habit - Привычка для обновления.
+   */
   const handleUpdateHabit = (habit: Habit) => {
      if (!user || !firestore || !habit.id) return;
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
@@ -78,6 +95,10 @@ export default function SchedulePage() {
     });
   };
 
+  /**
+   * Удаляет привычку.
+   * @param {string} habitId - ID привычки для удаления.
+   */
   const handleDeleteHabit = (habitId: string) => {
     if (!user || !firestore) return;
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habitId);
@@ -90,7 +111,11 @@ export default function SchedulePage() {
     });
   };
   
-  // Category CRUD
+  // CRUD для категорий
+  /**
+   * Добавляет новую категорию привычек.
+   * @param {string} name - Название новой категории.
+   */
   const handleAddHabitCategory = (name: string) => {
     if (!user || !firestore) return;
     const catCollection = collection(firestore, `users/${user.uid}/habitCategories`);
@@ -103,6 +128,10 @@ export default function SchedulePage() {
        errorEmitter.emit('permission-error', permissionError);
     });
   };
+  /**
+   * Обновляет существующую категорию привычек.
+   * @param {HabitCategory} category - Категория для обновления.
+   */
   const handleUpdateHabitCategory = (category: HabitCategory) => {
     if (!user || !firestore || !category.id) return;
     const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, category.id);
@@ -115,6 +144,10 @@ export default function SchedulePage() {
         errorEmitter.emit('permission-error', permissionError);
     });
   };
+  /**
+   * Удаляет категорию привычек.
+   * @param {string} categoryId - ID категории для удаления.
+   */
   const handleDeleteHabitCategory = (categoryId: string) => {
     if (!user || !firestore) return;
     const catDoc = doc(firestore, `users/${user.uid}/habitCategories`, categoryId);
@@ -134,10 +167,10 @@ export default function SchedulePage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              Weekly Activities
+              Еженедельные активности
             </h1>
             <p className="text-muted-foreground">
-              Your plan for the entire week.
+              Ваш план на всю неделю.
             </p>
           </div>
           <div className="flex items-center space-x-2">
@@ -145,7 +178,7 @@ export default function SchedulePage() {
                 onHabitAdd={handleAddHabit} 
                 categories={habitCategories || []}
                 openManageCategories={() => setIsManageHabitCategoriesOpen(true)}
-                trigger={<Button variant="ghost" size="sm"><Plus className="mr-2 h-4 w-4" />Habit</Button>}
+                trigger={<Button variant="ghost" size="sm"><Plus className="mr-2 h-4 w-4" />Привычка</Button>}
                  />
           </div>
         </div>

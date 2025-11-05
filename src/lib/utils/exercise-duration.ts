@@ -1,8 +1,14 @@
 import type { ExerciseLog } from '@/lib/types';
 
 /**
+ * @fileoverview Функция для расчета фактической длительности упражнения.
+ */
+
+/**
  * Рассчитывает фактическую длительность упражнения как среднее арифметическое
- * из всех логов, отсекая выбросы (используя межквартильный размах IQR)
+ * из всех логов, отсекая выбросы (используя межквартильный размах IQR).
+ * @param {ExerciseLog[]} exerciseLogs - Массив логов выполнения упражнения.
+ * @returns {number} - Рассчитанная фактическая длительность в секундах.
  */
 export function calculateExerciseActualDuration(
   exerciseLogs: ExerciseLog[]
@@ -41,4 +47,3 @@ export function calculateExerciseActualDuration(
     dataToUse.reduce((sum, d) => sum + d, 0) / dataToUse.length
   );
 }
-

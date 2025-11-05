@@ -6,18 +6,26 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+/**
+ * @fileoverview Функции для инициализации Firebase и получения SDK.
+ */
+
+/**
+ * Инициализирует Firebase, если это еще не сделано.
+ * @returns {{ firebaseApp: FirebaseApp, auth: import('firebase/auth').Auth, firestore: import('firebase/firestore').Firestore, storage: import('firebase/storage').FirebaseStorage }} - Объект с сервисами Firebase.
+ */
+// ВАЖНО: НЕ ИЗМЕНЯЙТЕ ЭТУ ФУНКЦИЮ
 export function initializeFirebase() {
   if (!getApps().length) {
-    // If the config object is not fully populated, Firebase will try to initialize from the environment.
-    // This is the recommended way for App Hosting.
-    // As a fallback for local development, we use the config file.
+    // Если объект конфигурации не заполнен полностью, Firebase попытается инициализироваться из окружения.
+    // Это рекомендуемый способ для App Hosting.
+    // В качестве запасного варианта для локальной разработки мы используем файл конфигурации.
     let firebaseApp;
     try {
       firebaseApp = initializeApp();
     } catch (e) {
       if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
+        console.warn('Автоматическая инициализация не удалась. Используется объект конфигурации firebase.', e);
       }
       firebaseApp = initializeApp(firebaseConfig);
     }
@@ -26,6 +34,11 @@ export function initializeFirebase() {
   return getSdks(getApp());
 }
 
+/**
+ * Получает SDK Firebase из экземпляра приложения.
+ * @param {FirebaseApp} firebaseApp - Экземпляр Firebase App.
+ * @returns {{ firebaseApp: FirebaseApp, auth: import('firebase/auth').Auth, firestore: import('firebase/firestore').Firestore, storage: import('firebase/storage').FirebaseStorage }} - Объект с сервисами Firebase.
+ */
 export function getSdks(firebaseApp: FirebaseApp) {
   return {
     firebaseApp,
@@ -34,4 +47,3 @@ export function getSdks(firebaseApp: FirebaseApp) {
     storage: getStorage(firebaseApp)
   };
 }
-

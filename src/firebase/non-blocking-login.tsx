@@ -1,29 +1,49 @@
 'use client';
 import {
-  Auth, // Import Auth type for type hinting
+  Auth, // Импортируем тип Auth для типизации
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  // Assume getAuth and app are initialized elsewhere
+  // Предполагается, что getAuth и app инициализированы в другом месте
 } from 'firebase/auth';
 
-/** Initiate anonymous sign-in (non-blocking). */
+/**
+ * @fileoverview Функции для неблокирующей аутентификации в Firebase.
+ * Эти функции инициируют процесс входа, но не ожидают его завершения,
+ * позволяя приложению продолжать работу. Изменение состояния аутентификации
+ * обрабатывается глобальным слушателем onAuthStateChanged.
+ */
+
+/**
+ * Инициирует анонимный вход (неблокирующий).
+ * @param {Auth} authInstance - Экземпляр Firebase Auth.
+ */
 export function initiateAnonymousSignIn(authInstance: Auth): void {
-  // CRITICAL: Call signInAnonymously directly. Do NOT use 'await signInAnonymously(...)'.
+  // КРИТИЧЕСКИ: Вызывайте signInAnonymously напрямую. НЕ используйте 'await signInAnonymously(...)'.
   signInAnonymously(authInstance);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+  // Код продолжает выполняться немедленно. Изменение состояния аутентификации обрабатывается слушателем onAuthStateChanged.
 }
 
-/** Initiate email/password sign-up (non-blocking). */
+/**
+ * Инициирует регистрацию по email/паролю (неблокирующую).
+ * @param {Auth} authInstance - Экземпляр Firebase Auth.
+ * @param {string} email - Email пользователя.
+ * @param {string} password - Пароль пользователя.
+ */
 export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): void {
-  // CRITICAL: Call createUserWithEmailAndPassword directly. Do NOT use 'await createUserWithEmailAndPassword(...)'.
+  // КРИТИЧЕСКИ: Вызывайте createUserWithEmailAndPassword напрямую. НЕ используйте 'await createUserWithEmailAndPassword(...)'.
   createUserWithEmailAndPassword(authInstance, email, password);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+  // Код продолжает выполняться немедленно. Изменение состояния аутентификации обрабатывается слушателем onAuthStateChanged.
 }
 
-/** Initiate email/password sign-in (non-blocking). */
+/**
+ * Инициирует вход по email/паролю (неблокирующий).
+ * @param {Auth} authInstance - Экземпляр Firebase Auth.
+ * @param {string} email - Email пользователя.
+ * @param {string} password - Пароль пользователя.
+ */
 export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
-  // CRITICAL: Call signInWithEmailAndPassword directly. Do NOT use 'await signInWithEmailAndPassword(...)'.
+  // КРИТИЧЕСКИ: Вызывайте signInWithEmailAndPassword напрямую. НЕ используйте 'await signInWithEmailAndPassword(...)'.
   signInWithEmailAndPassword(authInstance, email, password);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+  // Код продолжает выполняться немедленно. Изменение состояния аутентификации обрабатывается слушателем onAuthStateChanged.
 }

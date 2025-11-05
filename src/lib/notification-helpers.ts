@@ -1,6 +1,6 @@
 /**
- * Helper functions for in-app notifications
- * Manages saving, reading, and marking notifications in Firestore
+ * @fileoverview Вспомогательные функции для уведомлений в приложении.
+ * Управляет сохранением, чтением и пометкой уведомлений в Firestore.
  */
 
 import { collection, addDoc, doc, updateDoc, query, where, orderBy, limit, getDocs, deleteDoc, Timestamp } from 'firebase/firestore';
@@ -8,7 +8,11 @@ import type { Firestore } from 'firebase/firestore';
 import type { InAppNotification, NotificationType } from './types';
 
 /**
- * Create and save an in-app notification to Firestore
+ * Создает и сохраняет уведомление в приложении в Firestore.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @param {Omit<InAppNotification, 'id' | 'userId' | 'timestamp' | 'read' | 'createdAt' | 'updatedAt'>} notification - Данные уведомления.
+ * @returns {Promise<string>} - ID созданного уведомления.
  */
 export async function createNotification(
   firestore: Firestore,
@@ -35,7 +39,11 @@ export async function createNotification(
 }
 
 /**
- * Mark notification as read
+ * Помечает уведомление как прочитанное.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @param {string} notificationId - ID уведомления.
+ * @returns {Promise<void>}
  */
 export async function markNotificationAsRead(
   firestore: Firestore,
@@ -51,7 +59,10 @@ export async function markNotificationAsRead(
 }
 
 /**
- * Mark all notifications as read for a user
+ * Помечает все уведомления пользователя как прочитанные.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @returns {Promise<void>}
  */
 export async function markAllNotificationsAsRead(
   firestore: Firestore,
@@ -74,7 +85,11 @@ export async function markAllNotificationsAsRead(
 }
 
 /**
- * Delete a notification
+ * Удаляет уведомление.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @param {string} notificationId - ID уведомления.
+ * @returns {Promise<void>}
  */
 export async function deleteNotification(
   firestore: Firestore,
@@ -86,7 +101,10 @@ export async function deleteNotification(
 }
 
 /**
- * Delete expired notifications
+ * Удаляет просроченные уведомления.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @returns {Promise<void>}
  */
 export async function deleteExpiredNotifications(
   firestore: Firestore,
@@ -105,7 +123,10 @@ export async function deleteExpiredNotifications(
 }
 
 /**
- * Get unread notification count
+ * Получает количество непрочитанных уведомлений.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @returns {Promise<number>} - Количество непрочитанных уведомлений.
  */
 export async function getUnreadCount(
   firestore: Firestore,
@@ -121,8 +142,11 @@ export async function getUnreadCount(
 }
 
 /**
- * Create notification from push message
- * Called when FCM push notification is received
+ * Создает уведомление из push-сообщения.
+ * Вызывается при получении push-уведомления FCM.
+ * @param {any} payload - Данные push-уведомления.
+ * @param {string} userId - ID пользователя.
+ * @returns {Omit<InAppNotification, 'id' | 'userId' | 'timestamp' | 'read' | 'createdAt' | 'updatedAt'>} - Данные уведомления.
  */
 export function createNotificationFromPush(
   payload: any,
@@ -131,7 +155,7 @@ export function createNotificationFromPush(
   const notification = payload.notification || {};
   const data = payload.data || {};
 
-  // Map FCM data to notification type
+  // Сопоставляем данные FCM с типом уведомления
   let type: NotificationType = 'habit_reminder';
   if (data.type) {
     type = data.type as NotificationType;
@@ -145,7 +169,7 @@ export function createNotificationFromPush(
 
   return {
     type,
-    title: notification.title || 'Notification',
+    title: notification.title || 'Уведомление',
     message: notification.body || data.message || '',
     actionUrl: data.actionUrl || data.url,
     actionLabel: data.actionLabel,
@@ -160,7 +184,11 @@ export function createNotificationFromPush(
 }
 
 /**
- * Create habit reminder notification
+ * Создает уведомление-напоминание о привычке.
+ * @param {string} habitId - ID привычки.
+ * @param {string} habitName - Название привычки.
+ * @param {string} [reminderTime] - Время напоминания.
+ * @returns {Omit<InAppNotification, 'id' | 'userId' | 'timestamp' | 'read' | 'createdAt' | 'updatedAt'>} - Данные уведомления.
  */
 export function createHabitReminderNotification(
   habitId: string,
@@ -169,17 +197,22 @@ export function createHabitReminderNotification(
 ): Omit<InAppNotification, 'id' | 'userId' | 'timestamp' | 'read' | 'createdAt' | 'updatedAt'> {
   return {
     type: 'habit_reminder',
-    title: '⏰ Habit Reminder',
-    message: `Time for: ${habitName}`,
+    title: '⏰ Напоминание о привычке',
+    message: `Время для: ${habitName}`,
     actionUrl: '/habits',
-    actionLabel: 'Complete',
+    actionLabel: 'Выполнить',
     data: { habitId },
     priority: 3,
   };
 }
 
 /**
- * Create streak milestone notification
+ * Создает уведомление о достижении в серии.
+ * @param {string} habitId - ID привычки.
+ * @param {string} habitName - Название привычки.
+ * @param {number} streakValue - Значение серии.
+ * @returns {Omit<InAppNotification, 'id' | 'userId' | 'timestamp' | 'read' | 'createdAt' | 'updatedAt'>} - Данные уведомления.
+ * @throws {Error} - Если это не день достижения.
  */
 export function createStreakMilestoneNotification(
   habitId: string,
@@ -190,23 +223,26 @@ export function createStreakMilestoneNotification(
   const isMilestone = milestones.includes(streakValue);
 
   if (!isMilestone) {
-    // Only notify on milestone days
-    throw new Error('Not a milestone day');
+    // Уведомляем только в дни достижений
+    throw new Error('Не день достижения');
   }
 
   return {
     type: 'streak_milestone',
-    title: `🔥 ${streakValue} Day Streak!`,
-    message: `Amazing! You've maintained "${habitName}" for ${streakValue} days!`,
+    title: `🔥 Серия ${streakValue} дней!`,
+    message: `Отлично! Вы поддерживаете "${habitName}" уже ${streakValue} дней!`,
     actionUrl: '/habits',
-    actionLabel: 'View Streaks',
+    actionLabel: 'Посмотреть серии',
     data: { habitId, streakValue },
     priority: streakValue >= 100 ? 5 : streakValue >= 30 ? 4 : 3,
   };
 }
 
 /**
- * Create workout complete notification
+ * Создает уведомление о завершении тренировки.
+ * @param {string} workoutName - Название тренировки.
+ * @param {string} [workoutId] - ID тренировки.
+ * @returns {Omit<InAppNotification, 'id' | 'userId' | 'timestamp' | 'read' | 'createdAt' | 'updatedAt'>} - Данные уведомления.
  */
 export function createWorkoutCompleteNotification(
   workoutName: string,
@@ -214,17 +250,21 @@ export function createWorkoutCompleteNotification(
 ): Omit<InAppNotification, 'id' | 'userId' | 'timestamp' | 'read' | 'createdAt' | 'updatedAt'> {
   return {
     type: 'workout_complete',
-    title: '💪 Workout Complete!',
-    message: `Great job completing "${workoutName}"!`,
+    title: '💪 Тренировка завершена!',
+    message: `Отличная работа, вы завершили "${workoutName}"!`,
     actionUrl: workoutId ? `/programs/${workoutId}` : '/programs',
-    actionLabel: 'View',
+    actionLabel: 'Посмотреть',
     data: { workoutId },
     priority: 2,
   };
 }
 
 /**
- * Create AI insight notification
+ * Создает уведомление об инсайте от AI.
+ * @param {string} insightTitle - Заголовок инсайта.
+ * @param {string} insightMessage - Сообщение инсайта.
+ * @param {string} [programId] - ID программы.
+ * @returns {Omit<InAppNotification, 'id' | 'userId' | 'timestamp' | 'read' | 'createdAt' | 'updatedAt'>} - Данные уведомления.
  */
 export function createAIInsightNotification(
   insightTitle: string,
@@ -233,12 +273,11 @@ export function createAIInsightNotification(
 ): Omit<InAppNotification, 'id' | 'userId' | 'timestamp' | 'read' | 'createdAt' | 'updatedAt'> {
   return {
     type: 'ai_insight',
-    title: '🤖 AI Insight',
+    title: '🤖 Инсайт от AI',
     message: `${insightTitle}: ${insightMessage}`,
     actionUrl: programId ? `/programs/${programId}` : '/analytics',
-    actionLabel: 'View Details',
+    actionLabel: 'Посмотреть детали',
     data: { programId },
     priority: 3,
   };
 }
-

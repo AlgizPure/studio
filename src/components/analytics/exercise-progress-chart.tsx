@@ -29,11 +29,26 @@ import {
   getWorkoutsByDateRange,
 } from '@/lib/analytics-utils';
 
+/**
+ * @fileoverview Компонент диаграммы для отслеживания прогресса по конкретному упражнению.
+ */
+
+/**
+ * Свойства для компонента ExerciseProgressChart.
+ * @interface ExerciseProgressChartProps
+ * @property {WorkoutLog[]} workouts - Массив логов тренировок.
+ * @property {TimeRange} timeRange - Временной диапазон для анализа.
+ */
 interface ExerciseProgressChartProps {
   workouts: WorkoutLog[];
   timeRange: TimeRange;
 }
 
+/**
+ * Компонент диаграммы прогресса по упражнениям.
+ * @param {ExerciseProgressChartProps} props - Свойства компонента.
+ * @returns {JSX.Element} - Диаграмма прогресса по упражнениям.
+ */
 export function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressChartProps) {
   const exercises = useMemo(() => {
     return getUniqueExercises(workouts);
@@ -59,7 +74,7 @@ export function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressC
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' });
   };
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -70,7 +85,7 @@ export function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressC
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm text-muted-foreground">
               {entry.name}: <span className="font-medium text-foreground">{entry.value}</span>
-              {entry.dataKey === 'maxWeight' || entry.dataKey === 'avgWeight' ? ' kg' : ''}
+              {entry.dataKey === 'maxWeight' || entry.dataKey === 'avgWeight' ? ' кг' : ''}
               {entry.dataKey === 'avgRPE' ? ' / 10' : ''}
             </p>
           ))}
@@ -84,12 +99,12 @@ export function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressC
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Exercise Progress</CardTitle>
-          <CardDescription>Track weight and RPE over time</CardDescription>
+          <CardTitle>Прогресс по упражнениям</CardTitle>
+          <CardDescription>Отслеживайте вес и RPE с течением времени</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-            <p>Complete workouts to see exercise progress</p>
+            <p>Выполняйте тренировки, чтобы увидеть прогресс по упражнениям</p>
           </div>
         </CardContent>
       </Card>
@@ -102,12 +117,12 @@ export function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressC
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Exercise Progress</CardTitle>
-              <CardDescription>Track weight and RPE over time</CardDescription>
+              <CardTitle>Прогресс по упражнениям</CardTitle>
+              <CardDescription>Отслеживайте вес и RPE с течением времени</CardDescription>
             </div>
             <Select value={selectedExerciseId} onValueChange={setSelectedExerciseId}>
               <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select exercise" />
+                <SelectValue placeholder="Выберите упражнение" />
               </SelectTrigger>
               <SelectContent>
                 {exercises.map(exercise => (
@@ -121,7 +136,7 @@ export function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressC
         </CardHeader>
         <CardContent>
           <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-            <p>No data for this exercise in the selected time range</p>
+            <p>Нет данных для этого упражнения в выбранном временном диапазоне</p>
           </div>
         </CardContent>
       </Card>
@@ -133,14 +148,14 @@ export function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressC
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Exercise Progress</CardTitle>
+            <CardTitle>Прогресс по упражнениям</CardTitle>
             <CardDescription>
-              Weight progression and RPE tracking
+              Прогрессия веса и отслеживание RPE
             </CardDescription>
           </div>
           <Select value={selectedExerciseId} onValueChange={setSelectedExerciseId}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select exercise" />
+              <SelectValue placeholder="Выберите упражнение" />
             </SelectTrigger>
             <SelectContent>
               {exercises.map(exercise => (
@@ -168,7 +183,7 @@ export function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressC
               yAxisId="left"
               className="text-xs"
               tick={{ fill: 'hsl(var(--muted-foreground))' }}
-              label={{ value: 'Weight (kg)', angle: -90, position: 'insideLeft' }}
+              label={{ value: 'Вес (кг)', angle: -90, position: 'insideLeft' }}
             />
             <YAxis
               yAxisId="right"
@@ -180,13 +195,11 @@ export function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressC
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Bar yAxisId="left" dataKey="maxWeight" fill="hsl(var(--primary))" opacity={0.8} name="Max Weight (kg)" />
-            <Line yAxisId="right" type="monotone" dataKey="avgRPE" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ fill: 'hsl(var(--chart-2))', r: 4 }} name="Avg RPE" />
+            <Bar yAxisId="left" dataKey="maxWeight" fill="hsl(var(--primary))" opacity={0.8} name="Макс. вес (кг)" />
+            <Line yAxisId="right" type="monotone" dataKey="avgRPE" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ fill: 'hsl(var(--chart-2))', r: 4 }} name="Сред. RPE" />
           </ComposedChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>
   );
 }
-
-

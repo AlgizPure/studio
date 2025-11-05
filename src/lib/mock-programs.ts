@@ -1,5 +1,14 @@
 import type { Program, ProgramStats } from './types';
 
+/**
+ * @fileoverview Моковые данные для программ тренировок и их статистики.
+ * Используется для разработки и тестирования.
+ */
+
+/**
+ * Массив моковых программ тренировок.
+ * @type {Program[]}
+ */
 export const mockPrograms: Program[] = [
   {
     id: 'prog_1',
@@ -18,6 +27,10 @@ export const mockPrograms: Program[] = [
   },
 ];
 
+/**
+ * Объект с моковой статистикой по программам.
+ * @type {Record<string, ProgramStats>}
+ */
 export const mockProgramStats: Record<string, ProgramStats> = {
   prog_1: {
     programId: 'prog_1',

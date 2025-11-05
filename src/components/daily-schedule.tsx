@@ -16,16 +16,36 @@ import { AddHabitDialog } from './add-habit-dialog';
 import { Button } from './ui/button';
 import { PomodoroIcon } from './pomodoro-icon';
 
+/**
+ * @fileoverview Компонент для отображения недельного расписания тренировок и привычек.
+ */
+
 const weeklySchedule: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+/**
+ * @interface DailyScheduleProps
+ * @description Свойства для компонента DailySchedule.
+ */
 interface DailyScheduleProps {
+    /** Список программ тренировок. */
     programs?: Program[];
+    /** Список расширенных тренировок. */
     workouts?: WorkoutExtended[];
+    /** Список привычек. */
     habits: Habit[];
+    /** Список категорий привычек. */
     habitCategories: HabitCategory[];
+    /** Функция для открытия диалогового окна управления категориями привычек. */
     openManageHabitCategories: () => void;
 }
 
+/**
+ * Компонент, отображающий недельное расписание в виде аккордеона.
+ * Каждый элемент аккордеона представляет день недели и содержит список
+ * запланированных тренировок и привычек на этот день.
+ * @param {DailyScheduleProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function DailySchedule({ 
     programs = [],
     workouts = [],
@@ -46,7 +66,7 @@ export function DailySchedule({
     <>
       <Card className="glass">
         <CardHeader>
-          <CardTitle>Weekly Schedule</CardTitle>
+          <CardTitle>Недельное расписание</CardTitle>
         </CardHeader>
         <CardContent>
           <Accordion type="single" collapsible defaultValue={today} className="w-full">
@@ -59,7 +79,6 @@ export function DailySchedule({
               const dayDate = new Date(todayDate);
               dayDate.setDate(todayDate.getDate() + diff);
               
-              // Получаем запланированные тренировки на этот день
               const scheduledWorkouts = buildDailySchedule(programs, workouts, dayDate);
               
               // Фильтруем привычки для этого дня
@@ -78,7 +97,7 @@ export function DailySchedule({
               const allItems = [
                 ...dailyHabits.map(habit => ({
                   id: habit.id,
-                  time: habitCategories.find(c => c.id === habit.categoryId)?.name || 'Any time',
+                  time: habitCategories.find(c => c.id === habit.categoryId)?.name || 'Любое время',
                   activityType: 'Habit' as const,
                   activityName: habit.name,
                   duration: ('goal' in habit ? habit.goal : '') || '',
@@ -90,10 +109,10 @@ export function DailySchedule({
                   const workout = workoutsMap.get(scheduled.workoutId);
                   return {
                     id: scheduled.workoutId,
-                    time: scheduled.startTime || 'Any time',
+                    time: scheduled.startTime || 'Любое время',
                     activityType: 'Workout' as const,
-                    activityName: workout?.name || 'Workout',
-                    duration: workout?.estimatedDuration ? `${workout.estimatedDuration} min` : '',
+                    activityName: workout?.name || 'Тренировка',
+                    duration: workout?.estimatedDuration ? `${workout.estimatedDuration} мин` : '',
                     icon: Dumbbell,
                     raw: { workoutId: scheduled.workoutId, programId: scheduled.programId },
                     isPaused: scheduled.status === 'paused',
@@ -111,7 +130,7 @@ export function DailySchedule({
                 <AccordionItem value={day} key={day}>
                   <AccordionTrigger className="font-semibold">
                     {day}
-                    {day === today && <Badge className="ml-2">Today</Badge>}
+                    {day === today && <Badge className="ml-2">Сегодня</Badge>}
                   </AccordionTrigger>
                   <AccordionContent>
                     {allItems.length > 0 ? (
@@ -136,7 +155,7 @@ export function DailySchedule({
                                 </div>
                                 {(item as any).isPomodoro ? <PomodoroIcon className="mr-2"/> : null}
                                 {(item as any).isPaused && (
-                                  <Badge variant="outline" className="mr-2 opacity-50">Paused</Badge>
+                                  <Badge variant="outline" className="mr-2 opacity-50">На паузе</Badge>
                                 )}
                                 <Badge variant={item.activityType === 'Habit' ? 'secondary' : 'outline'} className="mr-2">{item.duration}</Badge>
                                 
@@ -156,7 +175,7 @@ export function DailySchedule({
                         })}
                       </div>
                     ) : (
-                      <p className="text-muted-foreground pt-2">Nothing scheduled. Add an activity!</p>
+                      <p className="text-muted-foreground pt-2">Ничего не запланировано. Добавьте занятие!</p>
                     )}
                   </AccordionContent>
                 </AccordionItem>

@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * Firebase Cloud Messaging setup for push notifications
- * Handles permission requests, token management, and notification scheduling
+ * @fileoverview Настройка Firebase Cloud Messaging для push-уведомлений.
+ * Обрабатывает запросы на разрешение, управление токенами и планирование уведомлений.
  */
 
 import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
@@ -11,8 +11,10 @@ import type { FirebaseApp } from 'firebase/app';
 let messaging: Messaging | null = null;
 
 /**
- * Initialize FCM messaging instance
- * Only works in browser environment
+ * Инициализирует экземпляр FCM messaging.
+ * Работает только в окружении браузера.
+ * @param {FirebaseApp} app - Экземпляр Firebase App.
+ * @returns {Messaging | null} - Экземпляр Messaging или null.
  */
 export function initializeMessaging(app: FirebaseApp): Messaging | null {
   if (typeof window === 'undefined') return null;
@@ -23,74 +25,81 @@ export function initializeMessaging(app: FirebaseApp): Messaging | null {
     }
     return messaging;
   } catch (error) {
-    console.error('[FCM] Failed to initialize messaging:', error);
+    console.error('[FCM] Не удалось инициализировать messaging:', error);
     return null;
   }
 }
 
 /**
- * Request notification permission and get FCM token
- * @returns FCM token or null if permission denied
+ * Запрашивает разрешение на отправку уведомлений и получает токен FCM.
+ * @param {FirebaseApp} app - Экземпляр Firebase App.
+ * @returns {Promise<string | null>} - Токен FCM или null, если разрешение отклонено.
  */
 export async function requestNotificationPermission(app: FirebaseApp): Promise<string | null> {
   if (typeof window === 'undefined') return null;
   if (!('Notification' in window)) {
-    console.warn('[FCM] This browser does not support notifications');
+    console.warn('[FCM] Этот браузер не поддерживает уведомления');
     return null;
   }
 
   try {
-    // Check current permission
+    // Проверяем текущее разрешение
     if (Notification.permission === 'granted') {
       return await getMessagingToken(app);
     }
 
-    // Request permission
+    // Запрашиваем разрешение
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       return await getMessagingToken(app);
     } else {
-      console.log('[FCM] Notification permission denied');
+      console.log('[FCM] Разрешение на уведомления отклонено');
       return null;
     }
   } catch (error) {
-    console.error('[FCM] Error requesting notification permission:', error);
+    console.error('[FCM] Ошибка при запросе разрешения на уведомления:', error);
     return null;
   }
 }
 
 /**
- * Get FCM registration token
+ * Получает регистрационный токен FCM.
+ * @param {FirebaseApp} app - Экземпляр Firebase App.
+ * @returns {Promise<string | null>} - Токен FCM или null.
  */
 async function getMessagingToken(app: FirebaseApp): Promise<string | null> {
   const messagingInstance = initializeMessaging(app);
   if (!messagingInstance) return null;
 
   try {
-    // VAPID key should be set in Firebase Console -> Project Settings -> Cloud Messaging
+    // VAPID-ключ должен быть установлен в Firebase Console -> Project Settings -> Cloud Messaging
     const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
     if (!vapidKey) {
-      console.warn('[FCM] VAPID key not configured');
+      console.warn('[FCM] VAPID-ключ не настроен');
       return null;
     }
 
     const token = await getToken(messagingInstance, { vapidKey });
     if (token) {
-      console.log('[FCM] Registration token obtained:', token.substring(0, 20) + '...');
+      console.log('[FCM] Регистрационный токен получен:', token.substring(0, 20) + '...');
       return token;
     } else {
-      console.log('[FCM] No registration token available');
+      console.log('[FCM] Регистрационный токен недоступен');
       return null;
     }
   } catch (error) {
-    console.error('[FCM] Error getting token:', error);
+    console.error('[FCM] Ошибка при получении токена:', error);
     return null;
   }
 }
 
 /**
- * Listen for foreground messages
- * Also saves notification to Firestore for in-app display
+ * Прослушивает сообщения в активном окне.
+ * Также сохраняет уведомление в Firestore для отображения в приложении.
+ * @param {FirebaseApp} app - Экземпляр Firebase App.
+ * @param {(payload: any) => void} callback - Функция обратного вызова при получении сообщения.
+ * @param {(notification: any) => Promise<void>} [saveToFirestore] - Функция для сохранения уведомления в Firestore.
+ * @returns {() => void} - Функция для отписки.
  */
 export function onForegroundMessage(
   app: FirebaseApp, 
@@ -101,14 +110,14 @@ export function onForegroundMessage(
   if (!messagingInstance) return () => {};
 
   return onMessage(messagingInstance, async (payload) => {
-    console.log('[FCM] Foreground message received:', payload);
+    console.log('[FCM] Получено сообщение в активном окне:', payload);
     
-    // Save to Firestore for in-app notification center
+    // Сохраняем в Firestore для центра уведомлений в приложении
     if (saveToFirestore) {
       try {
         await saveToFirestore(payload);
       } catch (error) {
-        console.error('[FCM] Failed to save notification to Firestore:', error);
+        console.error('[FCM] Не удалось сохранить уведомление в Firestore:', error);
       }
     }
     
@@ -117,14 +126,16 @@ export function onForegroundMessage(
 }
 
 /**
- * Check if notifications are supported and enabled
+ * Проверяет, поддерживаются ли и включены ли уведомления.
+ * @returns {boolean} - true, если уведомления поддерживаются.
  */
 export function isNotificationSupported(): boolean {
   return typeof window !== 'undefined' && 'Notification' in window;
 }
 
 /**
- * Get current notification permission status
+ * Получает текущий статус разрешения на уведомления.
+ * @returns {NotificationPermission | null} - Статус разрешения.
  */
 export function getNotificationPermission(): NotificationPermission | null {
   if (!isNotificationSupported()) return null;
@@ -132,8 +143,12 @@ export function getNotificationPermission(): NotificationPermission | null {
 }
 
 /**
- * Subscribe user to habit reminders
- * Stores FCM token in user profile
+ * Подписывает пользователя на напоминания о привычках.
+ * Сохраняет токен FCM в профиле пользователя.
+ * @param {FirebaseApp} app - Экземпляр Firebase App.
+ * @param {string} userId - ID пользователя.
+ * @param {(data: { fcmToken: string }) => Promise<void>} updateProfile - Функция для обновления профиля пользователя.
+ * @returns {Promise<boolean>} - true, если подписка прошла успешно.
  */
 export async function subscribeToHabitReminders(
   app: FirebaseApp,
@@ -144,18 +159,21 @@ export async function subscribeToHabitReminders(
     const token = await requestNotificationPermission(app);
     if (!token) return false;
 
-    // Save token to user profile
+    // Сохраняем токен в профиле пользователя
     await updateProfile({ fcmToken: token });
-    console.log('[FCM] Subscribed to habit reminders');
+    console.log('[FCM] Подписан на напоминания о привычках');
     return true;
   } catch (error) {
-    console.error('[FCM] Failed to subscribe to reminders:', error);
+    console.error('[FCM] Не удалось подписаться на напоминания:', error);
     return false;
   }
 }
 
 /**
- * Schedule a local notification (fallback for when FCM is not available)
+ * Планирует локальное уведомление (запасной вариант, когда FCM недоступен).
+ * @param {string} title - Заголовок уведомления.
+ * @param {string} body - Текст уведомления.
+ * @param {number} delayMs - Задержка в миллисекундах.
  */
 export function scheduleLocalNotification(title: string, body: string, delayMs: number) {
   if (!isNotificationSupported()) return;
@@ -171,4 +189,3 @@ export function scheduleLocalNotification(title: string, body: string, delayMs: 
     });
   }, delayMs);
 }
-

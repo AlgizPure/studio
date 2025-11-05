@@ -3,8 +3,15 @@
 
 import type { WorkoutLog, SetLog } from './types';
 
+/**
+ * @fileoverview Логика автоматической прогрессии нагрузок.
+ * Анализирует историю тренировок и предлагает изменения в весе или повторениях.
+ */
+
+/** Правило прогрессии. */
 export type ProgressionRule = 'increase_weight' | 'increase_reps' | 'decrease_weight' | 'decrease_reps' | 'maintain';
 
+/** Предложение по прогрессии. */
 export type ProgressionSuggestion = {
   exerciseId: string;
   exerciseName: string;
@@ -18,6 +25,7 @@ export type ProgressionSuggestion = {
   confidence: number; // 0-100%
 };
 
+/** История выполнения упражнения. */
 export type ExerciseHistory = {
   exerciseId: string;
   sessions: Array<{
@@ -41,6 +49,12 @@ const PROGRESSION_RULES = {
   MIN_SESSIONS_FOR_PROGRESSION: 2,
 };
 
+/**
+ * Анализирует историю выполнения упражнения.
+ * @param {WorkoutLog[]} workouts - Массив логов тренировок.
+ * @param {string} exerciseId - ID упражнения.
+ * @returns {ExerciseHistory} - История выполнения упражнения.
+ */
 export function analyzeExerciseHistory(
   workouts: WorkoutLog[],
   exerciseId: string
@@ -73,6 +87,11 @@ export function analyzeExerciseHistory(
   return { exerciseId, sessions };
 }
 
+/**
+ * Определяет, следует ли прогрессировать.
+ * @param {ExerciseHistory} history - История выполнения упражнения.
+ * @returns {{ should: boolean; rule: ProgressionRule; reason: string }} - Решение о прогрессии.
+ */
 export function shouldProgress(history: ExerciseHistory): {
   should: boolean;
   rule: ProgressionRule;
@@ -83,7 +102,7 @@ export function shouldProgress(history: ExerciseHistory): {
     return {
       should: false,
       rule: 'maintain',
-      reason: `Need at least ${PROGRESSION_RULES.MIN_SESSIONS_FOR_PROGRESSION} sessions to analyze progression`,
+      reason: `Нужно как минимум ${PROGRESSION_RULES.MIN_SESSIONS_FOR_PROGRESSION} сессии для анализа прогрессии`,
     };
   }
   const recentSessions = sessions.slice(-PROGRESSION_RULES.HISTORY_WINDOW);
@@ -93,26 +112,33 @@ export function shouldProgress(history: ExerciseHistory): {
     return {
       should: true,
       rule: 'increase_weight',
-      reason: `Average RPE is ${avgRPE.toFixed(1)} (≤${PROGRESSION_RULES.RPE_TOO_EASY}) and all sets completed`,
+      reason: `Средний RPE ${avgRPE.toFixed(1)} (≤${PROGRESSION_RULES.RPE_TOO_EASY}) и все подходы выполнены`,
     };
   }
   if (avgRPE >= PROGRESSION_RULES.RPE_TOO_EASY && avgRPE <= PROGRESSION_RULES.RPE_TOO_HARD) {
     return {
       should: false,
       rule: 'maintain',
-      reason: `Average RPE is ${avgRPE.toFixed(1)} (optimal range ${PROGRESSION_RULES.RPE_TOO_EASY}-${PROGRESSION_RULES.RPE_TOO_HARD})`,
+      reason: `Средний RPE ${avgRPE.toFixed(1)} (оптимальный диапазон ${PROGRESSION_RULES.RPE_TOO_EASY}-${PROGRESSION_RULES.RPE_TOO_HARD})`,
     };
   }
   if (avgRPE > PROGRESSION_RULES.RPE_TOO_HARD) {
     return {
       should: true,
       rule: 'decrease_weight',
-      reason: `Average RPE is ${avgRPE.toFixed(1)} (>${PROGRESSION_RULES.RPE_TOO_HARD}), weight is too heavy`,
+      reason: `Средний RPE ${avgRPE.toFixed(1)} (>${PROGRESSION_RULES.RPE_TOO_HARD}), вес слишком большой`,
     };
   }
-  return { should: false, rule: 'maintain', reason: 'No clear progression signal' };
+  return { should: false, rule: 'maintain', reason: 'Нет четкого сигнала для прогрессии' };
 }
 
+/**
+ * Вычисляет новые целевые значения.
+ * @param {ExerciseHistory} history - История выполнения упражнения.
+ * @param {ProgressionRule} rule - Правило прогрессии.
+ * @param {'barbell' | 'dumbbell' | 'bodyweight'} [exerciseType='barbell'] - Тип упражнения.
+ * @returns {{ newWeight?: number; newReps?: number }} - Новые целевые значения.
+ */
 export function calculateNewTargets(
   history: ExerciseHistory,
   rule: ProgressionRule,
@@ -151,6 +177,13 @@ export function calculateNewTargets(
   }
 }
 
+/**
+ * Получает предложения по прогрессии.
+ * @param {WorkoutLog[]} workouts - Массив логов тренировок.
+ * @param {string[]} exerciseIds - Массив ID упражнений.
+ * @param {Record<string, string>} [exerciseNames={}] - Словарь с названиями упражнений.
+ * @returns {ProgressionSuggestion[]} - Массив предложений по прогрессии.
+ */
 export function getProgressionSuggestions(
   workouts: WorkoutLog[],
   exerciseIds: string[],
@@ -188,23 +221,33 @@ export function getProgressionSuggestions(
   return suggestions.sort((a, b) => b.confidence - a.confidence);
 }
 
+/**
+ * Форматирует предложение по прогрессии в строку.
+ * @param {ProgressionSuggestion} suggestion - Предложение по прогрессии.
+ * @returns {string} - Отформатированная строка.
+ */
 export function formatSuggestion(suggestion: ProgressionSuggestion): string {
   const { rule, currentWeight, currentReps, suggestedWeight, suggestedReps } = suggestion;
   switch (rule) {
     case 'increase_weight':
-      return `Increase weight from ${currentWeight}kg to ${suggestedWeight}kg`;
+      return `Увеличить вес с ${currentWeight}кг до ${suggestedWeight}кг`;
     case 'decrease_weight':
-      return `Decrease weight from ${currentWeight}kg to ${suggestedWeight}kg`;
+      return `Уменьшить вес с ${currentWeight}кг до ${suggestedWeight}кг`;
     case 'increase_reps':
-      return `Increase reps from ${currentReps} to ${suggestedReps}`;
+      return `Увеличить повторения с ${currentReps} до ${suggestedReps}`;
     case 'decrease_reps':
-      return `Decrease reps from ${currentReps} to ${suggestedReps}`;
+      return `Уменьшить повторения с ${currentReps} до ${suggestedReps}`;
     case 'maintain':
     default:
-      return `Maintain current weight (${currentWeight}kg) and reps (${currentReps})`;
+      return `Сохранить текущий вес (${currentWeight}кг) и повторения (${currentReps})`;
   }
 }
 
+/**
+ * Получает цвет для правила прогрессии.
+ * @param {ProgressionRule} rule - Правило прогрессии.
+ * @returns {string} - CSS-класс цвета.
+ */
 export function getProgressionColor(rule: ProgressionRule): string {
   switch (rule) {
     case 'increase_weight':
@@ -219,6 +262,11 @@ export function getProgressionColor(rule: ProgressionRule): string {
   }
 }
 
+/**
+ * Получает иконку для правила прогрессии.
+ * @param {ProgressionRule} rule - Правило прогрессии.
+ * @returns {string} - Иконка.
+ */
 export function getProgressionIcon(rule: ProgressionRule): string {
   switch (rule) {
     case 'increase_weight':
@@ -232,5 +280,3 @@ export function getProgressionIcon(rule: ProgressionRule): string {
       return '→';
   }
 }
-
-

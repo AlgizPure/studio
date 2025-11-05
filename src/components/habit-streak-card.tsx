@@ -7,18 +7,37 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import type { Habit, HabitStreak, HabitLog } from '@/lib/types';
 import { Flame, Trophy, Snowflake, Ticket, TrendingUp, Calendar } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { FreezeStreakDialog } from './freeze-streak-dialog';
 import { computeCompletionRate, computeConsistencyScore, calculateHabitStrengthScore } from '@/lib/habits';
 
+/**
+ * @fileoverview Компонент-карточка для отображения статистики по серии выполнения привычки.
+ */
+
+/**
+ * @interface HabitStreakCardProps
+ * @description Свойства для компонента HabitStreakCard.
+ */
 interface HabitStreakCardProps {
+  /** Объект привычки. */
   habit: Habit;
+  /** Данные о серии выполнения привычки. */
   streak: HabitStreak;
+  /** Логи выполнения привычки. */
   logs: HabitLog[];
+  /** Callback-функция при "заморозке" серии. */
   onFreeze: (untilDate: string) => Promise<void>;
+  /** Callback-функция при использовании токена пропуска. */
   onUseSkipToken: () => Promise<void>;
 }
 
+/**
+ * Компонент-карточка для детального отображения статистики по серии (streak) привычки.
+ * Показывает текущую и лучшую серию, оценку силы привычки (HSS),
+ * а также предоставляет функционал для "заморозки" серии и использования токенов пропуска.
+ * @param {HabitStreakCardProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function HabitStreakCard({
   habit,
   streak,
@@ -28,7 +47,7 @@ export function HabitStreakCard({
 }: HabitStreakCardProps) {
   const [freezeDialogOpen, setFreezeDialogOpen] = useState(false);
 
-  // Calculate stats
+  // Расчет статистики
   const now = new Date();
   const from90 = new Date(now);
   from90.setDate(from90.getDate() - 90);
@@ -60,23 +79,23 @@ export function HabitStreakCard({
           {isFrozen && (
             <Badge variant="secondary" className="bg-blue-100 text-blue-800">
               <Snowflake className="h-3 w-3 mr-1" />
-              Frozen
+              Заморожено
             </Badge>
           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Main stats */}
+        {/* Основная статистика */}
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center p-3 rounded-lg bg-orange-50 border border-orange-200">
             <Flame className="h-5 w-5 mx-auto mb-1 text-orange-600" />
             <div className="text-2xl font-bold text-orange-900">{streak.current}</div>
-            <div className="text-[10px] text-orange-700 font-medium">Current</div>
+            <div className="text-[10px] text-orange-700 font-medium">Текущая</div>
           </div>
           <div className="text-center p-3 rounded-lg bg-amber-50 border border-amber-200">
             <Trophy className="h-5 w-5 mx-auto mb-1 text-amber-600" />
             <div className="text-2xl font-bold text-amber-900">{streak.longest}</div>
-            <div className="text-[10px] text-amber-700 font-medium">Best</div>
+            <div className="text-[10px] text-amber-700 font-medium">Лучшая</div>
           </div>
           <div className="text-center p-3 rounded-lg bg-emerald-50 border border-emerald-200">
             <TrendingUp className="h-5 w-5 mx-auto mb-1 text-emerald-600" />
@@ -85,41 +104,41 @@ export function HabitStreakCard({
           </div>
         </div>
 
-        {/* Habit Strength Score */}
+        {/* Оценка силы привычки */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Habit Strength</span>
+            <span className="text-sm font-medium">Сила привычки</span>
             <span className="text-sm font-bold">{hss}%</span>
           </div>
           <Progress value={hss} className="h-2" />
           <p className="text-xs text-muted-foreground mt-1">
-            Based on streak, completion rate, and consistency
+            На основе серии, % выполнения и постоянства
           </p>
         </div>
 
-        {/* 90-day stats */}
+        {/* Статистика за 90 дней */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="flex items-center gap-1 text-muted-foreground">
               <Calendar className="h-3 w-3" />
-              Last 90 days
+              Последние 90 дней
             </span>
             <span className="font-medium">
               {completedIn90}/{last90Days.length} ({Math.round(completionRate)}%)
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Consistency</span>
+            <span className="text-muted-foreground">Постоянство</span>
             <span className="font-medium">{Math.round(consistencyScore)}%</span>
           </div>
         </div>
 
-        {/* Skip tokens */}
+        {/* Токены пропуска */}
         <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium flex items-center gap-1">
               <Ticket className="h-4 w-4" />
-              Skip Tokens
+              Токены пропуска
             </span>
             <span className="text-sm font-bold">
               {skipTokens}/{maxSkipTokens}
@@ -127,7 +146,7 @@ export function HabitStreakCard({
           </div>
           <Progress value={(skipTokens / maxSkipTokens) * 100} className="h-1.5 mb-2" />
           <p className="text-xs text-muted-foreground">
-            Use tokens to skip without breaking your streak
+            Используйте токены для пропуска, не прерывая серию
           </p>
           <Button 
             variant="outline" 
@@ -136,11 +155,11 @@ export function HabitStreakCard({
             disabled={skipTokens === 0}
             onClick={onUseSkipToken}
           >
-            Use Skip Token ({skipTokens} left)
+            Использовать токен ({skipTokens} осталось)
           </Button>
         </div>
 
-        {/* Freeze streak */}
+        {/* Заморозка серии */}
         <Button
           variant="secondary"
           className="w-full"
@@ -148,12 +167,12 @@ export function HabitStreakCard({
           disabled={isFrozen}
         >
           <Snowflake className="h-4 w-4 mr-2" />
-          {isFrozen ? `Frozen until ${new Date(streak.frozenUntil!).toLocaleDateString()}` : 'Freeze Streak'}
+          {isFrozen ? `Заморожено до ${new Date(streak.frozenUntil!).toLocaleDateString()}` : 'Заморозить серию'}
         </Button>
 
         {isFrozen && (
           <p className="text-xs text-center text-muted-foreground">
-            Streak is frozen until {new Date(streak.frozenUntil!).toLocaleDateString()}
+            Серия заморожена до {new Date(streak.frozenUntil!).toLocaleDateString()}
           </p>
         )}
       </CardContent>
@@ -168,4 +187,3 @@ export function HabitStreakCard({
     </Card>
   );
 }
-

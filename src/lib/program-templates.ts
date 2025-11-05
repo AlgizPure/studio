@@ -1,11 +1,19 @@
+/**
+ * @fileoverview Содержит массив шаблонов программ тренировок.
+ */
+
+/**
+ * Массив шаблонов программ тренировок.
+ * @type {const Array<object>}
+ */
 export const programTemplates = [
     {
-        name: 'Foundation Strength',
-        description: 'A 3-day per week program focused on building a solid strength base with compound lifts. Ideal for beginners or those returning to training.',
+        name: 'Базовая сила',
+        description: 'Программа 3 раза в неделю, направленная на создание прочной силовой базы с помощью базовых упражнений. Идеально подходит для новичков или тех, кто возвращается к тренировкам.',
         workouts: [
             {
-                name: 'Full Body A',
-                description: 'Focus on core compound movements.',
+                name: 'Все тело А',
+                description: 'Сосредоточьтесь на основных базовых движениях.',
                 exercises: [
                     { exerciseId: 'squat', sets: 3, reps: 8 },
                     { exerciseId: 'bench_press', sets: 3, reps: 8 },
@@ -13,8 +21,8 @@ export const programTemplates = [
                 ]
             },
             {
-                name: 'Full Body B',
-                description: 'Alternate compound movements with accessory work.',
+                name: 'Все тело Б',
+                description: 'Чередуйте базовые движения со вспомогательной работой.',
                  exercises: [
                     { exerciseId: 'deadlift', sets: 1, reps: 5 },
                     { exerciseId: 'overhead_press', sets: 3, reps: 8 },
@@ -24,19 +32,19 @@ export const programTemplates = [
         ]
     },
     {
-        name: 'Cardio Boost',
-        description: 'A plan to improve cardiovascular endurance and overall fitness through a mix of running, HIIT, and active recovery.',
+        name: 'Кардио-ускорение',
+        description: 'План по улучшению сердечно-сосудистой выносливости и общей физической формы за счет сочетания бега, ВИИТ и активного восстановления.',
         workouts: [
              {
-                name: 'Interval Run',
-                description: 'High-intensity interval running.',
+                name: 'Интервальный бег',
+                description: 'Интервальный бег высокой интенсивности.',
                  exercises: [
                     { exerciseId: 'running', duration: '30min' },
                 ]
             },
             {
-                name: 'Bodyweight HIIT',
-                description: 'A quick and effective high-intensity session.',
+                name: 'ВИИТ с собственным весом',
+                description: 'Быстрая и эффективная высокоинтенсивная тренировка.',
                  exercises: [
                     { exerciseId: 'push_ups', sets: 3, reps: 15 },
                     { exerciseId: 'burpees', sets: 3, reps: 15 },
@@ -46,12 +54,12 @@ export const programTemplates = [
         ]
     },
     {
-        name: 'Functional Fitness',
-        description: 'Improve real-world strength and mobility with this program combining TRX, kettlebells, and bodyweight movements.',
+        name: 'Функциональный фитнес',
+        description: 'Улучшите реальную силу и мобильность с помощью этой программы, сочетающей TRX, гири и движения с собственным весом.',
         workouts: [
              {
-                name: 'TRX & Kettlebell',
-                description: 'Develop stability and power.',
+                name: 'TRX и гири',
+                description: 'Развивайте стабильность и мощность.',
                  exercises: [
                     { exerciseId: 'trx_row', sets: 3, reps: 12 },
                     { exerciseId: 'kettlebell_swing', sets: 3, reps: 15 },

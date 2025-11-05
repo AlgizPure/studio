@@ -7,8 +7,18 @@ import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { collection } from 'firebase/firestore';
 import type { HabitLog, Habit } from '@/lib/types';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+/**
+ * @fileoverview Компонент диалогового окна для отображения тепловой карты (heatmap) выполнения привычек.
+ */
+
+/**
+ * Создает карту данных для тепловой карты на основе логов привычек.
+ * @param {HabitLog[]} logs - Массив логов привычек.
+ * @param {string} [habitId] - Опциональный ID привычки для фильтрации.
+ * @returns {Map<string, number>} - Карта, где ключ - дата, а значение - количество выполнений.
+ */
 function buildHeatmap(logs: HabitLog[], habitId?: string) {
   const map = new Map<string, number>();
   for (const l of logs) {
@@ -20,6 +30,12 @@ function buildHeatmap(logs: HabitLog[], habitId?: string) {
   return map;
 }
 
+/**
+ * Компонент диалогового окна, отображающий тепловую карту активности пользователя за последний год.
+ * Интенсивность цвета ячейки дня зависит от количества выполненных привычек.
+ * @param {{ habits?: Habit[] }} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function HeatmapDialog({ habits = [] }: { habits?: Habit[] }) {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -45,6 +61,11 @@ export function HeatmapDialog({ habits = [] }: { habits?: Habit[] }) {
     days.push(new Date(d).toISOString().slice(0, 10));
   }
 
+  /**
+   * Определяет класс цвета для ячейки в зависимости от количества выполнений.
+   * @param {number} count - Количество выполнений.
+   * @returns {string} - CSS-класс.
+   */
   const intensity = (count: number) => {
     if (count >= 5) return 'bg-emerald-600';
     if (count >= 3) return 'bg-emerald-400';
@@ -57,23 +78,23 @@ export function HeatmapDialog({ habits = [] }: { habits?: Habit[] }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm">Heatmap</Button>
+        <Button variant="secondary" size="sm">Тепловая карта</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[720px]">
         <DialogHeader>
-          <DialogTitle>Heatmap</DialogTitle>
-          <DialogDescription>Daily completion intensity over the last year.</DialogDescription>
+          <DialogTitle>Тепловая карта</DialogTitle>
+          <DialogDescription>Интенсивность ежедневного выполнения за последний год.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-4 items-center gap-2">
-            <label className="text-sm">Filter by habit:</label>
+            <label className="text-sm">Фильтр по привычке:</label>
             <Select value={selectedHabit} onValueChange={setSelectedHabit}>
               <SelectTrigger className="col-span-3">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="all">All habits</SelectItem>
+                  <SelectItem value="all">Все привычки</SelectItem>
                   {(habits || []).map(h => (
                     <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
                   ))}
@@ -88,12 +109,12 @@ export function HeatmapDialog({ habits = [] }: { habits?: Habit[] }) {
                 <div
                   key={d}
                   className={`h-4 w-4 rounded cursor-pointer transition-all ${intensity(count)} ${hoveredDate === d ? 'ring-2 ring-primary' : ''}`}
-                  title={`${d}: ${count} completion(s)`}
+                  title={`${d}: ${count} выполнений`}
                   onMouseEnter={() => setHoveredDate(d)}
                   onMouseLeave={() => setHoveredDate(null)}
                   onClick={() => {
                     if (count > 0) {
-                      alert(`Date: ${d}\nCompletions: ${count}\n${selectedHabit !== 'all' ? `Habit: ${habits.find(h => h.id === selectedHabit)?.name}` : ''}`);
+                      alert(`Дата: ${d}\nВыполнено: ${count}\n${selectedHabit !== 'all' ? `Привычка: ${habits.find(h => h.id === selectedHabit)?.name}` : ''}`);
                     }
                   }}
                 />
@@ -101,23 +122,21 @@ export function HeatmapDialog({ habits = [] }: { habits?: Habit[] }) {
             })}
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span>Less</span>
+            <span>Меньше</span>
             <div className="flex items-center gap-1">
               <div className="h-3 w-3 rounded bg-muted" />
               <div className="h-3 w-3 rounded bg-emerald-200" />
               <div className="h-3 w-3 rounded bg-emerald-400" />
               <div className="h-3 w-3 rounded bg-emerald-600" />
             </div>
-            <span>More</span>
-            {maxCount > 0 && <span className="ml-auto">Max: {maxCount} per day</span>}
+            <span>Больше</span>
+            {maxCount > 0 && <span className="ml-auto">Макс: {maxCount} в день</span>}
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" onClick={() => setOpen(false)}>Close</Button>
+          <Button type="button" onClick={() => setOpen(false)}>Закрыть</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-

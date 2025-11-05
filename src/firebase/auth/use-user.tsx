@@ -8,8 +8,25 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
+/**
+ * @fileoverview Хук React для получения текущего аутентифицированного пользователя
+ * и его профиля из Firestore.
+ */
+
+/**
+ * Расширенный тип пользователя, объединяющий данные аутентификации Firebase
+ * с данными профиля пользователя из Firestore.
+ * @typedef {AuthUser & UserProfile} AppUser
+ */
 export type AppUser = AuthUser & UserProfile;
 
+/**
+ * Хук `useUser` для управления состоянием пользователя.
+ *
+ * @returns {{ user: AppUser | null, isUserLoading: boolean }} - Объект, содержащий:
+ * - `user`: Объект `AppUser`, если пользователь вошел в систему, иначе `null`.
+ * - `isUserLoading`: `true`, если состояние пользователя еще загружается, иначе `false`.
+ */
 export const useUser = () => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [isUserLoading, setIsLoading] = useState(true);
@@ -33,7 +50,7 @@ export const useUser = () => {
                 const mergedUser: AppUser = { ...authUser, ...userProfile, id: authUser.uid };
                 setUser(mergedUser);
             } else {
-                // Profile doesn't exist, create it.
+                // Профиль не существует, создаем его.
                 const userProfileData: UserProfile = {
                     id: authUser.uid,
                     email: authUser.email || '',
@@ -49,20 +66,20 @@ export const useUser = () => {
                       requestResourceData: userProfileData,
                     });
                     errorEmitter.emit('permission-error', permissionError);
-                    // Re-throw to be caught by the outer catch block
+                    // Повторно выбрасываем ошибку для обработки во внешнем блоке catch
                     throw err;
                 });
                 const mergedUser: AppUser = { ...authUser, ...userProfileData, id: authUser.uid };
                 setUser(mergedUser);
             }
         } catch (error) {
-            console.error("Error fetching or creating user profile:", error);
-            // Fallback to just the auth user if profile fails
+            console.error("Ошибка при получении или создании профиля пользователя:", error);
+            // В случае сбоя используем только данные аутентификации
             setUser(authUser as AppUser); 
         }
 
       } else {
-        // User is signed out
+        // Пользователь вышел из системы
         setUser(null);
       }
       setIsLoading(false);

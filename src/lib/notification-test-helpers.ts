@@ -1,6 +1,6 @@
 /**
- * Test helpers for creating sample notifications
- * Useful for development and testing
+ * @fileoverview Вспомогательные функции для создания образцов уведомлений.
+ * Полезно для разработки и тестирования.
  */
 
 import type { InAppNotification } from './types';
@@ -8,7 +8,11 @@ import { createNotification } from './notification-helpers';
 import type { Firestore } from 'firebase/firestore';
 
 /**
- * Create a test notification for development
+ * Создает тестовое уведомление для разработки.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @param {InAppNotification['type']} [type='system'] - Тип уведомления.
+ * @returns {Promise<string>} - ID созданного уведомления.
  */
 export async function createTestNotification(
   firestore: Firestore,
@@ -18,73 +22,73 @@ export async function createTestNotification(
   const testNotifications: Record<InAppNotification['type'], Omit<InAppNotification, 'id' | 'userId' | 'timestamp' | 'read' | 'createdAt' | 'updatedAt'>> = {
     habit_reminder: {
       type: 'habit_reminder',
-      title: '⏰ Habit Reminder',
-      message: 'Time to complete: Drink Water',
+      title: '⏰ Напоминание о привычке',
+      message: 'Время выполнить: Пить воду',
       actionUrl: '/habits',
-      actionLabel: 'Complete',
+      actionLabel: 'Выполнить',
       data: { habitId: 'test-habit-1' },
       priority: 3,
     },
     workout_complete: {
       type: 'workout_complete',
-      title: '💪 Workout Complete!',
-      message: 'Great job completing "Full Body Strength"!',
+      title: '💪 Тренировка завершена!',
+      message: 'Отличная работа, вы завершили "Силовая на все тело"!',
       actionUrl: '/programs',
-      actionLabel: 'View Progress',
+      actionLabel: 'Посмотреть прогресс',
       data: { workoutId: 'test-workout-1' },
       priority: 2,
     },
     streak_milestone: {
       type: 'streak_milestone',
-      title: '🔥 30 Day Streak!',
-      message: 'Amazing! You\'ve maintained "Meditation" for 30 days!',
+      title: '🔥 Серия 30 дней!',
+      message: 'Отлично! Вы поддерживаете "Медитация" уже 30 дней!',
       actionUrl: '/habits',
-      actionLabel: 'View Streaks',
+      actionLabel: 'Посмотреть серии',
       data: { habitId: 'test-habit-1', streakValue: 30 },
       priority: 4,
     },
     streak_broken: {
       type: 'streak_broken',
-      title: '💔 Streak Broken',
-      message: 'Your "Exercise" streak has ended. Start a new one!',
+      title: '💔 Серия прервана',
+      message: 'Ваша серия "Упражнения" закончилась. Начните новую!',
       actionUrl: '/habits',
-      actionLabel: 'Restart',
+      actionLabel: 'Перезапустить',
       data: { habitId: 'test-habit-2' },
       priority: 3,
     },
     ai_insight: {
       type: 'ai_insight',
-      title: '🤖 AI Insight Available',
-      message: 'New progression suggestions for your training program',
+      title: '🤖 Доступен инсайт от AI',
+      message: 'Новые предложения по прогрессии для вашей тренировочной программы',
       actionUrl: '/analytics',
-      actionLabel: 'View Insights',
+      actionLabel: 'Посмотреть инсайты',
       data: { programId: 'test-program-1' },
       priority: 3,
     },
     program_reminder: {
       type: 'program_reminder',
-      title: '📅 Program Reminder',
-      message: 'Time for your "Push Day" workout',
+      title: '📅 Напоминание о программе',
+      message: 'Время для тренировки "День жима"',
       actionUrl: '/programs',
-      actionLabel: 'Start Workout',
+      actionLabel: 'Начать тренировку',
       data: { programId: 'test-program-1' },
       priority: 3,
     },
     achievement: {
       type: 'achievement',
-      title: '🏆 Achievement Unlocked!',
-      message: 'You\'ve completed 100 workouts!',
+      title: '🏆 Достижение разблокировано!',
+      message: 'Вы завершили 100 тренировок!',
       actionUrl: '/analytics',
-      actionLabel: 'View Achievement',
+      actionLabel: 'Посмотреть достижение',
       data: { achievementId: '100-workouts' },
       priority: 5,
     },
     system: {
       type: 'system',
-      title: '🔔 System Update',
-      message: 'New features available! Check out the enhanced UI.',
+      title: '🔔 Системное обновление',
+      message: 'Доступны новые функции! Оцените улучшенный интерфейс.',
       actionUrl: '/',
-      actionLabel: 'Learn More',
+      actionLabel: 'Узнать больше',
       priority: 2,
     },
   };
@@ -94,7 +98,10 @@ export async function createTestNotification(
 }
 
 /**
- * Create multiple test notifications for different types
+ * Создает набор тестовых уведомлений разных типов.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @returns {Promise<string[]>} - Массив ID созданных уведомлений.
  */
 export async function createTestNotificationSet(
   firestore: Firestore,
@@ -114,4 +121,3 @@ export async function createTestNotificationSet(
 
   return ids;
 }
-

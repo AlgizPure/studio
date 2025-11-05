@@ -1,84 +1,114 @@
 'use server';
 /**
- * @fileOverview An AI-powered routine optimizer flow.
+ * @fileoverview Поток на базе AI для оптимизации распорядка дня.
  *
- * - aiRoutineOptimizer - A function that handles the routine optimization process.
- * - AIRoutineOptimizerInput - The input type for the aiRoutineOptimizer function.
- * - AIRoutineOptimizerOutput - The return type for the aiRoutineOptimizer function.
+ * - aiRoutineOptimizer - Функция, которая обрабатывает процесс оптимизации распорядка.
+ * - AIRoutineOptimizerInput - Тип входных данных для функции aiRoutineOptimizer.
+ * - AIRoutineOptimizerOutput - Тип возвращаемых данных для функции aiRoutineOptimizer.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+/**
+ * Схема входных данных для оптимизатора распорядка AI.
+ * @property {string} goals - Цели пользователя в фитнесе, например, скорость, рельеф мышц, потеря жира.
+ * @property {string} availability - Доступность пользователя по расписанию, включая дни и время, доступные для тренировок.
+ * @property {string} preferredExercises - Предпочтительные типы упражнений пользователя, например, силовые тренировки, биодинамика, бег, статические упражнения.
+ * @property {string} [customExercises] - Список пользовательских упражнений, предоставленных пользователем, включая название и описание.
+ */
 const AIRoutineOptimizerInputSchema = z.object({
   goals: z
     .string()
     .describe(
-      'The users fitness goals, e.g., speed, muscle definition, fat loss.'
+      'Цели пользователя в фитнесе, например, скорость, рельеф мышц, потеря жира.'
     ),
   availability: z
     .string()
     .describe(
-      'The users schedule availability, including days and times available for workouts.'
+      'Доступность пользователя по расписанию, включая дни и время, доступные для тренировок.'
     ),
   preferredExercises: z
     .string()
     .describe(
-      'The users preferred exercise types, e.g., strength training, bio-dynamics, running, static exercises.'
+      'Предпочтительные типы упражнений пользователя, например, силовые тренировки, биодинамика, бег, статические упражнения.'
     ),
   customExercises: z
     .string()
     .optional()
     .describe(
-      'A list of custom exercises provided by the user, including name and description.'
+      'Список пользовательских упражнений, предоставленных пользователем, включая название и описание.'
     ),
 });
 export type AIRoutineOptimizerInput = z.infer<typeof AIRoutineOptimizerInputSchema>;
 
+/**
+ * Схема для запланированного занятия.
+ * @property {('Monday'|'Tuesday'|'Wednesday'|'Thursday'|'Friday'|'Saturday'|'Sunday')} day - День недели.
+ * @property {string} time - Время для занятия в формате ЧЧ:мм.
+ * @property {string} activityName - Название упражнения или привычки.
+ * @property {('Workout'|'Habit')} activityType - Тип занятия.
+ */
 const ScheduledActivitySchema = z.object({
   day: z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']),
-  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).describe("The time for the activity in HH:mm format."),
-  activityName: z.string().describe("The name of the exercise or habit."),
-  activityType: z.enum(['Workout', 'Habit']).describe("The type of activity."),
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).describe("Время для занятия в формате ЧЧ:мм."),
+  activityName: z.string().describe("Название упражнения или привычки."),
+  activityType: z.enum(['Workout', 'Habit']).describe("Тип занятия."),
 });
 
+/**
+ * Схема выходных данных для оптимизатора распорядка AI.
+ * @property {string} textualDescription - Дружелюбное текстовое описание предложенного еженедельного расписания упражнений.
+ * @property {Array<ScheduledActivity>} structuredSchedule - Структурированный массив всех предложенных занятий на неделю.
+ */
 const AIRoutineOptimizerOutputSchema = z.object({
   textualDescription: z
     .string()
     .describe(
-      'A user-friendly, textual description of the suggested weekly exercise schedule.'
+      'Дружелюбное текстовое описание предложенного еженедельного расписания упражнений.'
     ),
-  structuredSchedule: z.array(ScheduledActivitySchema).describe("A structured array of all suggested activities for the week."),
+  structuredSchedule: z.array(ScheduledActivitySchema).describe("Структурированный массив всех предложенных занятий на неделю."),
 });
 export type AIRoutineOptimizerOutput = z.infer<typeof AIRoutineOptimizerOutputSchema>;
 export type ScheduledActivity = z.infer<typeof ScheduledActivitySchema>;
 
+/**
+ * Оптимизирует распорядок пользователя с помощью AI.
+ * @param {AIRoutineOptimizerInput} input - Входные данные для оптимизатора.
+ * @returns {Promise<AIRoutineOptimizerOutput>} - Обещание, которое разрешается с оптимизированным распорядком.
+ */
 export async function aiRoutineOptimizer(input: AIRoutineOptimizerInput): Promise<AIRoutineOptimizerOutput> {
   return aiRoutineOptimizerFlow(input);
 }
 
+/**
+ * Промпт для AI, который генерирует расписание упражнений.
+ */
 const prompt = ai.definePrompt({
   name: 'aiRoutineOptimizerPrompt',
   input: {schema: AIRoutineOptimizerInputSchema},
   output: {schema: AIRoutineOptimizerOutputSchema},
-  prompt: `You are an AI fitness assistant that generates an exercise schedule based on preferences, schedule, and goals.
+  prompt: `Вы — AI-фитнес-ассистент, который генерирует расписание упражнений на основе предпочтений, расписания и целей.
 
-  Generate a well-structured weekly exercise schedule, taking into consideration the user's specified fitness goals, schedule availability, preferred exercise types, and any custom exercises provided.
+  Создайте хорошо структурированное еженедельное расписание упражнений, учитывая указанные пользователем фитнес-цели, доступность по расписанию, предпочтительные типы упражнений и любые пользовательские упражнения.
 
-  Your response MUST include both a conversational, user-friendly textual description of the schedule AND a structured JSON array of every single activity.
+  Ваш ответ ДОЛЖЕН включать как разговорное, дружелюбное текстовое описание расписания, так и структурированный JSON-массив каждого занятия.
   
-  For the structuredSchedule:
-  - Each item must have a day, a specific time in HH:mm format, an activityName, and an activityType ('Workout' or 'Habit').
-  - Base the 'activityName' on the user's preferred and custom exercises. If an exercise sounds like a workout, classify it as 'Workout'. If it sounds like a daily routine (e.g., 'Morning Run', 'Meditation'), classify it as 'Habit'.
+  Для structuredSchedule:
+  - Каждый элемент должен иметь день, конкретное время в формате ЧЧ:мм, название занятия (activityName) и тип занятия (activityType) ('Workout' или 'Habit').
+  - Основывайте 'activityName' на предпочтительных и пользовательских упражнениях пользователя. Если упражнение звучит как тренировка, классифицируйте его как 'Workout'. Если оно звучит как ежедневная рутина (например, 'Утренняя пробежка', 'Медитация'), классифицируйте его как 'Habit'.
 
-  User Preferences:
-  - Fitness Goals: {{{goals}}}
-  - Schedule Availability: {{{availability}}}
-  - Preferred Exercises: {{{preferredExercises}}}
-  - Custom Exercises: {{{customExercises}}}
+  Предпочтения пользователя:
+  - Фитнес-цели: {{{goals}}}
+  - Доступность по расписанию: {{{availability}}}
+  - Предпочтительные упражнения: {{{preferredExercises}}}
+  - Пользовательские упражнения: {{{customExercises}}}
   `,
 });
 
+/**
+ * Поток Genkit для оптимизации распорядка с помощью AI.
+ */
 const aiRoutineOptimizerFlow = ai.defineFlow(
   {
     name: 'aiRoutineOptimizerFlow',

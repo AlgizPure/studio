@@ -1,6 +1,10 @@
 import type { Program, ProgramWorkout, WorkoutExtended, Day } from '@/lib/types';
 import { addDays, differenceInCalendarDays, parseISO } from 'date-fns';
 
+/**
+ * @fileoverview Функции для построения и проверки расписания тренировок.
+ */
+
 export interface ScheduledWorkoutItem {
   workoutId: string;
   programId?: string;
@@ -10,7 +14,12 @@ export interface ScheduledWorkoutItem {
 }
 
 /**
- * Проверяет, должна ли тренировка появиться в расписании на указанный день
+ * Проверяет, должна ли тренировка появиться в расписании на указанный день.
+ * @param {ProgramWorkout['schedule']} schedule - Расписание тренировки.
+ * @param {Day} day - День недели.
+ * @param {string} programStartDate - Дата начала программы.
+ * @param {Date} targetDate - Целевая дата.
+ * @returns {boolean} - true, если тренировка должна появиться.
  */
 function shouldAppearOnDay(
   schedule: ProgramWorkout['schedule'],
@@ -37,7 +46,11 @@ function shouldAppearOnDay(
 
 /**
  * Строит расписание тренировок на указанную дату
- * из активных программ и самодостаточных тренировок
+ * из активных программ и самодостаточных тренировок.
+ * @param {Program[]} programs - Массив программ.
+ * @param {WorkoutExtended[]} standaloneWorkouts - Массив самодостаточных тренировок.
+ * @param {Date} date - Дата для построения расписания.
+ * @returns {ScheduledWorkoutItem[]} - Массив запланированных тренировок.
  */
 export function buildDailySchedule(
   programs: Program[],
@@ -93,7 +106,12 @@ export function buildDailySchedule(
 }
 
 /**
- * Проверяет, является ли тренировка запланированной на указанную дату
+ * Проверяет, является ли тренировка запланированной на указанную дату.
+ * @param {string} workoutId - ID тренировки.
+ * @param {Program[]} programs - Массив программ.
+ * @param {WorkoutExtended[]} standaloneWorkouts - Массив самодостаточных тренировок.
+ * @param {Date} date - Дата для проверки.
+ * @returns {boolean} - true, если тренировка запланирована.
  */
 export function isWorkoutScheduledOnDate(
   workoutId: string,
@@ -104,4 +122,3 @@ export function isWorkoutScheduledOnDate(
   const scheduled = buildDailySchedule(programs, standaloneWorkouts, date);
   return scheduled.some(item => item.workoutId === workoutId);
 }
-

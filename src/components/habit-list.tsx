@@ -12,17 +12,42 @@ import { AddHabitDialog } from './add-habit-dialog';
 import { Pencil } from 'lucide-react';
 import { Button } from './ui/button';
 
+/**
+ * @fileoverview Компонент для отображения списка привычек пользователя.
+ */
+
+/**
+ * @interface HabitListProps
+ * @description Свойства для компонента HabitList.
+ */
 interface HabitListProps {
+    /** Массив привычек для отображения. */
     habits: Habit[];
+    /** Callback-функция при добавлении новой привычки. */
     onHabitAdd: (habit: Omit<Habit, 'id'>) => void;
+    /** Callback-функция при обновлении существующей привычки. */
     onHabitUpdate: (habit: Habit) => void;
+    /** Callback-функция при удалении привычки. */
     onHabitDelete: (habitId: string) => void;
+    /** Функция для обновления состояния списка привычек. */
     setHabits: React.Dispatch<React.SetStateAction<Habit[]>>;
+    /** Функция для открытия диалогового окна управления категориями. */
     openManageCategories: () => void;
 }
 
+/**
+ * Компонент-карточка, который отображает список привычек.
+ * Позволяет отмечать привычки как выполненные, редактировать их
+ * и добавлять новые через диалоговое окно.
+ * @param {HabitListProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, setHabits, openManageCategories }: HabitListProps) {
   
+  /**
+   * Переключает статус выполнения привычки.
+   * @param {string} habitId - ID привычки.
+   */
   const handleToggleCompletion = (habitId: string) => {
     setHabits(prevHabits =>
       prevHabits.map(h =>
@@ -39,6 +64,11 @@ export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, se
     });
   }, [habits]);
 
+  /**
+   * Создает триггер для редактирования привычки.
+   * @param {Habit} habit - Объект привычки.
+   * @returns {JSX.Element} - Диалоговое окно для редактирования.
+   */
   const editTrigger = (habit: Habit) => (
     <AddHabitDialog
         habitToEdit={habit}
@@ -59,7 +89,7 @@ export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, se
   return (
     <Card className="glass">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="font-headline">Habits</CardTitle>
+        <CardTitle className="font-headline">Привычки</CardTitle>
         <AddHabitDialog onHabitAdd={onHabitAdd} openManageCategories={openManageCategories} categories={[]}/>
       </CardHeader>
       <CardContent className="space-y-2 max-h-[70vh] overflow-y-auto">
@@ -96,7 +126,7 @@ export function HabitList({ habits, onHabitAdd, onHabitUpdate, onHabitDelete, se
         })}
          {sortedHabits.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            <p>No habits found.</p>
+            <p>Привычки не найдены.</p>
           </div>
         )}
       </CardContent>

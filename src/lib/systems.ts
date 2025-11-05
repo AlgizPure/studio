@@ -1,34 +1,42 @@
 import type { AnalysisSystem } from './types';
 
+/**
+ * @fileoverview Содержит массив встроенных систем анализа.
+ */
+
+/**
+ * Массив встроенных систем анализа.
+ * @type {AnalysisSystem[]}
+ */
 export const BUILTIN_SYSTEMS: AnalysisSystem[] = [
   {
     id: 'wheel-of-life-v1',
-    name: 'Wheel of Life',
-    description: 'Balance across 8 life areas',
+    name: 'Колесо жизни',
+    description: 'Баланс в 8 жизненных областях',
     version: '1.0',
     author: 'Zenith',
     isPremium: false,
     habitParameters: [
       {
         id: 'life_area',
-        label: 'Life area',
+        label: 'Жизненная область',
         type: 'select',
         options: [
-          { value: 'health', label: 'Health' },
-          { value: 'career', label: 'Career' },
-          { value: 'relationships', label: 'Relationships' },
-          { value: 'growth', label: 'Growth' },
-          { value: 'finance', label: 'Finance' },
-          { value: 'recreation', label: 'Recreation' },
-          { value: 'environment', label: 'Environment' },
-          { value: 'spirituality', label: 'Spirituality' },
+          { value: 'health', label: 'Здоровье' },
+          { value: 'career', label: 'Карьера' },
+          { value: 'relationships', label: 'Отношения' },
+          { value: 'growth', label: 'Рост' },
+          { value: 'finance', label: 'Финансы' },
+          { value: 'recreation', label: 'Отдых' },
+          { value: 'environment', label: 'Окружение' },
+          { value: 'spirituality', label: 'Духовность' },
         ],
         required: false,
         aiAssignable: true,
       },
       {
         id: 'impact_score',
-        label: 'Impact score',
+        label: 'Оценка влияния',
         type: 'slider',
         min: 1,
         max: 10,
@@ -41,32 +49,32 @@ export const BUILTIN_SYSTEMS: AnalysisSystem[] = [
     analytics: {
       chartType: 'wheel',
       metrics: [
-        { id: 'area_completion', label: 'Area completion', calculation: 'done/total per area' },
-        { id: 'balance_score', label: 'Balance score', calculation: '100 - stddev(area_completion)*10' },
+        { id: 'area_completion', label: 'Завершение области', calculation: 'done/total per area' },
+        { id: 'balance_score', label: 'Оценка баланса', calculation: '100 - stddev(area_completion)*10' },
       ],
-      insights: ['weak areas', 'strong areas', 'balance']
+      insights: ['слабые места', 'сильные стороны', 'баланс']
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
   {
     id: 'maslow-hierarchy-v1',
-    name: 'Maslow Pyramid',
-    description: 'Needs hierarchy focus',
+    name: 'Пирамида Маслоу',
+    description: 'Фокус на иерархии потребностей',
     version: '1.0',
     author: 'Zenith',
     isPremium: false,
     habitParameters: [
       {
         id: 'need_level',
-        label: 'Need level',
+        label: 'Уровень потребности',
         type: 'select',
         options: [
-          { value: 'physiological', label: 'Physiological' },
-          { value: 'safety', label: 'Safety' },
-          { value: 'belonging', label: 'Belonging' },
-          { value: 'esteem', label: 'Esteem' },
-          { value: 'self_actualization', label: 'Self-actualization' },
+          { value: 'physiological', label: 'Физиологические' },
+          { value: 'safety', label: 'Безопасность' },
+          { value: 'belonging', label: 'Принадлежность' },
+          { value: 'esteem', label: 'Уважение' },
+          { value: 'self_actualization', label: 'Самоактуализация' },
         ],
         required: false,
         aiAssignable: true,
@@ -76,13 +84,11 @@ export const BUILTIN_SYSTEMS: AnalysisSystem[] = [
     analytics: {
       chartType: 'pyramid',
       metrics: [
-        { id: 'base_stability', label: 'Base stability', calculation: 'avg(physiological, safety)' },
+        { id: 'base_stability', label: 'Стабильность базы', calculation: 'avg(physiological, safety)' },
       ],
-      insights: ['base weak', 'upper strong']
+      insights: ['слабая база', 'сильный верх']
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
 ];
-
-

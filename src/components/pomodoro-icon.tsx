@@ -4,13 +4,28 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-const CIRCLE_RADIUS = 20;
-const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
+/**
+ * @fileoverview Компонент иконки таймера Pomodoro.
+ */
 
+const CIRCLE_RADIUS = 20;
+
+/**
+ * @interface PomodoroIconProps
+ * @description Свойства для компонента PomodoroIcon.
+ */
 interface PomodoroIconProps {
+  /** Дополнительные классы CSS. */
   className?: string;
 }
 
+/**
+ * Компонент-иконка, представляющий таймер Pomodoro.
+ * Отображает стилизованный круглый индикатор.
+ * На данный момент является статичной иконкой, но может быть расширен для отображения прогресса.
+ * @param {PomodoroIconProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function PomodoroIcon({ className }: PomodoroIconProps) {
   return (
     <div className={cn("relative h-10 w-10", className)}>
@@ -31,7 +46,7 @@ export function PomodoroIcon({ className }: PomodoroIconProps) {
           cy="25"
           r={CIRCLE_RADIUS}
           fill="transparent"
-          strokeDasharray={CIRCLE_CIRCUMFERENCE}
+          strokeDasharray={2 * Math.PI * CIRCLE_RADIUS}
           strokeDashoffset={0} 
           transform="rotate(-90 25 25)"
         />

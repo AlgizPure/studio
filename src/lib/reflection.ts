@@ -1,5 +1,9 @@
 import type { Habit, DailyReflection, HabitLog, HabitLogStatus } from './types';
 
+/**
+ * @fileoverview Функции для разбора ежедневных заметок и извлечения информации о привычках.
+ */
+
 export type ParsedEntry = {
   habitId: string;
   habitName: string;
@@ -11,8 +15,11 @@ export type ParsedEntry = {
 };
 
 /**
- * Mock parser for development/testing.
- * Looks for habit names in text and extracts simple patterns.
+ * Мок-парсер для разработки/тестирования.
+ * Ищет названия привычек в тексте и извлекает простые паттерны.
+ * @param {string} rawText - Необработанный текст заметки.
+ * @param {Habit[]} habits - Массив привычек пользователя.
+ * @returns {ParsedEntry[]} - Массив разобранных записей.
  */
 export function parseReflectionMock(rawText: string, habits: Habit[]): ParsedEntry[] {
   const lines = rawText.split(/\r?\n/);
@@ -45,5 +52,3 @@ export function parseReflectionMock(rawText: string, habits: Habit[]): ParsedEnt
   }
   return results;
 }
-
-

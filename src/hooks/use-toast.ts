@@ -8,9 +8,18 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
+/**
+ * @fileoverview Реализация системы уведомлений (тостов), вдохновленная react-hot-toast.
+ * Предоставляет хук `useToast` и функцию `toast` для управления уведомлениями.
+ */
+
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
 
+/**
+ * @typedef {ToastProps & { id: string, title?: React.ReactNode, description?: React.ReactNode, action?: ToastActionElement }} ToasterToast
+ * Расширенный тип для тоста, используемый в `Toaster`.
+ */
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
@@ -18,6 +27,7 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement
 }
 
+/** Типы действий для редьюсера тостов. */
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
   UPDATE_TOAST: "UPDATE_TOAST",
@@ -27,6 +37,7 @@ const actionTypes = {
 
 let count = 0
 
+/** Генерирует уникальный ID для тоста. */
 function genId() {
   count = (count + 1) % Number.MAX_SAFE_INTEGER
   return count.toString()
@@ -34,6 +45,10 @@ function genId() {
 
 type ActionType = typeof actionTypes
 
+/**
+ * @typedef {object} Action
+ * Тип для действий, которые могут быть отправлены редьюсеру тостов.
+ */
 type Action =
   | {
       type: ActionType["ADD_TOAST"]
@@ -52,12 +67,21 @@ type Action =
       toastId?: ToasterToast["id"]
     }
 
+/**
+ * @typedef {object} State
+ * Состояние тостера, содержащее массив активных тостов.
+ * @property {ToasterToast[]} toasts - Массив тостов.
+ */
 interface State {
   toasts: ToasterToast[]
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
+/**
+ * Добавляет тост в очередь на удаление после задержки.
+ * @param {string} toastId - ID тоста.
+ */
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
     return
@@ -74,6 +98,12 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout)
 }
 
+/**
+ * Редьюсер для управления состоянием тостов.
+ * @param {State} state - Текущее состояние.
+ * @param {Action} action - Действие для выполнения.
+ * @returns {State} - Новое состояние.
+ */
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
@@ -93,8 +123,8 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
+      // ! Побочные эффекты ! - Это можно было бы вынести в отдельное действие dismissToast(),
+      // но для простоты оставлено здесь.
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -133,6 +163,10 @@ const listeners: Array<(state: State) => void> = []
 
 let memoryState: State = { toasts: [] }
 
+/**
+ * Отправляет действие редьюсеру и уведомляет всех слушателей об изменении состояния.
+ * @param {Action} action - Действие для отправки.
+ */
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
   listeners.forEach((listener) => {
@@ -140,8 +174,17 @@ function dispatch(action: Action) {
   })
 }
 
+/**
+ * @typedef {Omit<ToasterToast, "id">} Toast
+ * Тип для создания нового тоста (без ID).
+ */
 type Toast = Omit<ToasterToast, "id">
 
+/**
+ * Создает и отображает новый тост.
+ * @param {Toast} props - Свойства тоста.
+ * @returns {{ id: string, dismiss: () => void, update: (props: ToasterToast) => void }} - Объект с ID тоста и функциями для его обновления и скрытия.
+ */
 function toast({ ...props }: Toast) {
   const id = genId()
 
@@ -171,6 +214,10 @@ function toast({ ...props }: Toast) {
   }
 }
 
+/**
+ * Хук для использования системы тостов в компонентах React.
+ * @returns {{ toasts: ToasterToast[], toast: (props: Toast) => { id: string, dismiss: () => void, update: (props: ToasterToast) => void }, dismiss: (toastId?: string) => void }} - Состояние тостов и функции для управления ими.
+ */
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 

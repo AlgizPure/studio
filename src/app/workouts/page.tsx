@@ -16,6 +16,15 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { calculateWorkoutEstimatedDuration } from '@/lib/utils/workout-duration';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * @fileoverview Страница библиотеки тренировок.
+ * Позволяет пользователям просматривать, создавать, редактировать, удалять и дублировать тренировки.
+ */
+
+/**
+ * Компонент страницы тренировок.
+ * @returns {JSX.Element} - Страница тренировок.
+ */
 export default function WorkoutsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -38,6 +47,10 @@ export default function WorkoutsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newWorkout, setNewWorkout] = useState<Omit<WorkoutExtended, 'id'> | null>(null);
 
+  /**
+   * Сохраняет новую тренировку.
+   * @param {Omit<WorkoutExtended, 'id'>} workoutData - Данные новой тренировки.
+   */
   const handleWorkoutSave = async (workoutData: Omit<WorkoutExtended, 'id'>) => {
     if (!user || !firestore) return;
 
@@ -70,14 +83,18 @@ export default function WorkoutsPage() {
     });
 
     toast({
-      title: 'Workout Created',
-      description: 'Workout has been added to your library.',
+      title: 'Тренировка создана',
+      description: 'Тренировка добавлена в вашу библиотеку.',
     });
 
     setNewWorkout(null);
     setIsCreateDialogOpen(false);
   };
 
+  /**
+   * Обновляет существующую тренировку.
+   * @param {WorkoutExtended} workout - Тренировка для обновления.
+   */
   const handleUpdateWorkout = async (workout: WorkoutExtended) => {
     if (!user || !firestore || !workout.id) return;
     
@@ -102,6 +119,10 @@ export default function WorkoutsPage() {
     });
   };
 
+  /**
+   * Удаляет тренировку.
+   * @param {string} workoutId - ID тренировки для удаления.
+   */
   const handleDeleteWorkout = async (workoutId: string) => {
     if (!user || !firestore) return;
     const workoutDoc = doc(firestore, `users/${user.uid}/workouts`, workoutId);
@@ -114,6 +135,10 @@ export default function WorkoutsPage() {
     });
   };
 
+  /**
+   * Дублирует тренировку.
+   * @param {WorkoutExtended} workout - Тренировка для дублирования.
+   */
   const handleDuplicateWorkout = async (workout: WorkoutExtended) => {
     if (!user || !firestore) return;
     const workoutsCollection = collection(firestore, `users/${user.uid}/workouts`);
@@ -127,8 +152,8 @@ export default function WorkoutsPage() {
       errorEmitter.emit('permission-error', permissionError);
     });
     toast({
-      title: 'Workout Duplicated',
-      description: 'Workout has been duplicated.',
+      title: 'Тренировка дублирована',
+      description: 'Тренировка была дублирована.',
     });
   };
 
@@ -144,22 +169,22 @@ export default function WorkoutsPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              Workouts Library
+              Библиотека тренировок
             </h1>
             <p className="text-muted-foreground">
-              Browse, create, and manage your workouts.
+              Просматривайте, создавайте и управляйте своими тренировками.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Input 
-              placeholder="Search workouts..." 
+              placeholder="Поиск тренировок..."
               className="w-full md:w-64" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              New Workout
+              Новая тренировка
             </Button>
           </div>
         </div>
@@ -185,20 +210,20 @@ export default function WorkoutsPage() {
             ))}
             {filteredWorkouts.length === 0 && (
               <div className="col-span-full text-center py-12 text-muted-foreground">
-                <p>No workouts found. Create your first workout!</p>
+                <p>Тренировки не найдены. Создайте свою первую тренировку!</p>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Create Workout Dialog */}
+      {/* Диалог создания тренировки */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
-            <DialogTitle>Create New Workout</DialogTitle>
+            <DialogTitle>Создать новую тренировку</DialogTitle>
             <DialogDescription>
-              Build your workout by adding cycles and exercises.
+              Создайте свою тренировку, добавляя циклы и упражнения.
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-6" style={{ minHeight: 0 }}>
@@ -216,4 +241,3 @@ export default function WorkoutsPage() {
     </>
   );
 }
-

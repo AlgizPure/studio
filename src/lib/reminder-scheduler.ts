@@ -1,6 +1,6 @@
 /**
- * Client-side reminder scheduling logic
- * Manages local notification scheduling and escalation
+ * @fileoverview Логика планирования напоминаний на стороне клиента.
+ * Управляет планированием локальных уведомлений и эскалацией.
  */
 
 import type { Habit, Reminder } from './types';
@@ -14,14 +14,16 @@ export interface ScheduledReminder {
   habitId: string;
   habitName: string;
   time: string; // HH:MM
-  escalationLevel: number; // 0 = first, 1 = second, 2 = final
+  escalationLevel: number; // 0 = первое, 1 = второе, 2 = последнее
   status: ReminderStatus;
   scheduledFor: Date;
   untilDone?: boolean;
 }
 
 /**
- * Calculate minutes until a given time today
+ * Вычисляет количество минут до заданного времени сегодня.
+ * @param {string} timeStr - Время в формате "HH:MM".
+ * @returns {number} - Количество минут до заданного времени, или -1, если время уже прошло.
  */
 function minutesUntilTime(timeStr: string): number {
   const now = new Date();
@@ -30,7 +32,7 @@ function minutesUntilTime(timeStr: string): number {
   target.setHours(hours, minutes, 0, 0);
   
   if (target < now) {
-    // Time has passed today
+    // Время сегодня уже прошло
     return -1;
   }
   
@@ -38,7 +40,9 @@ function minutesUntilTime(timeStr: string): number {
 }
 
 /**
- * Get all reminders for today
+ * Получает все напоминания на сегодня.
+ * @param {Habit[]} habits - Массив привычек.
+ * @returns {ScheduledReminder[]} - Массив запланированных напоминаний.
  */
 export function getTodaysReminders(habits: Habit[]): ScheduledReminder[] {
   const reminders: ScheduledReminder[] = [];
@@ -53,7 +57,7 @@ export function getTodaysReminders(habits: Habit[]): ScheduledReminder[] {
     for (const reminder of habitReminders) {
       for (const time of reminder.times || []) {
         const minutesUntil = minutesUntilTime(time);
-        if (minutesUntil < 0) continue; // Already passed
+        if (minutesUntil < 0) continue; // Уже прошло
 
         const scheduledFor = new Date(now);
         const [hours, minutes] = time.split(':').map(Number);
@@ -77,68 +81,76 @@ export function getTodaysReminders(habits: Habit[]): ScheduledReminder[] {
 }
 
 /**
- * Schedule escalating reminders
- * First reminder at scheduled time, then +30min, +60min if not completed
+ * Планирует эскалирующие напоминания.
+ * Первое напоминание в запланированное время, затем +30 мин, +60 мин, если не выполнено.
+ * @param {ScheduledReminder} reminder - Запланированное напоминание.
+ * @param {boolean} isCompleted - Выполнена ли привычка.
  */
 export function scheduleEscalatingReminders(
   reminder: ScheduledReminder,
   isCompleted: boolean
 ): void {
   if (isCompleted) {
-    console.log(`[Reminders] Habit ${reminder.habitName} completed, cancelling reminders`);
+    console.log(`[Напоминания] Привычка ${reminder.habitName} выполнена, отмена напоминаний`);
     return;
   }
 
   const now = new Date();
   const delayMs = reminder.scheduledFor.getTime() - now.getTime();
 
-  if (delayMs < 0) return; // Already passed
+  if (delayMs < 0) return; // Уже прошло
 
-  // First reminder
+  // Первое напоминание
   scheduleLocalNotification(
-    '⏰ Habit Reminder',
-    `Time for: ${reminder.habitName}`,
+    '⏰ Напоминание о привычке',
+    `Время для: ${reminder.habitName}`,
     delayMs
   );
 
-  // Escalation 1: +30 minutes
+  // Эскалация 1: +30 минут
   if (reminder.untilDone || reminder.escalationLevel < 1) {
     scheduleLocalNotification(
-      '⏰⏰ Reminder',
-      `Don't forget: ${reminder.habitName}`,
+      '⏰⏰ Напоминание',
+      `Не забудьте: ${reminder.habitName}`,
       delayMs + 30 * 60000
     );
   }
 
-  // Escalation 2: +60 minutes (final)
+  // Эскалация 2: +60 минут (финальное)
   if (reminder.untilDone || reminder.escalationLevel < 2) {
     scheduleLocalNotification(
-      '⏰⏰⏰ Final Reminder',
-      `Last call: ${reminder.habitName}. Your streak is at risk!`,
+      '⏰⏰⏰ Последнее напоминание',
+      `Последний вызов: ${reminder.habitName}. Ваша серия под угрозой!`,
       delayMs + 60 * 60000
     );
   }
 }
 
 /**
- * Snooze a reminder by N minutes
+ * Откладывает напоминание на N минут.
+ * @param {ScheduledReminder} reminder - Запланированное напоминание.
+ * @param {number} delayMinutes - Задержка в минутах.
  */
 export function snoozeReminder(reminder: ScheduledReminder, delayMinutes: number): void {
   const now = new Date();
   const snoozeUntil = new Date(now.getTime() + delayMinutes * 60000);
   
   scheduleLocalNotification(
-    '⏰ Snoozed Reminder',
-    `Time for: ${reminder.habitName}`,
+    '⏰ Отложенное напоминание',
+    `Время для: ${reminder.habitName}`,
     delayMinutes * 60000
   );
 
-  console.log(`[Reminders] Snoozed ${reminder.habitName} for ${delayMinutes} minutes`);
+  console.log(`[Напоминания] Отложено ${reminder.habitName} на ${delayMinutes} минут`);
 }
 
 /**
- * Smart reminder time adjustment
- * Analyzes when user actually completes habit vs reminder time
+ * Умная корректировка времени напоминания.
+ * Анализирует, когда пользователь фактически выполняет привычку по сравнению со временем напоминания.
+ * @param {string} habitName - Название привычки.
+ * @param {string} reminderTime - Время напоминания.
+ * @param {string[]} actualCompletionTimes - Фактическое время выполнения в формате "HH:MM".
+ * @returns {{ shouldAdjust: boolean; suggestedTime?: string }} - Объект с результатом анализа.
  */
 export function analyzeReminderEffectiveness(
   habitName: string,
@@ -146,10 +158,10 @@ export function analyzeReminderEffectiveness(
   actualCompletionTimes: string[] // HH:MM format
 ): { shouldAdjust: boolean; suggestedTime?: string } {
   if (actualCompletionTimes.length < 5) {
-    return { shouldAdjust: false }; // Not enough data
+    return { shouldAdjust: false }; // Недостаточно данных
   }
 
-  // Calculate average completion time
+  // Вычисляем среднее время выполнения
   const avgMinutes = actualCompletionTimes.reduce((sum, time) => {
     const [h, m] = time.split(':').map(Number);
     return sum + h * 60 + m;
@@ -161,7 +173,7 @@ export function analyzeReminderEffectiveness(
   const diffMinutes = Math.abs(avgMinutes - reminderMinutes);
 
   if (diffMinutes > 30) {
-    // Significant difference, suggest adjustment
+    // Значительная разница, предлагаем корректировку
     const suggestedH = Math.floor(avgMinutes / 60);
     const suggestedM = Math.round(avgMinutes % 60);
     const suggestedTime = `${String(suggestedH).padStart(2, '0')}:${String(suggestedM).padStart(2, '0')}`;
@@ -176,7 +188,9 @@ export function analyzeReminderEffectiveness(
 }
 
 /**
- * Get next reminder time for a habit
+ * Получает следующее время напоминания для привычки.
+ * @param {Habit} habit - Привычка.
+ * @returns {Date | null} - Следующее время напоминания или null.
  */
 export function getNextReminder(habit: Habit): Date | null {
   if (!isHabitDueToday(habit)) return null;
@@ -201,4 +215,3 @@ export function getNextReminder(habit: Habit): Date | null {
 
   return nextTime;
 }
-

@@ -10,6 +10,15 @@ import { useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { generateFullAnalysisExport, downloadMarkdownFile } from '@/lib/ztl/export-full-analysis';
 import { programToZTL, generateScheduledWorkouts, calculateCurrentWeek } from '@/lib/ztl/helpers';
 
+/**
+ * @fileoverview Страница аналитики.
+ * Отображает диаграммы прогресса, инсайты от AI и позволяет экспортировать данные.
+ */
+
+/**
+ * Компонент страницы аналитики.
+ * @returns {JSX.Element} - Страница аналитики.
+ */
 export default function AnalyticsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -29,6 +38,10 @@ export default function AnalyticsPage() {
   const { data: workoutLogs } = useCollection<WorkoutLog>(workoutLogsQuery);
   const { data: programs } = useCollection<Program>(programsQuery);
 
+  /**
+   * Обрабатывает экспорт данных для анализа.
+   * Генерирует markdown-файл с полным анализом и загружает его.
+   */
   const handleExport = async () => {
     if (!user) return;
     const activePrograms = await Promise.all(
@@ -62,15 +75,15 @@ export default function AnalyticsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight">
-            Analytics
+            Аналитика
           </h1>
           <p className="text-muted-foreground">
-            Visualize your progress and trends.
+            Визуализируйте свой прогресс и тенденции.
           </p>
         </div>
         <Button onClick={handleExport}>
           <Download className="mr-2 h-4 w-4" />
-          Export for Claude Analysis
+          Экспорт для анализа Claude
         </Button>
       </div>
       

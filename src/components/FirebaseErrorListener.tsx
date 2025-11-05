@@ -5,35 +5,40 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 /**
- * An invisible component that listens for globally emitted 'permission-error' events.
- * It throws any received error to be caught by Next.js's global-error.tsx.
+ * @fileoverview Компонент для отслеживания глобальных ошибок Firebase.
+ */
+
+/**
+ * Невидимый компонент, который отслеживает глобально генерируемые события 'permission-error'.
+ * Он "пробрасывает" любую полученную ошибку, чтобы ее мог перехватить Next.js's global-error.tsx.
+ * @returns {null} Этот компонент ничего не рендерит.
  */
 export function FirebaseErrorListener() {
-  // Use the specific error type for the state for type safety.
+  // Используем конкретный тип ошибки для состояния для типобезопасности.
   const [error, setError] = useState<FirestorePermissionError | null>(null);
 
   useEffect(() => {
-    // The callback now expects a strongly-typed error, matching the event payload.
+    // Коллбэк теперь ожидает строго типизированную ошибку, соответствующую данным события.
     const handleError = (error: FirestorePermissionError) => {
-      // Set error in state to trigger a re-render.
+      // Устанавливаем ошибку в состояние, чтобы вызвать повторный рендеринг.
       setError(error);
     };
 
-    // The typed emitter will enforce that the callback for 'permission-error'
-    // matches the expected payload type (FirestorePermissionError).
+    // Типизированный эмиттер гарантирует, что коллбэк для 'permission-error'
+    // соответствует ожидаемому типу данных (FirestorePermissionError).
     errorEmitter.on('permission-error', handleError);
 
-    // Unsubscribe on unmount to prevent memory leaks.
+    // Отписываемся при размонтировании, чтобы предотвратить утечки памяти.
     return () => {
       errorEmitter.off('permission-error', handleError);
     };
   }, []);
 
-  // On re-render, if an error exists in state, throw it.
+  // При повторном рендеринге, если в состоянии есть ошибка, пробрасываем ее.
   if (error) {
     throw error;
   }
 
-  // This component renders nothing.
+  // Этот компонент ничего не рендерит.
   return null;
 }

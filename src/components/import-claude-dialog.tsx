@@ -6,8 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useUser, useFirestore } from '@/firebase/provider';
 import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
-import type { Habit } from '@/lib/types';
 
+/**
+ * @fileoverview Диалоговое окно для импорта и применения рекомендаций из отчета Claude AI.
+ */
+
+/**
+ * @typedef {object} Recommendation
+ * @description Представляет одну рекомендацию, извлеченную из отчета Claude AI.
+ * @property {'add' | 'modify' | 'pause'} action - Тип действия.
+ * @property {string} [name] - Название привычки (для действия 'add').
+ * @property {string} [habitId] - ID привычки (для 'modify', 'pause').
+ * @property {any} [params] - Дополнительные параметры для действия.
+ */
 type Recommendation = {
   action: 'add' | 'modify' | 'pause';
   name?: string;
@@ -15,12 +26,17 @@ type Recommendation = {
   params?: any;
 };
 
+/**
+ * Парсит Markdown-текст для извлечения структурированных рекомендаций.
+ * @param {string} markdown - Входной Markdown-текст из отчета.
+ * @returns {Recommendation[]} Массив объектов рекомендаций.
+ */
 function parseRecommendations(markdown: string): Recommendation[] {
   const lines = markdown.split(/\r?\n/);
   const recs: Recommendation[] = [];
   for (const l of lines) {
     const s = l.trim();
-    // Examples:
+    // Примеры:
     // - add: habit "Drink Water" type=quantity target=2000 unit=ml
     // - modify: habitId=abc target=duration value=25 unit=min
     // - pause: habitId=xyz
@@ -45,6 +61,12 @@ function parseRecommendations(markdown: string): Recommendation[] {
   return recs;
 }
 
+/**
+ * Компонент диалогового окна для импорта рекомендаций из отчета Claude AI.
+ * Пользователь может вставить текст отчета, который будет автоматически распарсен
+ * для добавления, изменения или приостановки привычек.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function ImportClaudeDialog() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -52,6 +74,9 @@ export function ImportClaudeDialog() {
   const [md, setMd] = useState('');
   const [busy, setBusy] = useState(false);
 
+  /**
+   * Обрабатывает применение извлеченных рекомендаций к данным пользователя в Firestore.
+   */
   const handleApply = async () => {
     if (!user || !firestore) return;
     setBusy(true);
@@ -84,21 +109,19 @@ export function ImportClaudeDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm">Import Claude report</Button>
+        <Button variant="secondary" size="sm">Импорт из Claude</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[720px]">
         <DialogHeader>
-          <DialogTitle>Import recommendations</DialogTitle>
-          <DialogDescription>Paste key bullet points from Claude report. Basic parser will extract add/modify/pause actions.</DialogDescription>
+          <DialogTitle>Импорт рекомендаций</DialogTitle>
+          <DialogDescription>Вставьте ключевые пункты из отчета Claude. Базовый парсер извлечет действия add/modify/pause.</DialogDescription>
         </DialogHeader>
         <Textarea rows={12} value={md} onChange={(e) => setMd(e.target.value)} />
         <DialogFooter>
-          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button type="button" onClick={handleApply} disabled={busy || !md.trim()}>{busy ? 'Applying…' : 'Apply'}</Button>
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Отмена</Button>
+          <Button type="button" onClick={handleApply} disabled={busy || !md.trim()}>{busy ? 'Применение...' : 'Применить'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-

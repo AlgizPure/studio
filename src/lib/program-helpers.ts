@@ -1,13 +1,21 @@
 /**
- * Helper functions for updating Program structures, especially for AI progression suggestions
+ * @fileoverview Вспомогательные функции для обновления структур программ, особенно для предложений по прогрессии от AI.
  */
 
 import type { Program, WorkoutExtended, Cycle, CycleExercise } from '@/lib/types';
 
 /**
- * Find and update an exercise's targetWeight in a program.
- * Since Program.workouts only contains references (workoutId), we need to work with the full workout structure.
- * This function helps update the program when we have the full workout data.
+ * Находит и обновляет targetWeight упражнения в программе.
+ * Поскольку Program.workouts содержит только ссылки (workoutId), нам нужно работать с полной структурой тренировки.
+ * Эта функция помогает обновить программу, когда у нас есть полные данные о тренировке.
+ * @param {Program} program - Программа для обновления.
+ * @param {string} workoutId - ID тренировки.
+ * @param {string} exerciseId - ID упражнения.
+ * @param {object} updates - Обновления для применения.
+ * @param {number} [updates.targetWeight] - Целевой вес.
+ * @param {string} [updates.targetReps] - Целевые повторения.
+ * @param {number} [updates.targetRPE] - Целевой RPE.
+ * @returns {Program} - Обновленная программа.
  */
 export function updateExerciseTargetInProgram(
   program: Program,
@@ -19,14 +27,14 @@ export function updateExerciseTargetInProgram(
     targetRPE?: number;
   }
 ): Program {
-  // Create updated program copy
+  // Создаем копию обновленной программы
   const updatedProgram = { ...program };
 
-  // If program has stored workout details (in a custom field), update them
-  // Otherwise, we return the program as-is and rely on external workout updates
+  // Если в программе хранятся детали тренировки (в пользовательском поле), обновляем их
+  // В противном случае возвращаем программу как есть и полагаемся на внешние обновления тренировок
   
-  // For now, we'll add the update info to program metadata
-  // In a full implementation, you'd update the actual WorkoutExtended document
+  // Пока что добавим информацию об обновлении в метаданные программы
+  // В полной реализации вы бы обновили фактический документ WorkoutExtended
   if (!(updatedProgram as any).exerciseUpdates) {
     (updatedProgram as any).exerciseUpdates = {};
   }
@@ -43,8 +51,14 @@ export function updateExerciseTargetInProgram(
 }
 
 /**
- * Apply progression suggestion to a WorkoutExtended structure.
- * This is used when you have the full workout loaded.
+ * Применяет предложение по прогрессии к структуре WorkoutExtended.
+ * Используется, когда у вас загружена полная тренировка.
+ * @param {WorkoutExtended} workout - Тренировка для обновления.
+ * @param {string} exerciseId - ID упражнения.
+ * @param {object} suggestion - Предложение по прогрессии.
+ * @param {number} [suggestion.suggestedWeight] - Предлагаемый вес.
+ * @param {number} [suggestion.suggestedReps] - Предлагаемые повторения.
+ * @returns {WorkoutExtended} - Обновленная тренировка.
  */
 export function applyProgressionToWorkout(
   workout: WorkoutExtended,
@@ -81,7 +95,10 @@ export function applyProgressionToWorkout(
 }
 
 /**
- * Find exercise in a workout by exerciseId
+ * Находит упражнение в тренировке по exerciseId.
+ * @param {WorkoutExtended} workout - Тренировка для поиска.
+ * @param {string} exerciseId - ID упражнения.
+ * @returns {{ cycle: Cycle; exercise: CycleExercise } | null} - Найденное упражнение и его цикл, или null.
  */
 export function findExerciseInWorkout(
   workout: WorkoutExtended,
@@ -100,4 +117,3 @@ export function findExerciseInWorkout(
 
   return null;
 }
-

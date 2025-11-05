@@ -1,17 +1,30 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, in { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Play, Pause, SkipForward } from 'lucide-react';
 
+/**
+ * @fileoverview Компонент таймера отдыха между подходами.
+ */
+
 interface RestTimerProps {
-  duration: number; // seconds
+  /** Длительность отдыха в секундах. */
+  duration: number;
+  /** Callback-функция, вызываемая по завершении таймера. */
   onComplete: () => void;
+  /** Callback-функция, вызываемая при пропуске отдыха. */
   onSkip: () => void;
 }
 
+/**
+ * `RestTimer` - это компонент, который отображает обратный отсчет
+ * времени отдыха. Он предоставляет кнопки для паузы, возобновления и пропуска.
+ * @param {RestTimerProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function RestTimer({ duration, onComplete, onSkip }: RestTimerProps) {
   const [timeLeft, setTimeLeft] = useState(duration);
   const [isRunning, setIsRunning] = useState(true);
@@ -21,6 +34,7 @@ export function RestTimer({ duration, onComplete, onSkip }: RestTimerProps) {
       const interval = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
+            clearInterval(interval);
             onComplete();
             return 0;
           }
@@ -33,40 +47,35 @@ export function RestTimer({ duration, onComplete, onSkip }: RestTimerProps) {
 
   const progress = ((duration - timeLeft) / duration) * 100;
 
+  /**
+   * Форматирует время из секунд в строку "мм:сс".
+   * @param {number} seconds - Время в секундах.
+   * @returns {string} Отформатированное время.
+   */
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${String(secs).padStart(2, '0')}`;
   };
 
   return (
     <Card className="glass border-2 border-primary">
       <CardHeader>
-        <CardTitle>Rest Time</CardTitle>
+        <CardTitle>Время отдыха</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-center">
           <div className="text-4xl font-bold font-mono">{formatTime(timeLeft)}</div>
-          <p className="text-sm text-muted-foreground mt-1">seconds remaining</p>
+          <p className="text-sm text-muted-foreground mt-1">осталось секунд</p>
         </div>
-
         <Progress value={progress} className="h-2" />
-
         <div className="flex gap-2">
-          {isRunning ? (
-            <Button onClick={() => setIsRunning(false)} variant="outline" className="flex-1">
-              <Pause className="mr-2 h-4 w-4" />
-              Pause
-            </Button>
-          ) : (
-            <Button onClick={() => setIsRunning(true)} className="flex-1">
-              <Play className="mr-2 h-4 w-4" />
-              Resume
-            </Button>
-          )}
+          <Button onClick={() => setIsRunning(!isRunning)} variant="outline" className="flex-1">
+            {isRunning ? <><Pause className="mr-2 h-4 w-4" />Пауза</> : <><Play className="mr-2 h-4 w-4" />Возобновить</>}
+          </Button>
           <Button onClick={onSkip} variant="outline">
             <SkipForward className="mr-2 h-4 w-4" />
-            Skip Rest
+            Пропустить
           </Button>
         </div>
       </CardContent>

@@ -20,22 +20,39 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { getOptimizedRoutine } from '@/app/actions';
 import { ScrollArea } from './ui/scroll-area';
-import type { AIRoutineOptimizerOutput, ScheduledActivity } from '@/ai/flows/ai-routine-optimizer';
+import type { AIRoutineOptimizerOutput } from '@/ai/flows/ai-routine-optimizer';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { writeBatch, doc, collection } from 'firebase/firestore';
 import type { Exercise, Habit } from '@/lib/types';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
+/**
+ * @fileoverview Диалоговое окно для оптимизации расписания тренировок с помощью AI.
+ */
+
+/**
+ * @description Схема валидации для формы AI-оптимизатора с использованием Zod.
+ */
 const schema = z.object({
-  goals: z.string().min(10, 'Please describe your goals in more detail.'),
-  availability: z.string().min(10, 'Please describe your availability in more detail.'),
-  preferredExercises: z.string().min(10, 'Please list some preferred exercises.'),
+  goals: z.string().min(10, 'Пожалуйста, опишите ваши цели более подробно.'),
+  availability: z.string().min(10, 'Пожалуйста, опишите вашу доступность более подробно.'),
+  preferredExercises: z.string().min(10, 'Пожалуйста, перечислите несколько предпочитаемых упражнений.'),
   customExercises: z.string().optional(),
 });
 
+/**
+ * @typedef {z.infer<typeof schema>} FormFields
+ * @description Тип, представляющий поля формы, выведенный из схемы Zod.
+ */
 type FormFields = z.infer<typeof schema>;
 
+/**
+ * Компонент диалогового окна AI-оптимизатора расписания.
+ * Позволяет пользователю описать свои цели и предпочтения, на основе которых AI создает
+ * и предлагает сбалансированное недельное расписание тренировок и привычек.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function AiOptimizerDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,13 +82,17 @@ export function AiOptimizerDialog() {
   } = useForm<FormFields>({
     resolver: zodResolver(schema),
     defaultValues: {
-      goals: 'Develop speed and muscle definition, and reduce belly fat.',
-      availability: '6 times a week, usually in the first half of the day.',
-      preferredExercises: 'Strength training (Mon, Wed, Fri), bio-dynamics/functional patterns (Tue, Thu, Sat), trail running, static exercises (Alexander Zass cycle).',
-      customExercises: 'TRX exercises, bodyweight exercises for when I travel.'
+      goals: 'Развить скорость и рельеф мышц, уменьшить жир на животе.',
+      availability: '6 раз в неделю, обычно в первой половине дня.',
+      preferredExercises: 'Силовые тренировки (Пн, Ср, Пт), биодинамика/функциональные паттерны (Вт, Чт, Сб), бег по пересеченной местности, статические упражнения (цикл Александра Засса).',
+      customExercises: 'Упражнения с TRX, упражнения с собственным весом для путешествий.'
     }
   });
 
+  /**
+   * Обрабатывает отправку формы для получения оптимизированного расписания.
+   * @param {FormFields} data - Данные из формы.
+   */
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     setIsLoading(true);
     setSuggestion(null);
@@ -83,18 +104,22 @@ export function AiOptimizerDialog() {
     } else {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: result.error || 'An unknown error occurred.',
+        title: 'Ошибка',
+        description: result.error || 'Произошла неизвестная ошибка.',
       });
     }
   };
   
+  /**
+   * Применяет предложенное AI расписание, обновляя дни занятий для существующих
+   * упражнений и привычек пользователя.
+   */
   const handleApplySchedule = async () => {
     if (!suggestion || !suggestion.structuredSchedule || !user || !firestore) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'No schedule to apply or user not logged in.',
+        title: 'Ошибка',
+        description: 'Нет расписания для применения или пользователь не авторизован.',
       });
       return;
     }
@@ -139,23 +164,27 @@ export function AiOptimizerDialog() {
                 requestResourceData: activitiesToUpdate
             });
             errorEmitter.emit('permission-error', permissionError);
-            throw e; // Re-throw to be caught by outer catch
+            throw e; // Пробрасываем ошибку для внешнего catch
         });
 
-        toast({ title: "Schedule Applied!", description: "Your new schedule is now active."});
+        toast({ title: "Расписание применено!", description: "Ваше новое расписание теперь активно."});
         handleOpenChange(false);
 
     } catch (error) {
         toast({
             variant: 'destructive',
-            title: 'Error Applying Schedule',
-            description: 'An unexpected error occurred while updating your schedule.',
+            title: 'Ошибка применения расписания',
+            description: 'Произошла непредвиденная ошибка при обновлении вашего расписания.',
         });
     } finally {
         setIsApplying(false);
     }
   }
 
+  /**
+   * Управляет состоянием открытия/закрытия диалогового окна.
+   * @param {boolean} open - Новое состояние.
+   */
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
@@ -169,56 +198,56 @@ export function AiOptimizerDialog() {
       <DialogTrigger asChild>
         <Button variant="outline">
           <Wand2 className="mr-2 h-4 w-4" />
-          AI Optimizer
+          AI-оптимизатор
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wand2 className="text-primary"/>
-            AI Routine Optimizer
+            AI-оптимизатор расписания
             </DialogTitle>
           <DialogDescription>
-            Describe your fitness preferences and let AI create a balanced weekly schedule for you.
+            Опишите ваши фитнес-предпочтения, и AI создаст для вас сбалансированное недельное расписание.
           </DialogDescription>
         </DialogHeader>
 
         {suggestion ? (
            <div className="space-y-4">
-            <h3 className="font-semibold">Suggested Weekly Schedule:</h3>
+            <h3 className="font-semibold">Предложенное недельное расписание:</h3>
             <ScrollArea className="h-72 w-full rounded-md border p-4">
                 <pre className="text-sm whitespace-pre-wrap font-body">{suggestion.textualDescription}</pre>
             </ScrollArea>
             <DialogFooter>
-                <Button variant="outline" onClick={() => setSuggestion(null)}>Back to Form</Button>
+                <Button variant="outline" onClick={() => setSuggestion(null)}>Назад к форме</Button>
                 <Button onClick={handleApplySchedule} disabled={isApplying}>
-                  {isApplying ? 'Applying...' : 'Apply Schedule'}
+                  {isApplying ? 'Применение...' : 'Применить расписание'}
                 </Button>
             </DialogFooter>
            </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="goals">Primary Goals</Label>
+              <Label htmlFor="goals">Основные цели</Label>
               <Textarea id="goals" {...register('goals')} rows={3} />
               {errors.goals && <p className="text-sm text-destructive">{errors.goals.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="availability">Availability</Label>
+              <Label htmlFor="availability">Доступность</Label>
               <Textarea id="availability" {...register('availability')} rows={2} />
               {errors.availability && <p className="text-sm text-destructive">{errors.availability.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="preferredExercises">Preferred & Custom Exercises</Label>
+              <Label htmlFor="preferredExercises">Предпочтительные и пользовательские упражнения</Label>
               <Textarea id="preferredExercises" {...register('preferredExercises')} rows={4} />
               {errors.preferredExercises && <p className="text-sm text-destructive">{errors.preferredExercises.message}</p>}
             </div>
 
             <DialogFooter>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Generating...' : 'Generate Schedule'}
+                {isLoading ? 'Генерация...' : 'Сгенерировать расписание'}
               </Button>
             </DialogFooter>
           </form>

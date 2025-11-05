@@ -5,9 +5,13 @@ import { ref, getDownloadURL } from 'firebase/storage';
 import { useStorage } from '../provider';
 
 /**
- * Hook for getting a download URL from Firebase Storage.
- * @param path - The storage path to get URL for
- * @returns The download URL, loading state, and error
+ * @fileoverview Хук React для получения URL для скачивания из Firebase Storage.
+ */
+
+/**
+ * Хук для получения URL для скачивания из Firebase Storage.
+ * @param {string | null} path - Путь в хранилище, для которого нужно получить URL.
+ * @returns {{ url: string | null, loading: boolean, error: Error | null }} - URL для скачивания, состояние загрузки и ошибка.
  */
 export function useDownloadUrl(path: string | null) {
   const storage = useStorage();
@@ -38,4 +42,3 @@ export function useDownloadUrl(path: string | null) {
 
   return { url, loading, error };
 }
-

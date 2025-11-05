@@ -13,8 +13,17 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import {FirestorePermissionError} from '@/firebase/errors';
 
 /**
- * Initiates a setDoc operation for a document reference.
- * Does NOT await the write operation internally.
+ * @fileoverview Функции для неблокирующих операций записи в Firestore.
+ * Эти функции инициируют операции, но не ожидают их завершения,
+ * а вместо этого отлавливают ошибки разрешений и передают их в `errorEmitter`.
+ */
+
+/**
+ * Инициирует операцию setDoc для ссылки на документ.
+ * НЕ ожидает завершения операции записи внутри.
+ * @param {DocumentReference} docRef - Ссылка на документ.
+ * @param {any} data - Данные для записи.
+ * @param {SetOptions} options - Опции для операции set.
  */
 export function setDocumentNonBlocking(docRef: DocumentReference, data: any, options: SetOptions) {
   setDoc(docRef, data, options).catch(error => {
@@ -22,19 +31,21 @@ export function setDocumentNonBlocking(docRef: DocumentReference, data: any, opt
       'permission-error',
       new FirestorePermissionError({
         path: docRef.path,
-        operation: 'write', // or 'create'/'update' based on options
+        operation: 'write', // или 'create'/'update' в зависимости от опций
         requestResourceData: data,
       })
     )
   })
-  // Execution continues immediately
+  // Выполнение продолжается немедленно
 }
 
-
 /**
- * Initiates an addDoc operation for a collection reference.
- * Does NOT await the write operation internally.
- * Returns the Promise for the new doc ref, but typically not awaited by caller.
+ * Инициирует операцию addDoc для ссылки на коллекцию.
+ * НЕ ожидает завершения операции записи внутри.
+ * Возвращает Promise для новой ссылки на документ, но обычно не ожидается вызывающей стороной.
+ * @param {CollectionReference} colRef - Ссылка на коллекцию.
+ * @param {any} data - Данные для добавления.
+ * @returns {Promise<DocumentReference | void>} - Promise, который разрешается ссылкой на новый документ.
  */
 export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
   const promise = addDoc(colRef, data)
@@ -51,10 +62,11 @@ export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
   return promise;
 }
 
-
 /**
- * Initiates an updateDoc operation for a document reference.
- * Does NOT await the write operation internally.
+ * Инициирует операцию updateDoc для ссылки на документ.
+ * НЕ ожидает завершения операции записи внутри.
+ * @param {DocumentReference} docRef - Ссылка на документ.
+ * @param {any} data - Данные для обновления.
  */
 export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) {
   updateDoc(docRef, data)
@@ -70,10 +82,10 @@ export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) 
     });
 }
 
-
 /**
- * Initiates a deleteDoc operation for a document reference.
- * Does NOT await the write operation internally.
+ * Инициирует операцию deleteDoc для ссылки на документ.
+ * НЕ ожидает завершения операции записи внутри.
+ * @param {DocumentReference} docRef - Ссылка на документ.
  */
 export function deleteDocumentNonBlocking(docRef: DocumentReference) {
   deleteDoc(docRef)

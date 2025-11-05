@@ -10,11 +10,27 @@ import type { Habit, Day } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
+/**
+ * @fileoverview Диалоговое окно для ежедневных заметок.
+ * Позволяет пользователю записывать свои мысли и отмечать выполнение привычек.
+ */
+
+/**
+ * Свойства для компонента DailyReflectionDialog.
+ * @interface DailyReflectionDialogProps
+ * @property {Habit[]} habits - Список привычек пользователя.
+ * @property {React.ReactNode} [trigger] - Триггер для открытия диалогового окна.
+ */
 interface DailyReflectionDialogProps {
   habits: Habit[];
   trigger?: React.ReactNode;
 }
 
+/**
+ * Компонент диалогового окна для ежедневных заметок.
+ * @param {DailyReflectionDialogProps} props - Свойства компонента.
+ * @returns {JSX.Element} - Диалоговое окно для ежедневных заметок.
+ */
 export function DailyReflectionDialog({ habits, trigger }: DailyReflectionDialogProps) {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -25,19 +41,19 @@ export function DailyReflectionDialog({ habits, trigger }: DailyReflectionDialog
 
   const template = useMemo(() => {
     const today = new Date();
-    const weekday = today.toLocaleString('en-US', { weekday: 'long' }) as Day;
+    const weekday = today.toLocaleString('ru-RU', { weekday: 'long' }) as Day;
     const todaysHabits = (habits || []).filter(h => !h.days || h.days.length === 0 || h.days.includes(weekday));
     const completed = todaysHabits.filter(h => !!h.completed);
     const notCompleted = todaysHabits.filter(h => !h.completed);
-    let t = `📅 Reflection for ${format(today, 'yyyy-MM-dd')}\n`;
+    let t = `📅 Заметка за ${format(today, 'yyyy-MM-dd')}\n`;
     if (completed.length) {
-      t += `\n✅ DONE:\n\n`;
+      t += `\n✅ ВЫПОЛНЕНО:\n\n`;
       for (const h of completed) {
         t += `${h.name}\n________________________________\n\n`;
       }
     }
     if (notCompleted.length) {
-      t += `\n❌ NOT DONE:\n\n`;
+      t += `\n❌ НЕ ВЫПОЛНЕНО:\n\n`;
       for (const h of notCompleted) {
         t += `${h.name}\n________________________________\n\n`;
       }
@@ -49,6 +65,9 @@ export function DailyReflectionDialog({ habits, trigger }: DailyReflectionDialog
     if (open) setText(template);
   }, [open, template]);
 
+  /**
+   * Сохраняет ежедневную заметку.
+   */
   const handleSave = async () => {
     if (!user || !firestore) return;
     const dateStr = format(new Date(), 'yyyy-MM-dd');
@@ -63,17 +82,17 @@ export function DailyReflectionDialog({ habits, trigger }: DailyReflectionDialog
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      toast({ title: 'Reflection saved', description: 'Your daily reflection has been saved.' });
+      toast({ title: 'Заметка сохранена', description: 'Ваша ежедневная заметка была сохранена.' });
       setOpen(false);
     } catch (e) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to save reflection' });
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось сохранить заметку' });
     } finally {
       setBusy(false);
     }
   };
 
   const dialogTrigger = trigger ?? (
-    <Button variant="secondary" size="sm">Evening reflection</Button>
+    <Button variant="secondary" size="sm">Вечерняя заметка</Button>
   );
 
   return (
@@ -81,19 +100,17 @@ export function DailyReflectionDialog({ habits, trigger }: DailyReflectionDialog
       <DialogTrigger asChild>{dialogTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Daily Reflection</DialogTitle>
-          <DialogDescription>Write your notes for today. We will parse it later with AI.</DialogDescription>
+          <DialogTitle>Ежедневная заметка</DialogTitle>
+          <DialogDescription>Напишите свои заметки за сегодня. Мы разберем их позже с помощью AI.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-2">
           <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={14} />
         </div>
         <DialogFooter>
-          <Button type="button" variant="ghost" onClick={() => setOpen(false)} aria-label="Cancel reflection" aria-disabled={busy}>Cancel</Button>
-          <Button type="button" onClick={handleSave} disabled={busy} aria-busy={busy} aria-label="Save reflection">{busy ? 'Saving…' : 'Save'}</Button>
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)} aria-label="Отменить заметку" aria-disabled={busy}>Отмена</Button>
+          <Button type="button" onClick={handleSave} disabled={busy} aria-busy={busy} aria-label="Сохранить заметку">{busy ? 'Сохранение…' : 'Сохранить'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-

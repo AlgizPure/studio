@@ -12,20 +12,24 @@ import {
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-/** Utility type to add an 'id' field to a given type T. */
+/**
+ * @fileoverview Хук React для подписки на коллекцию или запрос Firestore в реальном времени.
+ */
+
+/** Вспомогательный тип для добавления поля 'id' к заданному типу T. */
 export type WithId<T> = T & { id: string };
 
 /**
- * Interface for the return value of the useCollection hook.
- * @template T Type of the document data.
+ * Интерфейс для возвращаемого значения хука useCollection.
+ * @template T Тип данных документа.
  */
 export interface UseCollectionResult<T> {
-  data: WithId<T>[] | null; // Document data with ID, or null.
-  isLoading: boolean;       // True if loading.
-  error: FirestoreError | Error | null; // Error object, or null.
+  data: WithId<T>[] | null; // Данные документа с ID или null.
+  isLoading: boolean;       // true, если идет загрузка.
+  error: FirestoreError | Error | null; // Объект ошибки или null.
 }
 
-/* Internal implementation of Query:
+/* Внутренняя реализация Query:
   https://github.com/firebase/firebase-js-sdk/blob/c5f08a9bc5da0d2b0207802c972d53724ccef055/packages/firestore/src/lite-api/reference.ts#L143
 */
 export interface InternalQuery extends Query<DocumentData> {
@@ -38,18 +42,18 @@ export interface InternalQuery extends Query<DocumentData> {
 }
 
 /**
- * React hook to subscribe to a Firestore collection or query in real-time.
- * Handles nullable references/queries.
+ * Хук React для подписки на коллекцию или запрос Firestore в реальном времени.
+ * Обрабатывает nullable ссылки/запросы.
  * 
  *
- * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use useMemo to memoize it per React guidence.  Also make sure that it's dependencies are stable
- * references
+ * ВАЖНО! ВЫ ДОЛЖНЫ МЕМОИЗИРОВАТЬ входной memoizedTargetRefOrQuery, иначе ПРОИЗОЙДУТ ПЛОХИЕ ВЕЩИ
+ * используйте useMemo для его мемоизации согласно руководству React. Также убедитесь, что его зависимости являются стабильными
+ * ссылками
  *  
- * @template T Optional type for document data. Defaults to any.
- * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} targetRefOrQuery -
- * The Firestore CollectionReference or Query. Waits if null/undefined.
- * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
+ * @template T Необязательный тип для данных документа. По умолчанию any.
+ * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} memoizedTargetRefOrQuery -
+ * Ссылка на коллекцию или запрос Firestore. Ожидает, если null/undefined.
+ * @returns {UseCollectionResult<T>} Объект с данными, isLoading, error.
  */
 export function useCollection<T = any>(
     memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>))  | null | undefined,

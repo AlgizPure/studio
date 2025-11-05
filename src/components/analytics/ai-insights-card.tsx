@@ -9,6 +9,20 @@ import { useUser } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
+/**
+ * @fileoverview Карточка, отображающая инсайты от AI на основе данных о тренировках пользователя.
+ */
+
+/**
+ * Тип для быстрого инсайта.
+ * @typedef {object} QuickInsight
+ * @property {'positive' | 'warning' | 'recommendation'} type - Тип инсайта.
+ * @property {1 | 2 | 3} priority - Приоритет инсайта.
+ * @property {string} title - Заголовок инсайта.
+ * @property {string} description - Описание инсайта.
+ * @property {boolean} actionable - Является ли инсайт действенным.
+ * @property {string} [relatedProgram] - Связанная программа.
+ */
 type QuickInsight = {
   type: 'positive' | 'warning' | 'recommendation';
   priority: 1 | 2 | 3;
@@ -18,6 +32,16 @@ type QuickInsight = {
   relatedProgram?: string;
 };
 
+/**
+ * Тип для данных инсайтов.
+ * @typedef {object} InsightsData
+ * @property {QuickInsight[]} insights - Массив инсайтов.
+ * @property {string} summary - Краткое резюме.
+ * @property {number} confidence - Уверенность в инсайтах.
+ * @property {string} [generatedAt] - Дата генерации.
+ * @property {string} [cacheUntil] - Дата истечения кэша.
+ * @property {boolean} [fromCache] - Были ли данные взяты из кэша.
+ */
 type InsightsData = {
   insights: QuickInsight[];
   summary: string;
@@ -27,6 +51,10 @@ type InsightsData = {
   fromCache?: boolean;
 };
 
+/**
+ * Компонент карточки с инсайтами от AI.
+ * @returns {JSX.Element | null} - Карточка с инсайтами от AI или null, если пользователь не аутентифицирован.
+ */
 export function AIInsightsCard() {
   const { user } = useUser();
   const { toast } = useToast();
@@ -34,6 +62,9 @@ export function AIInsightsCard() {
   const [insights, setInsights] = useState<InsightsData | null>(null);
   const [timeframe, setTimeframe] = useState<'2weeks' | '4weeks'>('2weeks');
 
+  /**
+   * Запрашивает инсайты с сервера.
+   */
   const fetchInsights = async () => {
     if (!user) return;
 
@@ -47,16 +78,16 @@ export function AIInsightsCard() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch insights');
+        throw new Error(error.error || 'Не удалось получить инсайты');
       }
 
       const data = await response.json();
       setInsights(data);
     } catch (error: any) {
-      console.error('[AIInsightsCard] Error:', error);
+      console.error('[AIInsightsCard] Ошибка:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to generate insights',
+        title: 'Ошибка',
+        description: error.message || 'Не удалось сгенерировать инсайты',
         variant: 'destructive',
       });
     } finally {
@@ -64,6 +95,11 @@ export function AIInsightsCard() {
     }
   };
 
+  /**
+   * Возвращает иконку в зависимости от типа инсайта.
+   * @param {QuickInsight['type']} type - Тип инсайта.
+   * @returns {JSX.Element} - Иконка.
+   */
   const getIcon = (type: QuickInsight['type']) => {
     switch (type) {
       case 'positive':
@@ -75,6 +111,11 @@ export function AIInsightsCard() {
     }
   };
 
+  /**
+   * Возвращает вариант значка в зависимости от типа инсайта.
+   * @param {QuickInsight['type']} type - Тип инсайта.
+   * @returns {'default' | 'destructive' | 'secondary'} - Вариант значка.
+   */
   const getVariant = (type: QuickInsight['type']) => {
     switch (type) {
       case 'positive':
@@ -90,7 +131,7 @@ export function AIInsightsCard() {
     ? new Date(insights.cacheUntil).getTime() - Date.now() < 24 * 60 * 60 * 1000
     : true;
 
-  // Don't render if user is not authenticated
+  // Не рендерить, если пользователь не аутентифицирован
   if (!user) {
     return null;
   }
@@ -102,10 +143,10 @@ export function AIInsightsCard() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5" />
-              AI Insights
+              Инсайты от AI
             </CardTitle>
             <CardDescription>
-              Quick analysis of your training patterns
+              Быстрый анализ ваших тренировочных паттернов
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -115,7 +156,7 @@ export function AIInsightsCard() {
               onClick={() => setTimeframe(timeframe === '2weeks' ? '4weeks' : '2weeks')}
               disabled={!insights && !loading}
             >
-              {timeframe === '2weeks' ? '2W' : '4W'}
+              {timeframe === '2weeks' ? '2Н' : '4Н'}
             </Button>
             {insights && canRefresh && (
               <Button
@@ -135,10 +176,10 @@ export function AIInsightsCard() {
           <div className="space-y-3">
             <Button onClick={fetchInsights} className="w-full">
               <Sparkles className="mr-2 h-4 w-4" />
-              Get AI Insights
+              Получить инсайты от AI
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Analyze your recent workouts to get personalized recommendations
+              Проанализируйте свои недавние тренировки, чтобы получить персональные рекомендации
             </p>
           </div>
         )}
@@ -146,7 +187,7 @@ export function AIInsightsCard() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-8 gap-2">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Analyzing your data...</p>
+            <p className="text-sm text-muted-foreground">Анализ ваших данных...</p>
           </div>
         )}
 
@@ -158,8 +199,8 @@ export function AIInsightsCard() {
 
             {insights.insights.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-lg">
-                <p className="text-sm">No insights available yet.</p>
-                <p className="text-xs mt-1">Complete more workouts to get AI recommendations.</p>
+                <p className="text-sm">Инсайтов пока нет.</p>
+                <p className="text-xs mt-1">Выполните больше тренировок, чтобы получить рекомендации от AI.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -196,9 +237,9 @@ export function AIInsightsCard() {
 
             {insights.generatedAt && (
               <div className="text-xs text-muted-foreground pt-2 border-t">
-                Updated {formatDistanceToNow(new Date(insights.generatedAt), { addSuffix: true })}
-                {insights.fromCache && ' (cached)'}
-                {insights.confidence && ` • Confidence: ${Math.round(insights.confidence * 100)}%`}
+                Обновлено {formatDistanceToNow(new Date(insights.generatedAt), { addSuffix: true, locale: require('date-fns/locale/ru') })}
+                {insights.fromCache && ' (кэш)'}
+                {insights.confidence && ` • Уверенность: ${Math.round(insights.confidence * 100)}%`}
               </div>
             )}
           </div>

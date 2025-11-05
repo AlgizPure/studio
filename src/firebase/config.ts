@@ -1,8 +1,20 @@
 
-// This file is used to configure the Firebase project.
-// It is recommended to use environment variables for this.
-// https://firebase.google.com/docs/web/setup#config-object
+/**
+ * @fileoverview Этот файл используется для настройки проекта Firebase.
+ * Рекомендуется использовать переменные окружения для этого.
+ * @see https://firebase.google.com/docs/web/setup#config-object
+ */
 
+/**
+ * Конфигурация Firebase.
+ * @type {object}
+ * @property {string | undefined} apiKey - Ключ API.
+ * @property {string | undefined} authDomain - Домен аутентификации.
+ * @property {string | undefined} projectId - ID проекта.
+ * @property {string | undefined} storageBucket - Хранилище.
+ * @property {string | undefined} messagingSenderId - ID отправителя сообщений.
+ * @property {string | undefined} appId - ID приложения.
+ */
 export const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,

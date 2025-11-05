@@ -17,6 +17,17 @@ import { addDoc, collection, doc } from 'firebase/firestore';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * @fileoverview Страница с подробной информацией о программе тренировок.
+ * Отображает детали программы, список тренировок и предложения по прогрессии от AI.
+ */
+
+/**
+ * Компонент страницы с подробной информацией о программе.
+ * @param {object} props - Свойства компонента.
+ * @param {Promise<{ programId: string }>} props.params - Параметры маршрута, содержащие ID программы.
+ * @returns {JSX.Element} - Страница с подробной информацией о программе.
+ */
 export default function ProgramDetailPage({ 
   params 
 }: { 
@@ -28,19 +39,19 @@ export default function ProgramDetailPage({
   const { user } = useUser();
   const { toast } = useToast();
 
-  // Load program from Firestore
+  // Загрузка программы из Firestore
   const programDocRef = useMemoFirebase(
     () => (user && firestore ? doc(firestore, `users/${user.uid}/programs/${programId}`) : null),
     [user, firestore, programId]
   );
   const { data: programFromFirestore, isLoading: isLoadingProgram } = useDoc<Program>(programDocRef);
 
-  // Fallback to mock data if Firestore doesn't have it
+  // Резервные данные из моков, если Firestore не имеет данных
   const [program, setProgram] = useState<Program | undefined>(
     programFromFirestore || mockPrograms.find(p => p.id === programId)
   );
 
-  // Update program when Firestore data loads
+  // Обновление программы при загрузке данных из Firestore
   useEffect(() => {
     if (programFromFirestore) {
       setProgram(programFromFirestore);
@@ -50,23 +61,27 @@ export default function ProgramDetailPage({
   const [isAddWorkoutOpen, setIsAddWorkoutOpen] = useState(false);
   const [executingWorkout, setExecutingWorkout] = useState<WorkoutExtended | null>(null);
 
-  // Show loading state while fetching from Firestore
+  // Отображение состояния загрузки при получении данных из Firestore
   if (isLoadingProgram && !program) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading program...</p>
+          <p className="text-muted-foreground">Загрузка программы...</p>
         </div>
       </div>
     );
   }
 
+  /**
+   * Обрабатывает завершение тренировки.
+   * @param {Omit<WorkoutLog, 'id' | 'createdAt' | 'updatedAt' | 'userId'>} log - Лог завершенной тренировки.
+   */
   const handleWorkoutComplete = async (log: Omit<WorkoutLog, 'id' | 'createdAt' | 'updatedAt' | 'userId'>) => {
     if (!user || !firestore) {
       toast({
-        title: 'Error',
-        description: 'User not authenticated. Cannot save log.',
+        title: 'Ошибка',
+        description: 'Пользователь не аутентифицирован. Не удается сохранить лог.',
         variant: 'destructive',
       });
       return;
@@ -82,16 +97,16 @@ export default function ProgramDetailPage({
       });
   
       toast({
-        title: 'Workout Completed!',
-        description: 'Your workout has been logged successfully.',
+        title: 'Тренировка завершена!',
+        description: 'Ваша тренировка была успешно записана.',
       });
   
       setExecutingWorkout(null);
     } catch (error) {
-      console.error("Failed to save workout log:", error);
+      console.error("Не удалось сохранить лог тренировки:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to save workout log. Please try again.',
+        title: 'Ошибка',
+        description: 'Не удалось сохранить лог тренировки. Пожалуйста, попробуйте еще раз.',
         variant: 'destructive',
       });
     }
@@ -102,15 +117,25 @@ export default function ProgramDetailPage({
     notFound();
   }
 
+  /**
+   * Форматирует строку с датой.
+   * @param {string} [dateString] - Строка с датой.
+   * @returns {string} - Отформатированная дата.
+   */
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', { 
+    return new Date(dateString).toLocaleDateString('ru-RU', {
       month: 'short', 
       day: 'numeric', 
       year: 'numeric' 
     });
   };
 
+  /**
+   * Добавляет тренировку в программу.
+   * @param {WorkoutExtended} workout - Добавляемая тренировка.
+   * @param {ProgramWorkout['schedule']} schedule - Расписание тренировки.
+   */
   const handleWorkoutAdd = (workout: WorkoutExtended, schedule: ProgramWorkout['schedule']) => {
     const programWorkout: ProgramWorkout = {
       workoutId: workout.id,
@@ -131,6 +156,10 @@ export default function ProgramDetailPage({
     });
   };
   
+  /**
+   * Начинает выполнение тренировки.
+   * @param {WorkoutExtended} workout - Тренировка для начала.
+   */
   const handleStartWorkout = (workout: WorkoutExtended) => {
     setExecutingWorkout(workout);
   };
@@ -138,7 +167,7 @@ export default function ProgramDetailPage({
   return (
     <>
     <div className="space-y-6">
-      {/* Header */}
+      {/* Заголовок */}
       <div className="flex items-center gap-4">
         <Button 
           variant="outline" 
@@ -154,16 +183,16 @@ export default function ProgramDetailPage({
             <Badge>{program.status}</Badge>
           </div>
           <p className="text-muted-foreground mt-1">
-            {formatDate(program.startDate)} - {program.durationType === 'fixed' ? formatDate(program.endDate) : 'Ongoing'}
+            {formatDate(program.startDate)} - {program.durationType === 'fixed' ? formatDate(program.endDate) : 'Постоянная'}
           </p>
         </div>
       </div>
 
-      {/* Description */}
+      {/* Описание */}
       {program.description && (
         <Card className="glass">
           <CardHeader>
-            <CardTitle>Description</CardTitle>
+            <CardTitle>Описание</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">{program.description}</p>
@@ -171,12 +200,12 @@ export default function ProgramDetailPage({
         </Card>
       )}
 
-      {/* Tags & Goal */}
+      {/* Теги и цель */}
       <div className="grid md:grid-cols-2 gap-4">
         {program.tags.length > 0 && (
           <Card className="glass flex-1">
             <CardHeader>
-              <CardTitle>Tags</CardTitle>
+              <CardTitle>Теги</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
@@ -191,7 +220,7 @@ export default function ProgramDetailPage({
         {program.goal && (
           <Card className="glass flex-1">
             <CardHeader>
-              <CardTitle>Goal</CardTitle>
+              <CardTitle>Цель</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">{program.goal}</p>
@@ -200,32 +229,32 @@ export default function ProgramDetailPage({
         )}
       </div>
 
-      {/* AI Progression Suggestions */}
+      {/* Предложения по прогрессии от AI */}
       {program.status === 'active' && program.workouts.length > 0 && user && (
         <ProgressionSuggestionsPanel program={program} />
       )}
 
-      {/* Workouts Section */}
+      {/* Секция тренировок */}
       <Card className="glass">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Workouts</CardTitle>
+              <CardTitle>Тренировки</CardTitle>
               <CardDescription>
-                Training sessions in this program
+                Тренировочные сессии в этой программе
               </CardDescription>
             </div>
             <Button onClick={() => setIsAddWorkoutOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Workout
+              Добавить тренировку
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           {program.workouts.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-              <p>No workouts added yet</p>
-              <p className="text-sm mt-2">Click "Add Workout" to get started</p>
+              <p>Тренировки еще не добавлены</p>
+              <p className="text-sm mt-2">Нажмите "Добавить тренировку", чтобы начать</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -234,11 +263,11 @@ export default function ProgramDetailPage({
                 return (
                     <Card key={index}>
                       <CardHeader>
-                          <CardTitle>{workoutDetail?.name || `Workout ${index + 1}`}</CardTitle>
+                          <CardTitle>{workoutDetail?.name || `Тренировка ${index + 1}`}</CardTitle>
                           <CardDescription>
                           {pw.schedule.intervalType === 'days_of_week' 
                               ? `${(pw.schedule.intervalValue as string[]).join(', ')}`
-                              : `Every ${pw.schedule.intervalValue} days`
+                              : `Каждые ${pw.schedule.intervalValue} дней`
                           }
                           </CardDescription>
                       </CardHeader>
@@ -246,7 +275,7 @@ export default function ProgramDetailPage({
                         {workoutDetail && (
                           <Button onClick={() => handleStartWorkout(workoutDetail)}>
                             <Play className="mr-2 h-4 w-4" />
-                            Start Workout
+                            Начать тренировку
                           </Button>
                         )}
                       </CardContent>
@@ -258,7 +287,7 @@ export default function ProgramDetailPage({
         </CardContent>
       </Card>
 
-      {/* Add Workout Dialog */}
+      {/* Диалог добавления тренировки */}
       <AddWorkoutToProgramDialog
         open={isAddWorkoutOpen}
         onOpenChange={setIsAddWorkoutOpen}

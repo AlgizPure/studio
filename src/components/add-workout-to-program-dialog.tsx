@@ -16,12 +16,28 @@ import { WorkoutScheduleSetup } from './workout-builder/workout-schedule-setup';
 import type { WorkoutExtended, ProgramWorkout } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * @fileoverview Диалоговое окно для добавления новой тренировки в программу тренировок.
+ */
+
+/**
+ * Свойства для компонента AddWorkoutToProgramDialog.
+ * @interface AddWorkoutToProgramDialogProps
+ * @property {boolean} open - Определяет, открыто ли диалоговое окно.
+ * @property {(open: boolean) => void} onOpenChange - Функция обратного вызова при изменении состояния открытости.
+ * @property {(workout: WorkoutExtended, schedule: ProgramWorkout['schedule']) => void} onWorkoutAdd - Функция обратного вызова при добавлении тренировки.
+ */
 interface AddWorkoutToProgramDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onWorkoutAdd: (workout: WorkoutExtended, schedule: ProgramWorkout['schedule']) => void;
 }
 
+/**
+ * Компонент диалогового окна для добавления тренировки в программу.
+ * @param {AddWorkoutToProgramDialogProps} props - Свойства компонента.
+ * @returns {JSX.Element} - Диалоговое окно для добавления тренировки в программу.
+ */
 export function AddWorkoutToProgramDialog({
   open,
   onOpenChange,
@@ -40,8 +56,8 @@ export function AddWorkoutToProgramDialog({
   const handleScheduleSave = () => {
     if (!workout || !schedule) {
       toast({
-        title: 'Error',
-        description: 'Please complete workout and schedule setup.',
+        title: 'Ошибка',
+        description: 'Пожалуйста, завершите создание тренировки и настройку расписания.',
         variant: 'destructive',
       });
       return;
@@ -54,7 +70,7 @@ export function AddWorkoutToProgramDialog({
 
     onWorkoutAdd(fullWorkout, schedule);
     
-    // Reset
+    // Сброс
     setWorkout(null);
     setSchedule(null);
     setCurrentTab('workout');
@@ -72,17 +88,17 @@ export function AddWorkoutToProgramDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
-          <DialogTitle>Add Workout to Program</DialogTitle>
+          <DialogTitle>Добавить тренировку в программу</DialogTitle>
           <DialogDescription>
-            Create a new workout and configure its schedule in the program.
+            Создайте новую тренировку и настройте ее расписание в программе.
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-1 flex flex-col overflow-hidden min-h-0 px-6">
           <TabsList className="grid w-full grid-cols-2 mt-4 flex-shrink-0">
-            <TabsTrigger value="workout">Workout Builder</TabsTrigger>
+            <TabsTrigger value="workout">Конструктор тренировок</TabsTrigger>
             <TabsTrigger value="schedule" disabled={!workout}>
-              Schedule
+              Расписание
             </TabsTrigger>
           </TabsList>
 
@@ -104,10 +120,10 @@ export function AddWorkoutToProgramDialog({
                 </div>
                 <DialogFooter className="mt-4 pt-4 border-t px-0">
                   <Button variant="outline" onClick={() => setCurrentTab('workout')}>
-                    Back to Builder
+                    Назад к конструктору
                   </Button>
                   <Button onClick={handleScheduleSave} disabled={!schedule}>
-                    Add to Program
+                    Добавить в программу
                   </Button>
                 </DialogFooter>
               </div>

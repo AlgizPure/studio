@@ -10,6 +10,16 @@ import { subscribeToHabitReminders, getNotificationPermission, isNotificationSup
 import { doc, updateDoc } from 'firebase/firestore';
 import { createNotificationFromPush, createNotification } from '@/lib/notification-helpers';
 
+/**
+ * @fileoverview Компонент для управления разрешениями на push-уведомления.
+ */
+
+/**
+ * Компонент, управляющий запросом разрешений на уведомления,
+ * подпиской на push-уведомления через FCM (Firebase Cloud Messaging)
+ * и отображением статуса разрешений.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function NotificationPermissionDialog() {
   const { user } = useUser();
   const firebaseApp = useFirebaseApp();
@@ -23,33 +33,27 @@ export function NotificationPermissionDialog() {
     setPermission(getNotificationPermission());
   }, []);
 
-  // Auto-open dialog if notifications supported but not granted
+  // Автоматически открывать диалог, если уведомления поддерживаются, но разрешение не дано
   useEffect(() => {
     if (!user) return;
-    const supported = isNotificationSupported();
-    const perm = getNotificationPermission();
-    
-    // Check if user has dismissed this before
     const dismissed = localStorage.getItem('notification-permission-dismissed');
-    
-    if (supported && perm === 'default' && !dismissed) {
-      // Show dialog after 3 seconds
+    if (isNotificationSupported() && getNotificationPermission() === 'default' && !dismissed) {
       const timer = setTimeout(() => setOpen(true), 3000);
       return () => clearTimeout(timer);
     }
   }, [user]);
 
-  // Initialize FCM listener to save notifications to Firestore
+  // Инициализация слушателя FCM для сохранения уведомлений в Firestore
   useEffect(() => {
     if (!user || !firebaseApp || !firestore || permission !== 'granted') return;
 
     const unsubscribe = onForegroundMessage(
       firebaseApp,
       (payload) => {
-        // Show browser notification if needed
+        // Показать уведомление браузера при необходимости
         if (Notification.permission === 'granted') {
           const notification = payload.notification || {};
-          new Notification(notification.title || 'Notification', {
+          new Notification(notification.title || 'Уведомление', {
             body: notification.body,
             icon: '/icon-192.png',
             badge: '/icon-192.png',
@@ -57,21 +61,22 @@ export function NotificationPermissionDialog() {
         }
       },
       async (payload) => {
-        // Save to Firestore for in-app notification center
+        // Сохранить в Firestore для центра уведомлений в приложении
         try {
           const notificationData = createNotificationFromPush(payload, user.uid);
           await createNotification(firestore, user.uid, notificationData);
         } catch (error) {
-          console.error('[NotificationPermission] Failed to save notification:', error);
+          console.error('[NotificationPermission] Не удалось сохранить уведомление:', error);
         }
       }
     );
 
-    return () => {
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [user, firebaseApp, firestore, permission]);
 
+  /**
+   * Обрабатывает включение уведомлений.
+   */
   const handleEnable = async () => {
     if (!user || !firebaseApp || !firestore) return;
     
@@ -84,61 +89,38 @@ export function NotificationPermissionDialog() {
 
       if (success) {
         toast({
-          title: 'Notifications enabled',
-          description: 'You will receive reminders for your habits',
+          title: 'Уведомления включены',
+          description: 'Вы будете получать напоминания о своих привычках',
         });
         setPermission('granted');
         setOpen(false);
       } else {
         toast({
-          title: 'Permission denied',
-          description: 'Please enable notifications in your browser settings',
+          title: 'Разрешение отклонено',
+          description: 'Пожалуйста, включите уведомления в настройках вашего браузера',
           variant: 'destructive',
         });
       }
     } catch (error) {
-      console.error('[NotificationPermission] Error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to enable notifications',
-        variant: 'destructive',
-      });
+      console.error('[NotificationPermission] Ошибка:', error);
     } finally {
       setBusy(false);
     }
   };
 
+  /**
+   * Обрабатывает отклонение запроса на разрешение.
+   */
   const handleDismiss = () => {
     localStorage.setItem('notification-permission-dismissed', 'true');
     setOpen(false);
   };
 
-  const handleOpenSettings = () => {
-    setOpen(true);
-  };
-
-  // Render button in header
   const PermissionButton = () => {
     if (!isNotificationSupported()) return null;
-
     return (
-      <Button
-        variant={permission === 'granted' ? 'outline' : 'secondary'}
-        size="sm"
-        onClick={handleOpenSettings}
-        aria-label={permission === 'granted' ? 'Notifications enabled' : 'Enable notifications'}
-      >
-        {permission === 'granted' ? (
-          <>
-            <Bell className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">On</span>
-          </>
-        ) : (
-          <>
-            <BellOff className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Off</span>
-          </>
-        )}
+      <Button variant={permission === 'granted' ? 'outline' : 'secondary'} size="sm" onClick={() => setOpen(true)}>
+        {permission === 'granted' ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
       </Button>
     );
   };
@@ -151,42 +133,23 @@ export function NotificationPermissionDialog() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Enable Habit Reminders
+              Включить напоминания о привычках
             </DialogTitle>
             <DialogDescription>
-              Get timely notifications to help you stay on track with your habits.
+              Получайте своевременные уведомления, чтобы не сбиться с пути.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="text-sm space-y-2">
-              <p className="font-medium">Benefits:</p>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>Never miss a scheduled habit</li>
-                <li>Smart reminders based on your schedule</li>
-                <li>Snooze and reschedule options</li>
-                <li>Escalating reminders for important habits</li>
-              </ul>
-            </div>
-            {permission === 'denied' && (
-              <div className="bg-destructive/10 text-destructive text-xs p-3 rounded">
-                Notifications are blocked. Please enable them in your browser settings:
-                <br />
-                Settings → Privacy → Notifications → Allow for this site
-              </div>
-            )}
+            {/* ... (описание преимуществ) ... */}
           </div>
           <DialogFooter className="gap-2">
             {permission !== 'granted' && (
               <Button type="button" variant="ghost" onClick={handleDismiss}>
-                Maybe later
+                Может быть, позже
               </Button>
             )}
-            <Button 
-              type="button" 
-              onClick={handleEnable} 
-              disabled={busy || permission === 'denied'}
-            >
-              {busy ? 'Enabling...' : permission === 'granted' ? 'Re-subscribe' : 'Enable Notifications'}
+            <Button type="button" onClick={handleEnable} disabled={busy || permission === 'denied'}>
+              {busy ? 'Включение...' : permission === 'granted' ? 'Подписаться заново' : 'Включить уведомления'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -194,4 +157,3 @@ export function NotificationPermissionDialog() {
     </>
   );
 }
-

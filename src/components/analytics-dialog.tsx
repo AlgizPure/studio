@@ -10,6 +10,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { HabitLog } from '@/lib/types';
 
+/**
+ * @fileoverview Диалоговое окно для отображения базовой аналитики на основе данных о привычках.
+ */
+
+/**
+ * Вычисляет метрики "Колеса жизни" на основе логов привычек.
+ * @param {HabitLog[]} logs - Массив логов привычек.
+ * @returns {{ metrics: { area: string, value: number }[], balanceScore: number }} - Метрики "Колеса жизни" и оценка баланса.
+ */
 function computeWheelOfLife(logs: HabitLog[]) {
   const areas = ['health','career','relationships','growth','finance','recreation','environment','spirituality'] as const;
   const counters: Record<string, { total: number; done: number }> = Object.fromEntries(areas.map(a => [a, { total: 0, done: 0 }])) as any;
@@ -27,6 +36,11 @@ function computeWheelOfLife(logs: HabitLog[]) {
   return { metrics, balanceScore };
 }
 
+/**
+ * Вычисляет базовые метрики иерархии Маслоу.
+ * @param {HabitLog[]} logs - Массив логов привычек.
+ * @returns {{ physiological: number, safety: number, baseStability: number }} - Метрики иерархии Маслоу.
+ */
 function computeMaslowBase(logs: HabitLog[]) {
   const base = ['physiological','safety'] as const;
   const counters: Record<string, { total: number; done: number }> = { physiological: { total: 0, done: 0 }, safety: { total: 0, done: 0 } };
@@ -42,6 +56,10 @@ function computeMaslowBase(logs: HabitLog[]) {
   return { physiological: Math.round(phys), safety: Math.round(saf), baseStability };
 }
 
+/**
+ * Компонент диалогового окна аналитики.
+ * @returns {JSX.Element} - Диалоговое окно аналитики.
+ */
 export function AnalyticsDialog() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -75,24 +93,24 @@ export function AnalyticsDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm">Analytics</Button>
+        <Button variant="secondary" size="sm">Аналитика</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[720px]">
         <DialogHeader>
-          <DialogTitle>Analytics (basic)</DialogTitle>
-          <DialogDescription>Early metrics based on active systems context.</DialogDescription>
+          <DialogTitle>Аналитика (базовая)</DialogTitle>
+          <DialogDescription>Ранние метрики на основе контекста активных систем.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-4 items-center gap-2">
-            <Label className="text-right">From</Label>
+            <Label className="text-right">С</Label>
             <Input type="date" className="col-span-3" value={from} onChange={(e) => setFrom(e.target.value)} />
           </div>
           <div className="grid grid-cols-4 items-center gap-2">
-            <Label className="text-right">To</Label>
+            <Label className="text-right">По</Label>
             <Input type="date" className="col-span-3" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
           <div>
-            <div className="text-sm font-medium mb-2">Wheel of Life</div>
+            <div className="text-sm font-medium mb-2">Колесо жизни</div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               {wheel.metrics.map(m => (
                 <div key={m.area} className="flex items-center justify-between p-2 rounded border">
@@ -101,23 +119,21 @@ export function AnalyticsDialog() {
                 </div>
               ))}
             </div>
-            <div className="mt-2 text-xs text-muted-foreground">Balance score: {wheel.balanceScore}%</div>
+            <div className="mt-2 text-xs text-muted-foreground">Оценка баланса: {wheel.balanceScore}%</div>
           </div>
           <div>
-            <div className="text-sm font-medium mb-2">Maslow Base</div>
+            <div className="text-sm font-medium mb-2">База Маслоу</div>
             <div className="grid grid-cols-3 gap-2 text-sm">
-              <div className="p-2 rounded border">Physiological: {maslow.physiological}%</div>
-              <div className="p-2 rounded border">Safety: {maslow.safety}%</div>
-              <div className="p-2 rounded border">Base stability: {maslow.baseStability}%</div>
+              <div className="p-2 rounded border">Физиологические: {maslow.physiological}%</div>
+              <div className="p-2 rounded border">Безопасность: {maslow.safety}%</div>
+              <div className="p-2 rounded border">Стабильность базы: {maslow.baseStability}%</div>
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" onClick={() => setOpen(false)}>Close</Button>
+          <Button type="button" onClick={() => setOpen(false)}>Закрыть</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-

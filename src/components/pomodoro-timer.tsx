@@ -5,17 +5,33 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Play, Pause } from 'lucide-react';
 import { Button } from './ui/button';
 
+/**
+ * @fileoverview Компонент таймера Pomodoro.
+ */
+
+/**
+ * @interface PomodoroTimerProps
+ * @description Свойства для компонента PomodoroTimer.
+ */
 interface PomodoroTimerProps {
+  /** Количество рабочих циклов. */
   cycles: number;
+  /** Флаг, отключающий таймер. */
   disabled?: boolean;
 }
 
 const DEFAULT_WORK_MINUTES = 25;
 const DEFAULT_REST_MINUTES = 5;
-
 const CIRCLE_RADIUS = 20;
 const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
+/**
+ * Интерактивный компонент таймера Pomodoro.
+ * Позволяет пользователю запускать и останавливать сессии работы и отдыха.
+ * Настройки длительности берутся из `localStorage`.
+ * @param {PomodoroTimerProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function PomodoroTimer({ cycles, disabled = false }: PomodoroTimerProps) {
   const [workDuration, setWorkDuration] = useState(DEFAULT_WORK_MINUTES * 60);
   const [restDuration, setRestDuration] = useState(DEFAULT_REST_MINUTES * 60);
@@ -29,13 +45,15 @@ export function PomodoroTimer({ cycles, disabled = false }: PomodoroTimerProps) 
     if (typeof window !== 'undefined') {
       const workMin = parseInt(localStorage.getItem('pomodoroWorkDuration') || String(DEFAULT_WORK_MINUTES), 10);
       const restMin = parseInt(localStorage.getItem('pomodoroRestDuration') || String(DEFAULT_REST_MINUTES), 10);
-      const initialDuration = workMin * 60;
-      setWorkDuration(initialDuration);
+      setWorkDuration(workMin * 60);
       setRestDuration(restMin * 60);
-      setTimeLeft(initialDuration);
+      setTimeLeft(workMin * 60);
     }
   }, []);
 
+  /**
+   * Сбрасывает таймер в исходное состояние.
+   */
   const resetTimer = useCallback(() => {
     setIsActive(false);
     setIsWorkSession(true);
@@ -50,56 +68,56 @@ export function PomodoroTimer({ cycles, disabled = false }: PomodoroTimerProps) 
   }, [disabled]);
   
   useEffect(() => {
-    // When workDuration changes (e.g. from settings), reset the timer
     setTimeLeft(workDuration);
   }, [workDuration]);
 
   useEffect(() => {
-    if (!isActive) {
-      return;
-    }
-
-    if (timeLeft <= 0) {
-      if (isWorkSession) {
-        setCompletedCycles(prev => prev + 1);
-        
-        if (completedCycles + 1 >= cycles) {
+    if (!isActive || timeLeft <= 0) {
+      if (timeLeft <= 0) {
+        if (isWorkSession) {
+          const newCompleted = completedCycles + 1;
+          setCompletedCycles(newCompleted);
+          if (newCompleted >= cycles) {
             resetTimer();
-            new Notification("Pomodoro", { body: "All cycles complete! Great work." });
+            new Notification("Pomodoro", { body: "Все циклы завершены! Отличная работа." });
             return;
+          }
+          setIsWorkSession(false);
+          setTimeLeft(restDuration);
+          new Notification("Pomodoro", { body: "Рабочая сессия окончена! Время для перерыва." });
+        } else {
+          setIsWorkSession(true);
+          setTimeLeft(workDuration);
+          new Notification("Pomodoro", { body: "Перерыв окончен! Пора возвращаться к работе." });
         }
-
-        setIsWorkSession(false);
-        setTimeLeft(restDuration);
-        new Notification("Pomodoro", { body: "Work session over! Time for a break." });
-
-      } else {
-        setIsWorkSession(true);
-        setTimeLeft(workDuration);
-        new Notification("Pomodoro", { body: "Break's over! Time to get back to work." });
       }
       return;
     }
 
-    const interval = setInterval(() => {
-      setTimeLeft(prev => prev - 1);
-    }, 1000);
-
+    const interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     return () => clearInterval(interval);
   }, [isActive, timeLeft, isWorkSession, workDuration, restDuration, resetTimer, completedCycles, cycles]);
 
+  /**
+   * Переключает состояние таймера (запуск/пауза).
+   */
   const toggleTimer = () => {
     if (disabled) return;
-    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+    if (Notification.permission === 'default') {
       Notification.requestPermission();
     }
     setIsActive(!isActive);
   };
 
+  /**
+   * Форматирует время из секунд в строку "мм:сс".
+   * @param {number} seconds - Время в секундах.
+   * @returns {string} - Отформатированное время.
+   */
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
   const totalDuration = isWorkSession ? workDuration : restDuration;
@@ -113,18 +131,13 @@ export function PomodoroTimer({ cycles, disabled = false }: PomodoroTimerProps) 
           <circle
             className="stroke-current text-secondary"
             strokeWidth="4"
-            cx="25"
-            cy="25"
-            r={CIRCLE_RADIUS}
+            cx="25" cy="25" r={CIRCLE_RADIUS}
             fill="transparent"
           />
           <circle
             className="stroke-current text-primary transition-all duration-1000 ease-linear"
-            strokeWidth="4"
-            strokeLinecap="round"
-            cx="25"
-            cy="25"
-            r={CIRCLE_RADIUS}
+            strokeWidth="4" strokeLinecap="round"
+            cx="25" cy="25" r={CIRCLE_RADIUS}
             fill="transparent"
             strokeDasharray={CIRCLE_CIRCUMFERENCE}
             strokeDashoffset={strokeDashoffset}

@@ -20,19 +20,37 @@ import { z } from 'zod';
 import type { Exercise } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * @fileoverview Диалоговое окно для логирования выполнения упражнения с параметрами.
+ */
+
+/**
+ * @interface LogExerciseDialogProps
+ * @description Свойства для компонента LogExerciseDialog.
+ */
 interface LogExerciseDialogProps {
+  /** Упражнение, для которого ведется лог. */
   exercise: Exercise;
+  /** Callback-функция, вызываемая при сохранении лога. */
   onLog: (exercise: Exercise, values: { [key: string]: number }) => void;
+  /** Флаг, указывающий, завершено ли уже упражнение. */
   isCompleted: boolean;
 }
 
+/**
+ * Компонент диалогового окна для записи результатов выполнения упражнения.
+ * Динамически создает поля ввода на основе параметров, определенных для упражнения.
+ * @param {LogExerciseDialogProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function LogExerciseDialog({ exercise, onLog, isCompleted }: LogExerciseDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
+  // Динамическое создание схемы валидации на основе параметров упражнения
   const schema = z.object(
     (exercise.parameters || []).reduce((acc, param) => {
-      acc[param.id] = z.preprocess((val) => Number(val), z.number().min(0, 'Must be non-negative'));
+      acc[param.id] = z.preprocess((val) => Number(val), z.number().min(0, 'Значение не может быть отрицательным'));
       return acc;
     }, {} as { [key: string]: z.ZodType<any, any> })
   );
@@ -42,7 +60,6 @@ export function LogExerciseDialog({ exercise, onLog, isCompleted }: LogExerciseD
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -52,19 +69,23 @@ export function LogExerciseDialog({ exercise, onLog, isCompleted }: LogExerciseD
     }, {} as any),
   });
 
+  /**
+   * Обрабатывает отправку формы с данными лога.
+   * @param {FormValues} data - Данные из формы.
+   */
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     try {
       onLog(exercise, data);
       toast({
-        title: 'Exercise Logged!',
-        description: `${exercise.name} has been marked as complete.`,
+        title: 'Упражнение записано!',
+        description: `${exercise.name} было отмечено как выполненное.`,
       });
       setIsOpen(false);
     } catch (e) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'There was an error logging the exercise.',
+        title: 'Ошибка',
+        description: 'Произошла ошибка при записи упражнения.',
       });
     }
   };
@@ -85,8 +106,8 @@ export function LogExerciseDialog({ exercise, onLog, isCompleted }: LogExerciseD
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle className="font-headline">Log: {exercise.name}</DialogTitle>
-            <DialogDescription>Enter the values for today's workout. Your changes will be saved.</DialogDescription>
+            <DialogTitle className="font-headline">Запись: {exercise.name}</DialogTitle>
+            <DialogDescription>Введите значения для сегодняшней тренировки. Ваши изменения будут сохранены.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {(exercise.parameters || []).map((param) => (
@@ -105,8 +126,8 @@ export function LogExerciseDialog({ exercise, onLog, isCompleted }: LogExerciseD
             ))}
           </div>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
-            <Button type="submit">Log & Complete</Button>
+            <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Отмена</Button>
+            <Button type="submit">Записать и завершить</Button>
           </DialogFooter>
         </form>
       </DialogContent>

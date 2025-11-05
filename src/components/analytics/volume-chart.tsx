@@ -22,11 +22,26 @@ import {
   formatVolume,
 } from '@/lib/analytics-utils';
 
+/**
+ * @fileoverview Компонент диаграммы для отслеживания общего объема тренировок с течением времени.
+ */
+
+/**
+ * Свойства для компонента VolumeChart.
+ * @interface VolumeChartProps
+ * @property {WorkoutLog[]} workouts - Массив логов тренировок.
+ * @property {TimeRange} timeRange - Временной диапазон для анализа.
+ */
 interface VolumeChartProps {
   workouts: WorkoutLog[];
   timeRange: TimeRange;
 }
 
+/**
+ * Компонент диаграммы объема тренировок.
+ * @param {VolumeChartProps} props - Свойства компонента.
+ * @returns {JSX.Element} - Диаграмма объема тренировок.
+ */
 export function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
   const chartData = useMemo(() => {
     const filteredWorkouts = getWorkoutsByDateRange(workouts, timeRange);
@@ -45,14 +60,14 @@ export function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
   const formatDate = (dateStr: string, period: 'day' | 'week' | 'month') => {
     if (period === 'week') {
       const weekNum = dateStr.split('-W')[1];
-      return `W${weekNum}`;
+      return `Н${weekNum}`;
     } else if (period === 'day') {
       const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return date.toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' });
     } else {
       const [year, month] = dateStr.split('-');
       const date = new Date(parseInt(year), parseInt(month) - 1);
-      return date.toLocaleDateString('en-US', { month: 'short' });
+      return date.toLocaleDateString('ru-RU', { month: 'short' });
     }
   };
 
@@ -62,10 +77,10 @@ export function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
         <div className="rounded-lg border bg-background p-2 shadow-md">
           <p className="text-sm font-medium">{payload[0].payload.date}</p>
           <p className="text-sm text-muted-foreground">
-            Volume: <span className="font-medium text-foreground">{formatVolume(payload[0].value)}</span>
+            Объем: <span className="font-medium text-foreground">{formatVolume(payload[0].value)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
-            Workouts: <span className="font-medium text-foreground">{payload[0].payload.workouts}</span>
+            Тренировок: <span className="font-medium text-foreground">{payload[0].payload.workouts}</span>
           </p>
         </div>
       );
@@ -77,12 +92,12 @@ export function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Total Volume Over Time</CardTitle>
-          <CardDescription>Track your training volume progress</CardDescription>
+          <CardTitle>Общий объем с течением времени</CardTitle>
+          <CardDescription>Отслеживайте прогресс вашего тренировочного объема</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-            <p>No workout data available for this time range</p>
+            <p>Нет данных о тренировках для этого временного диапазона</p>
           </div>
         </CardContent>
       </Card>
@@ -92,9 +107,9 @@ export function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Total Volume Over Time</CardTitle>
+        <CardTitle>Общий объем с течением времени</CardTitle>
         <CardDescription>
-          Training volume (weight × reps) with trend line
+          Тренировочный объем (вес × повторения) с линией тренда
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -112,7 +127,7 @@ export function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
             <YAxis
               className="text-xs"
               tick={{ fill: 'hsl(var(--muted-foreground))' }}
-              tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+              tickFormatter={(value) => `${(value / 1000).toFixed(0)}тыс.`}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend
@@ -126,7 +141,7 @@ export function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
               strokeWidth={2}
               dot={{ fill: 'hsl(var(--primary))', r: 4 }}
               activeDot={{ r: 6 }}
-              name="Volume (kg)"
+              name="Объем (кг)"
             />
             <Line
               type="monotone"
@@ -135,7 +150,7 @@ export function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
               strokeWidth={2}
               strokeDasharray="5 5"
               dot={false}
-              name="Trend"
+              name="Тренд"
             />
           </LineChart>
         </ResponsiveContainer>
@@ -143,5 +158,3 @@ export function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
     </Card>
   );
 }
-
-

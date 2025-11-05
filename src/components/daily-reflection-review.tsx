@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUser, useFirestore } from '@/firebase/provider';
 import { collection, doc, getDoc, addDoc, updateDoc } from 'firebase/firestore';
@@ -16,11 +15,25 @@ import { parseDailyReflection } from '@/ai/flows/parse-reflection';
 import { isHabitV2 } from '@/lib/habits-guards';
 import { validateAndCreateHabitLog } from '@/lib/habits-validators';
 
+/**
+ * @fileoverview Диалоговое окно для просмотра и корректировки результатов парсинга ежедневной заметки.
+ */
+
+/**
+ * @interface DailyReflectionReviewProps
+ * @description Свойства для компонента DailyReflectionReview.
+ */
 interface DailyReflectionReviewProps {
+  /** Список привычек пользователя для сопоставления. */
   habits: Habit[];
+  /** Пользовательский триггер для открытия диалогового окна. */
   trigger?: React.ReactNode;
 }
 
+/**
+ * @typedef {object} EditableEntry
+ * @description Тип для редактируемой записи, полученной из заметки.
+ */
 type EditableEntry = {
   habitId: string;
   habitName: string;
@@ -29,6 +42,12 @@ type EditableEntry = {
   durationMin?: string;
 };
 
+/**
+ * Компонент для просмотра и редактирования записей, извлеченных AI из ежедневной заметки.
+ * Позволяет пользователю скорректировать данные перед их сохранением в виде логов привычек.
+ * @param {DailyReflectionReviewProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function DailyReflectionReview({ habits, trigger }: DailyReflectionReviewProps) {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -37,6 +56,9 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
   const [entries, setEntries] = useState<EditableEntry[]>([]);
   const [busy, setBusy] = useState(false);
 
+  /**
+   * Загружает заметку за сегодняшний день и парсит ее с помощью AI.
+   */
   const loadAndParse = async () => {
     if (!user || !firestore) return;
     const dateStr = format(new Date(), 'yyyy-MM-dd');
@@ -48,7 +70,6 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
       return;
     }
     
-    // Use real AI parsing with fallback to mock
     try {
       const parsed = await parseDailyReflection(rawText, habits || []);
       setEntries(parsed.map(p => ({
@@ -59,8 +80,8 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
         durationMin: p.extractedDuration != null ? String(p.extractedDuration) : '',
       })));
     } catch (error) {
-      console.error('[DailyReflectionReview] Parsing error:', error);
-      // Fallback to mock
+      console.error('[DailyReflectionReview] Ошибка парсинга:', error);
+      // Запасной вариант с моком
       const parsed = parseReflectionMock(rawText, habits || []);
       setEntries(parsed.map(p => ({
         habitId: p.habitId,
@@ -78,12 +99,14 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
     }
   }, [open]);
 
+  /**
+   * Сохраняет скорректированные записи как логи привычек.
+   */
   const handleSave = async () => {
     if (!user || !firestore) return;
     const dateStr = format(new Date(), 'yyyy-MM-dd');
     try {
       setBusy(true);
-      // write logs
       const logsCol = collection(firestore, `users/${user.uid}/habitLogs`);
       for (const e of entries) {
         const matched = (habits || []).find(h => h.id === e.habitId);
@@ -101,11 +124,9 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
           manuallyEdited: true,
         };
         
-        // Validate before writing
         const validated = validateAndCreateHabitLog(logData);
         await addDoc(logsCol, validated);
       }
-      // update reflection doc
       const ref = doc(firestore, `users/${user.uid}/dailyReflections/${dateStr}`);
       await updateDoc(ref, {
         parsedEntries: entries.map(e => ({
@@ -120,17 +141,17 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
         manualCorrections: true,
         updatedAt: new Date().toISOString(),
       });
-      toast({ title: 'Reflection processed', description: 'Logs created from reflection.' });
+      toast({ title: 'Заметка обработана', description: 'Логи созданы из заметки.' });
       setOpen(false);
     } catch (e) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to process reflection' });
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось обработать заметку' });
     } finally {
       setBusy(false);
     }
   };
 
   const dialogTrigger = trigger ?? (
-    <Button variant="secondary" size="sm">Process reflection</Button>
+    <Button variant="secondary" size="sm">Обработать заметку</Button>
   );
 
   return (
@@ -138,20 +159,20 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
       <DialogTrigger asChild>{dialogTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle>Review parsed entries</DialogTitle>
-          <DialogDescription>Adjust values or status, then save to create logs.</DialogDescription>
+          <DialogTitle>Просмотр извлеченных записей</DialogTitle>
+          <DialogDescription>Скорректируйте значения или статус, затем сохраните для создания логов.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
           {entries.map((e, idx) => (
             <div key={e.habitId} className="grid grid-cols-6 items-center gap-2 p-2 border rounded">
               <div className="col-span-2 text-sm font-medium truncate">{e.habitName}</div>
               <div className="col-span-2 flex items-center gap-2">
-                <Input placeholder="value" value={e.value} onChange={(ev) => {
+                <Input placeholder="значение" value={e.value} onChange={(ev) => {
                   const next = [...entries];
                   next[idx] = { ...next[idx], value: ev.target.value };
                   setEntries(next);
                 }} />
-                <Input placeholder="minutes" value={e.durationMin} onChange={(ev) => {
+                <Input placeholder="минуты" value={e.durationMin} onChange={(ev) => {
                   const next = [...entries];
                   next[idx] = { ...next[idx], durationMin: ev.target.value };
                   setEntries(next);
@@ -164,14 +185,14 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
                   setEntries(next);
                 }}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder="Статус" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="done">Done</SelectItem>
-                      <SelectItem value="partial">Partial</SelectItem>
-                      <SelectItem value="skipped">Skipped</SelectItem>
-                      <SelectItem value="missed">Missed</SelectItem>
+                      <SelectItem value="done">Выполнено</SelectItem>
+                      <SelectItem value="partial">Частично</SelectItem>
+                      <SelectItem value="skipped">Пропущено</SelectItem>
+                      <SelectItem value="missed">Не выполнено</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -179,16 +200,14 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
             </div>
           ))}
           {entries.length === 0 && (
-            <div className="text-sm text-muted-foreground">No entries parsed from today’s reflection.</div>
+            <div className="text-sm text-muted-foreground">Из сегодняшней заметки не извлечено ни одной записи.</div>
           )}
         </div>
         <DialogFooter>
-          <Button type="button" variant="ghost" onClick={() => setOpen(false)} aria-disabled={busy}>Cancel</Button>
-          <Button type="button" onClick={handleSave} disabled={entries.length === 0 || busy} aria-busy={busy}>{busy ? 'Saving…' : 'Save Logs'}</Button>
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)} aria-disabled={busy}>Отмена</Button>
+          <Button type="button" onClick={handleSave} disabled={entries.length === 0 || busy} aria-busy={busy}>{busy ? 'Сохранение...' : 'Сохранить логи'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-

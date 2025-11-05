@@ -10,6 +10,15 @@ import { collection, orderBy, query } from 'firebase/firestore';
 import type { WorkoutLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
+/**
+ * @fileoverview Страница истории тренировок.
+ * Отображает список прошлых тренировок пользователя.
+ */
+
+/**
+ * Компонент страницы истории тренировок.
+ * @returns {JSX.Element} - Страница истории тренировок.
+ */
 export default function WorkoutHistoryPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -27,19 +36,29 @@ export default function WorkoutHistoryPage() {
 
   const { data: workoutLogs, isLoading } = useCollection<WorkoutLog>(workoutLogsQuery);
 
+  /**
+   * Форматирует строку с датой.
+   * @param {string} dateString - Строка с датой.
+   * @returns {string} - Отформатированная дата.
+   */
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('ru-RU', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
   };
 
+  /**
+   * Форматирует продолжительность в минутах.
+   * @param {number} [minutes] - Продолжительность в минутах.
+   * @returns {string} - Отформатированная продолжительность.
+   */
   const formatDuration = (minutes?: number) => {
     if (!minutes) return 'N/A';
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+    return hours > 0 ? `${hours}ч ${mins}м` : `${mins}м`;
   };
 
   if (isLoading) {
@@ -55,15 +74,15 @@ export default function WorkoutHistoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-headline font-bold tracking-tight">Workout History</h1>
-        <p className="text-muted-foreground">View your past workouts and progress</p>
+        <h1 className="text-3xl font-headline font-bold tracking-tight">История тренировок</h1>
+        <p className="text-muted-foreground">Просматривайте свои прошлые тренировки и прогресс</p>
       </div>
 
       {!workoutLogs || workoutLogs.length === 0 ? (
         <Card className="glass">
           <CardContent className="text-center py-12">
-            <p className="text-muted-foreground">No workout history yet</p>
-            <p className="text-sm mt-2">Start a workout to see your history here</p>
+            <p className="text-muted-foreground">Истории тренировок пока нет</p>
+            <p className="text-sm mt-2">Начните тренировку, чтобы увидеть свою историю здесь</p>
           </CardContent>
         </Card>
       ) : (
@@ -73,7 +92,7 @@ export default function WorkoutHistoryPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle>Workout</CardTitle>
+                    <CardTitle>Тренировка</CardTitle>
                     <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>{formatDate(log.date)}</span>
@@ -88,19 +107,19 @@ export default function WorkoutHistoryPage() {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="font-medium">{formatDuration(log.duration)}</p>
-                      <p className="text-xs text-muted-foreground">Duration</p>
+                      <p className="text-xs text-muted-foreground">Длительность</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Dumbbell className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="font-medium">{log.totalVolume || 0} kg</p>
-                      <p className="text-xs text-muted-foreground">Total Volume</p>
+                      <p className="font-medium">{log.totalVolume || 0} кг</p>
+                      <p className="text-xs text-muted-foreground">Общий объем</p>
                     </div>
                   </div>
                   <div>
-                    <p className="font-medium">{log.cycles.length} cycles</p>
-                    <p className="text-xs text-muted-foreground">Completed</p>
+                    <p className="font-medium">{log.cycles.length} циклов</p>
+                    <p className="text-xs text-muted-foreground">Завершено</p>
                   </div>
                 </div>
               </CardContent>

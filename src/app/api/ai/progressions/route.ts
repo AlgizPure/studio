@@ -4,28 +4,37 @@ import { getRecentWorkouts, getExerciseHistory, getCachedInsights, saveInsightsC
 import { getFirebaseAdminApp } from '@/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
 
+/**
+ * @fileoverview Обработчик API-маршрута для генерации предложений по прогрессии.
+ */
+
+/**
+ * Обрабатывает POST-запросы для генерации предложений по прогрессии.
+ * @param {NextRequest} req - Объект запроса Next.js.
+ * @returns {Promise<NextResponse>} - Объект ответа Next.js.
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { userId, programId } = body;
 
     if (!userId || !programId) {
-      return NextResponse.json({ error: 'userId and programId are required' }, { status: 400 });
+      return NextResponse.json({ error: 'userId и programId являются обязательными' }, { status: 400 });
     }
 
     const adminApp = getFirebaseAdminApp();
     const firestore = getFirestore(adminApp);
 
-    // Check usage limits
+    // Проверка лимитов использования
     const usageCheck = await checkAndUpdateUsage(firestore, userId, 'progressions');
     if (!usageCheck.allowed) {
       return NextResponse.json({
-        error: 'Daily limit reached. Try tomorrow.',
+        error: 'Дневной лимит достигнут. Попробуйте завтра.',
         usage: usageCheck.usage,
       }, { status: 429 });
     }
 
-    // Try cached data first
+    // Сначала попытка получить кэшированные данные
     const cached = await getCachedInsights(firestore, userId, 'progressions', undefined, programId);
     if (cached) {
       return NextResponse.json({
@@ -35,41 +44,41 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Fetch program
+    // Запрос программы
     const programDoc = await firestore.collection(`users/${userId}/programs`).doc(programId).get();
     
     if (!programDoc.exists) {
       return NextResponse.json({
-        error: 'Program not found',
+        error: 'Программа не найдена',
       }, { status: 404 });
     }
 
     const program = { id: programDoc.id, ...programDoc.data() };
 
-    // Fetch recent workouts (last 30 days)
+    // Запрос недавних тренировок (за последние 30 дней)
     const recentWorkouts = await getRecentWorkouts(firestore, userId, 30);
     
     if (recentWorkouts.length === 0) {
       return NextResponse.json({
-        error: 'Insufficient data. Need at least 1 workout from this program.',
+        error: 'Недостаточно данных. Требуется как минимум 1 тренировка из этой программы.',
       }, { status: 400 });
     }
 
-    // Get exercise history
+    // Получение истории упражнений
     const exerciseHistory = await getExerciseHistory(firestore, userId, programId, 30);
 
     if (Object.keys(exerciseHistory).length === 0) {
       return NextResponse.json({
-        error: 'No exercise history found for this program.',
+        error: 'История упражнений для этой программы не найдена.',
       }, { status: 400 });
     }
 
-    // Generate suggestions
+    // Генерация предложений
     try {
       const result = await getProgressionSuggestions(program as any, recentWorkouts as any, exerciseHistory);
       const tokensUsed = (result as any).tokensUsed || 0;
 
-      // Update usage with token count
+      // Обновление использования с количеством токенов
       if (tokensUsed > 0) {
         const today = new Date().toISOString().split('T')[0];
         const usageDoc = await firestore.collection(`users/${userId}/aiUsage`).doc(today).get();
@@ -83,7 +92,7 @@ export async function POST(req: NextRequest) {
         }, { merge: true });
       }
 
-      // Cache result
+      // Кэширование результата
       await saveInsightsCache(firestore, userId, 'progressions', result, undefined, programId, tokensUsed);
 
       return NextResponse.json({
@@ -92,27 +101,27 @@ export async function POST(req: NextRequest) {
         fromCache: false,
       });
     } catch (error) {
-      console.error('[api/ai/progressions] Generation error:', error);
+      console.error('[api/ai/progressions] Ошибка генерации:', error);
       
-      // Try to return cached data even if expired
+      // Попытка вернуть кэшированные данные, даже если они устарели
       const expiredCache = await getCachedInsights(firestore, userId, 'progressions', undefined, programId);
       if (expiredCache) {
         return NextResponse.json({
           ...expiredCache.data,
           lastAnalyzed: expiredCache.generatedAt.toDate().toISOString(),
           fromCache: true,
-          warning: 'Fresh analysis unavailable, showing cached data',
+          warning: 'Свежий анализ недоступен, показаны кэшированные данные',
         });
       }
 
       return NextResponse.json({
-        error: 'Analysis unavailable. Please try again later.',
+        error: 'Анализ недоступен. Пожалуйста, попробуйте еще раз позже.',
       }, { status: 500 });
     }
   } catch (error) {
-    console.error('[api/ai/progressions] Request error:', error);
+    console.error('[api/ai/progressions] Ошибка запроса:', error);
     return NextResponse.json({
-      error: 'Internal server error',
+      error: 'Внутренняя ошибка сервера',
     }, { status: 500 });
   }
 }

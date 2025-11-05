@@ -1,15 +1,25 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc } from 'firebase/firestore';
-import type { HabitLog, HabitInsight, AnalysisSystem } from '@/lib/types';
+import type { HabitLog, AnalysisSystem } from '@/lib/types';
 import { generateInsightsFromLogs } from '@/lib/insights';
 
+/**
+ * @fileoverview Диалоговое окно для генерации инсайтов на основе данных о привычках с помощью AI.
+ */
+
+/**
+ * Компонент диалогового окна, который инициирует процесс генерации инсайтов.
+ * Он использует данные из логов привычек и активных аналитических систем пользователя
+ * для создания полезных наблюдений и рекомендаций, которые затем сохраняются в Firestore.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function InsightsDialog() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -17,12 +27,14 @@ export function InsightsDialog() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  // Запрос на получение логов привычек
   const logsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/habitLogs`) : null),
     [user, firestore]
   );
   const { data: logs } = useCollection<HabitLog>(logsQuery);
 
+  // Запрос на получение активных аналитических систем
   const activeSystemsQuery = useMemoFirebase(
     () => (user ? collection(firestore, `users/${user.uid}/activeSystems`) : null),
     [user, firestore]
@@ -32,22 +44,25 @@ export function InsightsDialog() {
   const safeLogs: HabitLog[] = (logs ?? []) as unknown as HabitLog[];
   const safeActiveSystems: AnalysisSystem[] = (activeSystems ?? []) as unknown as AnalysisSystem[];
 
+  /**
+   * Обрабатывает запрос на генерацию инсайтов.
+   * Вызывает AI-функцию и сохраняет результаты в Firestore.
+   */
   const handleGenerate = async () => {
     if (!user || !firestore) return;
     setBusy(true);
     try {
-      // Use real AI generation with fallback to mock
       const insights = await generateInsightsFromLogs(safeLogs, safeActiveSystems);
       
       if (insights.length === 0) {
         toast({
-          title: 'No insights',
-          description: 'No actionable insights found in your logs at this time.',
+          title: 'Нет инсайтов',
+          description: 'На данный момент в ваших логах не найдено полезных инсайтов.',
         });
         return;
       }
 
-      // Save to Firestore
+      // Сохранение в Firestore
       const col = collection(firestore, `users/${user.uid}/habitInsights`);
       for (const ins of insights) {
         await addDoc(col, {
@@ -63,15 +78,15 @@ export function InsightsDialog() {
       }
       
       toast({
-        title: 'Insights generated',
-        description: `Created ${insights.length} insight(s) based on your logs.`,
+        title: 'Инсайты сгенерированы',
+        description: `Создано ${insights.length} инсайт(ов) на основе ваших логов.`,
       });
       setOpen(false);
     } catch (error: any) {
-      console.error('[InsightsDialog] Generation error:', error);
+      console.error('[InsightsDialog] Ошибка генерации:', error);
       toast({
-        title: 'Error',
-        description: error?.message || 'Failed to generate insights',
+        title: 'Ошибка',
+        description: error?.message || 'Не удалось сгенерировать инсайты',
         variant: 'destructive',
       });
     } finally {
@@ -82,29 +97,27 @@ export function InsightsDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm">Generate insights</Button>
+        <Button variant="secondary" size="sm">Сгенерировать инсайты</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>AI Insights</DialogTitle>
+          <DialogTitle>AI Инсайты</DialogTitle>
           <DialogDescription>
-            Generate actionable insights based on your habit logs and active analysis systems.
+            Сгенерируйте полезные инсайты на основе ваших логов привычек и активных систем анализа.
             {process.env.NEXT_PUBLIC_AI_MOCK === '1' && (
-              <span className="block mt-1 text-xs text-muted-foreground">Mock mode enabled</span>
+              <span className="block mt-1 text-xs text-muted-foreground">Включен режим имитации</span>
             )}
           </DialogDescription>
         </DialogHeader>
         <div className="text-sm text-muted-foreground space-y-2">
-          <p>This will analyze {safeLogs.length} log(s) and {safeActiveSystems.length} active system(s).</p>
-          <p>Insights will be stored in your account and can be reviewed later.</p>
+          <p>Будет проанализировано {safeLogs.length} лог(ов) и {safeActiveSystems.length} активная(ых) система(ы).</p>
+          <p>Инсайты будут сохранены в вашем аккаунте и могут быть просмотрены позже.</p>
         </div>
         <DialogFooter>
-          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button type="button" onClick={handleGenerate} disabled={busy}>{busy ? 'Generating…' : 'Generate'}</Button>
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Отмена</Button>
+          <Button type="button" onClick={handleGenerate} disabled={busy}>{busy ? 'Генерация...' : 'Сгенерировать'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-

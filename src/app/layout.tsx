@@ -9,18 +9,34 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
+/**
+ * @fileoverview Корневой макет приложения.
+ * Этот компонент оборачивает все страницы и включает общие элементы,
+ * такие как заголовок, боковая панель и провайдеры контекста.
+ */
+
+/**
+ * Метаданные для приложения.
+ * @type {Metadata}
+ */
 export const metadata: Metadata = {
   title: 'Zenith Trainer',
-  description: 'Your personal AI-powered fitness and habit tracker.',
+  description: 'Ваш персональный AI-трекер для фитнеса и привычек.',
 };
 
+/**
+ * Корневой компонент макета.
+ * @param {object} props - Свойства компонента.
+ * @param {React.ReactNode} props.children - Дочерние элементы для рендеринга внутри макета.
+ * @returns {JSX.Element} - Корневой макет приложения.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ru" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

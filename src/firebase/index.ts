@@ -1,25 +1,27 @@
-// This file acts as a single entry point for all Firebase-related functionality.
-// It re-exports providers, hooks, and utilities for easy import throughout the app.
+/**
+ * @fileoverview Этот файл служит единой точкой входа для всей функциональности, связанной с Firebase.
+ * Он реэкспортирует провайдеры, хуки и утилиты для удобного импорта во всем приложении.
+ */
 
-// Export initialization function
+// Экспорт функции инициализации
 export { initializeFirebase } from './init';
 
-// Export core providers and hooks
+// Экспорт основных провайдеров и хуков
 export { FirebaseProvider, useFirebase, useFirebaseApp, useFirestore, useAuth, useStorage } from './provider';
 
-// Export Authentication hooks
+// Экспорт хуков аутентификации
 export { useUser } from './auth/use-user';
 export type { User } from 'firebase/auth';
 
-// Export Firestore hooks and utilities
+// Экспорт хуков и утилит Firestore
 export { useDoc } from './firestore/use-doc';
 export { useCollection } from './firestore/use-collection';
 export { useMemoFirebase } from './provider';
 
-// Export Storage hooks
+// Экспорт хуков Storage
 export { useUploadFile } from './storage/use-upload-file';
 export { useDownloadUrl } from './storage/use-download-url';
 
-// Export error handling utilities
+// Экспорт утилит для обработки ошибок
 export * from './errors';
 export { errorEmitter } from './error-emitter';

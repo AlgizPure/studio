@@ -1,11 +1,15 @@
 import type { LucideIcon } from "lucide-react";
 
+/**
+ * @fileoverview Содержит определения типов TypeScript для всего приложения.
+ */
+
 export type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 
 export type ExerciseParameter = {
-  id: string; // e.g., 'distance'
-  name: string; // e.g., 'Distance'
-  unit: string; // e.g., 'km'
+  id: string; // например, 'distance'
+  name: string; // например, 'Дистанция'
+  unit: string; // например, 'км'
   defaultValue: number;
 }
 
@@ -23,24 +27,24 @@ export type Exercise = {
   image: string;
   custom?: boolean;
   authorId?: string;
-  lastCompleted?: string; // ISO date string
-  distance?: number; // in kilometers
+  lastCompleted?: string; // строка с датой в формате ISO
+  distance?: number; // в километрах
   parameters?: ExerciseParameter[];
   
-  // Planned and actual duration
+  // Планируемая и фактическая продолжительность
   plannedDuration?: {
     minutes: number;
     seconds: number;
   };
   trackDuration?: boolean; // чекбокс "определять длительность упражнения"
-  actualDuration?: number; // фактическая длительность в секундах (readonly, вычисляется из ExerciseLog)
+  actualDuration?: number; // фактическая длительность в секундах (только для чтения, вычисляется из ExerciseLog)
 };
 
 export type ExerciseLogValue = {
     id: string;
     exerciseId: string;
     userId: string;
-    date: string; // ISO date string YYYY-MM-DD
+    date: string; // строка с датой в формате ISO YYYY-MM-DD
     values: {
       [parameterId: string]: number;
     }
@@ -61,35 +65,35 @@ export type HabitCategory = {
 }
 
 /**
- * Legacy Habit type (v1) - for backward compatibility
- * Has discriminator field 'schemaVersion?: 1' or absence of 'type' field
+ * Устаревший тип привычки (v1) - для обратной совместимости.
+ * Имеет поле-дискриминатор 'schemaVersion?: 1' или отсутствие поля 'type'.
  */
 export type HabitLegacy = {
   id: string;
   name: string;
   categoryId: string;
-  goal?: string; // e.g., "3 lessons", "10 minutes"
+  goal?: string; // например, "3 урока", "10 минут"
   completed?: boolean;
   days?: Day[];
   pomodoro?: {
     cycles: number;
   };
   authorId?: string;
-  schemaVersion?: 1; // discriminator
+  schemaVersion?: 1; // дискриминатор
 };
 
 /**
- * Union type: Habit can be either Legacy (v1) or V2
- * Use isHabitV2() guard to discriminate
+ * Объединенный тип: Habit может быть либо Legacy (v1), либо V2.
+ * Используйте isHabitV2() для распознавания.
  */
 export type Habit = HabitLegacy | HabitV2;
 
 export type ScheduleItem = {
   id: string;
-  time: string; // e.g., '06:00'
+  time: string; // например, '06:00'
   activityType: 'Workout' | 'Run' | 'Habit';
   activityName: string;
-  duration: string; // e.g., '45min'
+  duration: string; // например, '45min'
   icon: LucideIcon;
 };
 
@@ -104,7 +108,7 @@ export type UserProfile = {
   displayName?: string | null;
   photoURL?: string | null;
   currentStreak?: number;
-  lastActiveDate?: string | null; // ISO date string (e.g., '2024-07-26')
+  lastActiveDate?: string | null; // строка с датой в формате ISO (например, '2024-07-26')
 };
 
 // ============================================
@@ -128,17 +132,17 @@ export type Program = {
   id: string;
   name: string;
   description?: string;
-  startDate: string; // ISO date string
+  startDate: string; // строка с датой в формате ISO
   endDate?: string; // вычисляемое поле, null для infinite
   durationType: ProgramDurationType;
   status: ProgramStatus;
   goal?: string; // 'mass_gain' | 'fat_loss' | 'strength' | 'endurance' | 'maintenance'
   tags: string[]; // ['#силовая', '#дома', '#новичок']
   workouts: ProgramWorkout[]; // тренировки в программе
-  createdAt: string; // ISO timestamp
-  updatedAt: string; // ISO timestamp
+  createdAt: string; // временная метка в формате ISO
+  updatedAt: string; // временная метка в формате ISO
   userId: string; // для будущего
-  isTemplate?: boolean; // optional flag for template cards
+  isTemplate?: boolean; // необязательный флаг для карточек шаблонов
 };
 
 // Тренировка в контексте программы (с расписанием)
@@ -210,7 +214,7 @@ export type ProgramStats = {
   completionRate: number; // процент
   totalVolume: number; // килограммы
   totalDuration: number; // минуты
-  lastUpdated: string; // ISO timestamp
+  lastUpdated: string; // временная метка в формате ISO
 };
 // ============================================
 // ТИПЫ ДЛЯ РЕЖИМА ВЫПОЛНЕНИЯ ТРЕНИРОВКИ
@@ -249,9 +253,9 @@ export type WorkoutLog = {
   workoutId: string;
   programId?: string;
   userId: string;
-  date: string; // ISO date
-  startTime: string; // ISO timestamp
-  endTime?: string; // ISO timestamp
+  date: string; // дата в формате ISO
+  startTime: string; // временная метка в формате ISO
+  endTime?: string; // временная метка в формате ISO
   duration?: number; // минуты
   status: WorkoutExecutionStatus;
   cycles: CycleLog[];
@@ -292,8 +296,8 @@ export type HabitSchedule = {
   nPerWeek?: number; // для n_per_week
   preferredDays?: Day[]; // предпочтительные дни для n_per_week
   timeWindow?: { start: string; end: string }; // 'HH:MM'
-  startDate?: string; // ISO date
-  endDate?: string; // ISO date
+  startDate?: string; // дата в формате ISO
+  endDate?: string; // дата в формате ISO
 };
 
 export type Reminder = {
@@ -309,11 +313,11 @@ export type HabitV2 = {
   name: string;
   categoryId?: string;
   tags?: string[];
-  type: HabitType; // discriminator field for V2
+  type: HabitType; // поле-дискриминатор для V2
   target?: HabitTarget;
   schedule?: HabitSchedule;
   reminders?: Reminder[];
-  dependencies?: string[]; // habit stacking
+  dependencies?: string[]; // группировка привычек
   stackingRule?: {
     triggerId: string;
     position: 'before' | 'after';
@@ -328,8 +332,8 @@ export type HabitV2 = {
   authorId?: string;
   createdAt?: string;
   updatedAt?: string;
-  schemaVersion?: 2; // optional discriminator
-  // Legacy compatibility fields (optional for migration)
+  schemaVersion?: 2; // необязательный дискриминатор
+  // Поля для обратной совместимости (необязательны для миграции)
   completed?: boolean;
   goal?: string;
   days?: Day[];
@@ -363,13 +367,13 @@ export type HabitStreak = {
   habitId: string;
   current: number;
   longest: number;
-  hss?: number; // Habit Strength Score (computed)
-  frozenUntil?: string; // ISO date
+  hss?: number; // Habit Strength Score (вычисляется)
+  frozenUntil?: string; // дата в формате ISO
   skipTokens?: number;
   maxSkipTokens?: number;
-  lastCompletedDate?: string; // ISO date
+  lastCompletedDate?: string; // дата в формате ISO
   history?: {
-    date: string; // ISO date
+    date: string; // дата в формате ISO
     action: 'completed' | 'skipped' | 'frozen' | 'broken';
     note?: string;
   }[];
@@ -400,7 +404,7 @@ export type DailyReflection = {
 };
 
 // ===============================
-// ANALYSIS SYSTEMS
+// СИСТЕМЫ АНАЛИЗА
 // ===============================
 
 export type SystemParameter = {
@@ -462,7 +466,7 @@ export type ActiveSystem = {
 };
 
 // ===============================
-// IN-APP NOTIFICATIONS
+// УВЕДОМЛЕНИЯ В ПРИЛОЖЕНИИ
 // ===============================
 
 export type NotificationType = 
@@ -481,12 +485,12 @@ export type InAppNotification = {
   type: NotificationType;
   title: string;
   message: string;
-  timestamp: string; // ISO timestamp
+  timestamp: string; // временная метка в формате ISO
   read: boolean;
-  readAt?: string; // ISO timestamp
-  actionUrl?: string; // URL to navigate on click
-  actionLabel?: string; // e.g., "Complete", "View", "Open"
-  // Context data for different notification types
+  readAt?: string; // временная метка в формате ISO
+  actionUrl?: string; // URL для перехода по клику
+  actionLabel?: string; // например, "Выполнить", "Посмотреть", "Открыть"
+  // Контекстные данные для разных типов уведомлений
   data?: {
     habitId?: string;
     workoutId?: string;
@@ -495,21 +499,21 @@ export type InAppNotification = {
     achievementId?: string;
     [key: string]: any;
   };
-  priority?: 1 | 2 | 3 | 4 | 5; // Higher = more important
-  expiresAt?: string; // ISO timestamp - auto-delete after this
-  createdAt: string; // ISO timestamp
-  updatedAt: string; // ISO timestamp
+  priority?: 1 | 2 | 3 | 4 | 5; // Выше = важнее
+  expiresAt?: string; // временная метка в формате ISO - автоудаление после этой даты
+  createdAt: string; // временная метка в формате ISO
+  updatedAt: string; // временная метка в формате ISO
 };
 
 // ===============================
-// INSIGHTS
+// ИНСАЙТЫ
 // ===============================
 
 export type InsightType = 'recommendation' | 'warning' | 'achievement' | 'pattern';
 
 export type HabitInsight = {
   id: string;
-  date: string; // ISO date
+  date: string; // дата в формате ISO
   systemId?: string;
   type: InsightType;
   priority: 1 | 2 | 3 | 4 | 5;
@@ -531,7 +535,7 @@ export type HabitInsight = {
 };
 
 // ===============================
-// EXPORT / IMPORT
+// ЭКСПОРТ / ИМПОРТ
 // ===============================
 
 export type HabitExportV1 = {

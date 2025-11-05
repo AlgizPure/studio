@@ -10,15 +10,31 @@ import { useState } from 'react';
 import type { Program } from '@/lib/types';
 import { DialogTrigger } from '@/components/ui/dialog';
 
-// Collision detection/diff/patch utilities:
+/**
+ * @fileoverview Страница программ тренировок.
+ * Позволяет пользователям просматривать, создавать, импортировать и управлять своими программами тренировок.
+ */
+
+/**
+ * Сравнивает две программы и возвращает различия.
+ * @param {any} oldProg - Старая версия программы.
+ * @param {any} newProg - Новая версия программы.
+ * @returns {string} - Строка с описанием различий.
+ */
 function diffPrograms(oldProg: any, newProg: any) {
-  if (!oldProg) return 'Program is new.';
+  if (!oldProg) return 'Программа новая.';
   const oldJSON = JSON.stringify(oldProg, null, 2);
   const newJSON = JSON.stringify(newProg, null, 2);
-  if (oldJSON === newJSON) return 'No changes.';
-  return `Old:\n${oldJSON}\n\nNew:\n${newJSON}`;
+  if (oldJSON === newJSON) return 'Нет изменений.';
+  return `Старая:\n${oldJSON}\n\nНовая:\n${newJSON}`;
 }
 
+/**
+ * Применяет патч к списку программ.
+ * @param {Program[]} programs - Текущий список программ.
+ * @param {any} patch - Патч для применения.
+ * @returns {Program[]} - Новый список программ после применения патча.
+ */
 function applyPatch(programs: Program[], patch: any): Program[] {
   let next = [...programs];
   for (const op of patch.patch || []) {
@@ -56,17 +72,25 @@ function applyPatch(programs: Program[], patch: any): Program[] {
         );
       }
     }
-    // Could add update-exercise...
+    // Можно добавить update-exercise...
   }
   return next;
 }
 
+/**
+ * Компонент страницы программ тренировок.
+ * @returns {JSX.Element} - Страница программ тренировок.
+ */
 export default function ProgramsPage() {
   const [programs, setPrograms] = useState<Program[]>(mockPrograms);
   const [editingProgram, setEditingProgram] = useState<Program | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
+  /**
+   * Добавляет новую программу.
+   * @param {Omit<Program, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'workouts'>} programData - Данные новой программы.
+   */
   const handleAddProgram = (programData: Omit<Program, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'workouts'>) => {
     const newProgram: Program = {
       ...programData,
@@ -80,28 +104,47 @@ export default function ProgramsPage() {
     setPrograms([...programs, newProgram]);
   };
 
+  /**
+   * Открывает диалог редактирования для выбранной программы.
+   * @param {string} programId - ID программы для редактирования.
+   */
   const handleEdit = (programId: string) => {
     const program = programs.find(p => p.id === programId);
     setEditingProgram(program);
     setIsDialogOpen(true);
   };
 
+  /**
+   * Удаляет программу.
+   * @param {string} programId - ID программы для удаления.
+   */
   const handleDelete = (programId: string) => {
     setPrograms(programs.filter(p => p.id !== programId));
   };
 
+  /**
+   * Активирует программу.
+   * @param {string} programId - ID программы для активации.
+   */
   const handleActivate = (programId: string) => {
     setPrograms(programs.map(p => 
       p.id === programId ? { ...p, status: 'active' as const } : p
     ));
   };
 
+  /**
+   * Приостанавливает программу.
+   * @param {string} programId - ID программы для приостановки.
+   */
   const handlePause = (programId: string) => {
     setPrograms(programs.map(p => 
       p.id === programId ? { ...p, status: 'paused' as const } : p
     ));
   };
   
+  /**
+   * Открывает диалог для создания новой программы.
+   */
   const openNewProgramDialog = () => {
     setEditingProgram(undefined);
     setIsDialogOpen(true);
@@ -112,17 +155,17 @@ export default function ProgramsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-headline font-bold tracking-tight">
-            Training Programs
+            Программы тренировок
           </h1>
           <p className="text-muted-foreground">
-            Create and manage your workout programs
+            Создавайте и управляйте своими программами тренировок
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => setImportOpen(true)}>Import Program</Button>
+          <Button variant="secondary" onClick={() => setImportOpen(true)}>Импортировать программу</Button>
           <Button onClick={openNewProgramDialog}>
             <Plus className="mr-2 h-4 w-4" />
-            New Program
+            Новая программа
           </Button>
         </div>
       </div>
@@ -137,13 +180,13 @@ export default function ProgramsPage() {
       {programs.length === 0 ? (
         <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-lg">
           <div className="text-center">
-            <h3 className="text-lg font-semibold mb-2">No programs yet</h3>
+            <h3 className="text-lg font-semibold mb-2">Программ пока нет</h3>
             <p className="text-muted-foreground mb-4">
-              Create your first training program to get started
+              Создайте свою первую программу тренировок, чтобы начать
             </p>
             <Button onClick={openNewProgramDialog}>
               <Plus className="mr-2 h-4 w-4" />
-              Create Program
+              Создать программу
             </Button>
           </div>
         </div>
@@ -171,7 +214,7 @@ export default function ProgramsPage() {
             const duplicate = programs.find(p => p.id === newId);
             if (duplicate) {
               const diff = diffPrograms(duplicate, data.value);
-              const overwrite = window.confirm(`Программа с ID "${newId}" уже существует. Перезаписать?\n\nDiff:\n${diff}`);
+              const overwrite = window.confirm(`Программа с ID "${newId}" уже существует. Перезаписать?\n\nРазличия:\n${diff}`);
               if (!overwrite) return;
               setPrograms(prev => prev.map(p =>
                 p.id === newId
@@ -180,7 +223,7 @@ export default function ProgramsPage() {
                       name: data.value.meta.name,
                       workouts: [],
                       updatedAt: new Date().toISOString(),
-                      // ...other fields if needed from ZTL
+                      // ...другие поля при необходимости из ZTL
                     }
                   : p
               ));

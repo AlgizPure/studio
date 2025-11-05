@@ -8,13 +8,28 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { CycleExercise, Exercise } from '@/lib/types';
 
+/**
+ * @fileoverview Компонент-обертка, делающий упражнение в цикле перетаскиваемым.
+ */
+
 interface DraggableExerciseProps {
+  /** Объект упражнения в цикле. */
   exercise: CycleExercise;
+  /** Полные данные упражнения из библиотеки. */
   exerciseData: Exercise | undefined;
+  /** Callback-функция при обновлении параметров упражнения. */
   onUpdate: (updates: Partial<CycleExercise>) => void;
+  /** Callback-функция при удалении упражнения из цикла. */
   onRemove: () => void;
 }
 
+/**
+ * Компонент `DraggableExercise` представляет одно упражнение в списке внутри `CycleBuilder`.
+ * Он использует `dnd-kit` для обеспечения перетаскивания и содержит поля для редактирования
+ * параметров упражнения (повторения, вес, отдых).
+ * @param {DraggableExerciseProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function DraggableExercise({
   exercise,
   exerciseData,
@@ -34,6 +49,7 @@ export function DraggableExercise({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 'auto',
   };
 
   return (
@@ -42,28 +58,28 @@ export function DraggableExercise({
       style={style}
       className="flex items-center gap-2 p-3 border rounded-lg bg-background/50"
     >
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-2">
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </div>
       
       <div className="flex-1">
-        <p className="font-medium">{exerciseData?.name || 'Unknown'}</p>
+        <p className="font-medium">{exerciseData?.name || 'Неизвестное упражнение'}</p>
         <div className="flex flex-wrap gap-2 mt-2">
           <Input
-            placeholder="Reps"
+            placeholder="Повторения"
             value={exercise.targetReps || ''}
             onChange={(e) => onUpdate({ targetReps: e.target.value })}
             className="h-8 w-24"
           />
           <Input
-            placeholder="Weight"
+            placeholder="Вес"
             type="number"
             value={exercise.targetWeight || ''}
             onChange={(e) => onUpdate({ targetWeight: parseInt(e.target.value) || undefined })}
             className="h-8 w-24"
           />
           <Input
-            placeholder="Rest (sec)"
+            placeholder="Отдых (сек)"
             type="number"
             value={exercise.restAfter}
             onChange={(e) => onUpdate({ restAfter: parseInt(e.target.value) || 0 })}

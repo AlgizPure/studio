@@ -19,13 +19,24 @@ import { collection, doc, updateDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
+/**
+ * @fileoverview Главная страница панели управления пользователя.
+ * Отображает еженедельную статистику, сегодняшнее расписание и трекер привычек.
+ */
+
+/**
+ * Обновляет серию (streak) активности пользователя.
+ * @param {AppUser} user - Объект пользователя.
+ * @param {any} firestore - Экземпляр Firestore.
+ * @param {boolean} anyActivityCompletedToday - Флаг, указывающий, была ли сегодня завершена какая-либо активность.
+ */
 function updateStreak(user: AppUser, firestore: any, anyActivityCompletedToday: boolean) {
     if (!user || !firestore) return;
   
     const userRef = doc(firestore, `users/${user.uid}`);
     const todayStr = formatISO(new Date(), { representation: 'date' });
   
-    // Logic to update streak
+    // Логика обновления серии
     if (anyActivityCompletedToday) {
       if (user.lastActiveDate !== todayStr) {
         let newStreak = 1;
@@ -46,7 +57,7 @@ function updateStreak(user: AppUser, firestore: any, anyActivityCompletedToday: 
         });
       }
     } else {
-      // Logic to reset streak if needed
+      // Логика сброса серии при необходимости
       if (user.lastActiveDate && !isToday(new Date(user.lastActiveDate)) && !isYesterday(new Date(user.lastActiveDate))) {
         if ((user.currentStreak || 0) > 0) {
            const updatedData = { currentStreak: 0 };
@@ -63,7 +74,10 @@ function updateStreak(user: AppUser, firestore: any, anyActivityCompletedToday: 
     }
 }
 
-
+/**
+ * Компонент страницы панели управления.
+ * @returns {JSX.Element} - Страница панели управления.
+ */
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -88,7 +102,7 @@ export default function DashboardPage() {
 
   const weeklyStats = useMemo(() => {
     const now = new Date();
-    const startOfThisWeek = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of week
+    const startOfThisWeek = startOfWeek(now, { weekStartsOn: 1 }); // Понедельник - начало недели
     const endOfThisWeek = new Date(startOfThisWeek);
     endOfThisWeek.setDate(endOfThisWeek.getDate() + 6);
 
@@ -137,8 +151,8 @@ export default function DashboardPage() {
     return (
        <div className="flex items-center justify-center h-full">
           <div className="text-center">
-              <h2 className="text-2xl font-semibold mb-2">Loading...</h2>
-              <p className="text-muted-foreground">Preparing your dashboard.</p>
+              <h2 className="text-2xl font-semibold mb-2">Загрузка...</h2>
+              <p className="text-muted-foreground">Подготовка вашей панели управления.</p>
           </div>
       </div>
     )
@@ -148,14 +162,14 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center h-full">
           <div className="text-center p-8 border rounded-lg glass">
-              <h2 className="text-2xl font-bold mb-2">Welcome to Zenith Trainer</h2>
-              <p className="text-muted-foreground mb-6">Your personal AI-powered fitness and habit tracker.</p>
+              <h2 className="text-2xl font-bold mb-2">Добро пожаловать в Zenith Trainer</h2>
+              <p className="text-muted-foreground mb-6">Ваш персональный AI-трекер для фитнеса и привычек.</p>
               <div className="flex gap-4 justify-center">
                 <Button asChild>
-                    <Link href="/login">Login</Link>
+                    <Link href="/login">Войти</Link>
                 </Button>
                  <Button asChild variant="outline">
-                    <Link href="/signup">Sign Up</Link>
+                    <Link href="/signup">Зарегистрироваться</Link>
                 </Button>
               </div>
           </div>
@@ -168,10 +182,10 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Dashboard
+            Панель управления
           </h1>
           <p className="text-muted-foreground">
-            Here's your weekly overview. Stay strong!
+            Вот ваш еженедельный обзор. Так держать!
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -182,49 +196,49 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="glass">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Workouts This Week</CardTitle>
+            <CardTitle className="text-sm font-medium">Тренировки на этой неделе</CardTitle>
             <Dumbbell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{weeklyStats.workoutsCompleted}/{weeklyStats.workoutsScheduled}</div>
             <p className="text-xs text-muted-foreground">
-              Completed vs. Scheduled
+              Завершено vs. Запланировано
             </p>
           </CardContent>
         </Card>
         <Card className="glass">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Habits Completed</CardTitle>
+            <CardTitle className="text-sm font-medium">Выполненные привычки</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{weeklyStats.habitCompletion}%</div>
             <p className="text-xs text-muted-foreground">
-              This week's average
+              Среднее за эту неделю
             </p>
           </CardContent>
         </Card>
         <Card className="glass">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Running Distance</CardTitle>
+            <CardTitle className="text-sm font-medium">Дистанция бега</CardTitle>
             <HeartPulse className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{weeklyStats.runningDistance}km</div>
+            <div className="text-2xl font-bold">{weeklyStats.runningDistance}км</div>
             <p className="text-xs text-muted-foreground">
-              This week's total
+              Всего за эту неделю
             </p>
           </CardContent>
         </Card>
         <Card className="glass">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Streak</CardTitle>
+            <CardTitle className="text-sm font-medium">Активная серия</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{user.currentStreak || 0} Days</div>
+            <div className="text-2xl font-bold">{user.currentStreak || 0} дней</div>
             <p className="text-xs text-muted-foreground">
-              Keep it going!
+              Продолжайте в том же духе!
             </p>
           </CardContent>
         </Card>

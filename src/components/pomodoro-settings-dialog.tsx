@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, [ useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,14 +14,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * @fileoverview Диалоговое окно для настройки параметров таймера Pomodoro.
+ */
+
+/**
+ * @interface PomodoroSettingsDialogProps
+ * @description Свойства для компонента PomodoroSettingsDialog.
+ */
 interface PomodoroSettingsDialogProps {
+  /** Определяет, открыто ли диалоговое окно. */
   open: boolean;
+  /** Callback-функция при изменении состояния открытости. */
   onOpenChange: (open: boolean) => void;
 }
 
+/** @constant {number} Длительность рабочего интервала по умолчанию в минутах. */
 const DEFAULT_WORK_MINUTES = 25;
+/** @constant {number} Длительность интервала отдыха по умолчанию в минутах. */
 const DEFAULT_REST_MINUTES = 5;
 
+/**
+ * Компонент-диалог для настройки длительности рабочих и перерывных сессий таймера Pomodoro.
+ * Настройки сохраняются в `localStorage`.
+ * @param {PomodoroSettingsDialogProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function PomodoroSettingsDialog({ open, onOpenChange }: PomodoroSettingsDialogProps) {
   const [workDuration, setWorkDuration] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -38,16 +56,22 @@ export function PomodoroSettingsDialog({ open, onOpenChange }: PomodoroSettingsD
   
   const { toast } = useToast();
 
+  /**
+   * Сохраняет текущие настройки в localStorage.
+   */
   const handleSave = () => {
     localStorage.setItem('pomodoroWorkDuration', String(workDuration));
     localStorage.setItem('pomodoroRestDuration', String(restDuration));
     toast({
-        title: "Settings Saved",
-        description: "Your Pomodoro timer settings have been updated.",
+        title: "Настройки сохранены",
+        description: "Ваши настройки таймера Pomodoro были обновлены.",
     });
     onOpenChange(false);
   };
   
+  /**
+   * Сбрасывает настройки к значениям по умолчанию.
+   */
   const handleReset = () => {
     setWorkDuration(DEFAULT_WORK_MINUTES);
     setRestDuration(DEFAULT_REST_MINUTES);
@@ -57,15 +81,15 @@ export function PomodoroSettingsDialog({ open, onOpenChange }: PomodoroSettingsD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Pomodoro Timer Settings</DialogTitle>
+          <DialogTitle>Настройки таймера Pomodoro</DialogTitle>
           <DialogDescription>
-            Set the intervals for your work and rest sessions. Defaults are 25/5 min.
+            Установите интервалы для рабочих сессий и перерывов. По умолчанию 25/5 мин.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="work-duration" className="text-right">
-              Work (minutes)
+              Работа (минуты)
             </Label>
             <Input
               id="work-duration"
@@ -77,7 +101,7 @@ export function PomodoroSettingsDialog({ open, onOpenChange }: PomodoroSettingsD
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="rest-duration" className="text-right">
-              Rest (minutes)
+              Отдых (минуты)
             </Label>
             <Input
               id="rest-duration"
@@ -89,8 +113,8 @@ export function PomodoroSettingsDialog({ open, onOpenChange }: PomodoroSettingsD
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={handleReset}>Reset to Default</Button>
-          <Button onClick={handleSave}>Save Settings</Button>
+          <Button variant="outline" onClick={handleReset}>Сбросить по умолчанию</Button>
+          <Button onClick={handleSave}>Сохранить настройки</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

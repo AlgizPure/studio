@@ -1,9 +1,16 @@
 import type { WorkoutExtended, Exercise, Cycle } from '@/lib/types';
 
 /**
+ * @fileoverview Функция для расчета планируемой длительности тренировки.
+ */
+
+/**
  * Рассчитывает планируемую длительность тренировки
  * как сумму plannedDuration всех упражнений в циклах
- * (без учета restAfter)
+ * (без учета restAfter).
+ * @param {WorkoutExtended} workout - Расширенная тренировка.
+ * @param {Map<string, Exercise> | Record<string, Exercise>} exercises - Map или объект с упражнениями.
+ * @returns {number} - Рассчитанная длительность в минутах.
  */
 export function calculateWorkoutEstimatedDuration(
   workout: WorkoutExtended,
@@ -35,4 +42,3 @@ export function calculateWorkoutEstimatedDuration(
   // Возвращаем в минутах (округление вверх)
   return Math.ceil(totalSeconds / 60);
 }
-

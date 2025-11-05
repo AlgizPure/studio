@@ -8,14 +8,34 @@ import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
+/**
+ * @fileoverview Компонент карточки для отображения информации о программе тренировок.
+ */
+
+/**
+ * @interface ProgramCardProps
+ * @description Свойства для компонента ProgramCard.
+ */
 interface ProgramCardProps {
+  /** Объект программы для отображения. */
   program: Program;
+  /** Callback-функция, вызываемая при добавлении программы-шаблона к программам пользователя. */
   onAddTemplate: (program: Program) => void;
 }
 
+/**
+ * Компонент-карточка, отображающий основную информацию о программе тренировок.
+ * Позволяет либо перейти к деталям программы, либо добавить ее как шаблон,
+ * в зависимости от свойства `isTemplate`.
+ * @param {ProgramCardProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function ProgramCard({ program, onAddTemplate }: ProgramCardProps) {
   const [isAdding, setIsAdding] = useState(false);
 
+  /**
+   * Обрабатывает клик по кнопке "Добавить".
+   */
   const handleAddClick = async () => {
     setIsAdding(true);
     await onAddTemplate(program);
@@ -27,26 +47,25 @@ export function ProgramCard({ program, onAddTemplate }: ProgramCardProps) {
       <CardHeader>
         <div className="flex justify-between items-start">
             <CardTitle className="text-2xl">{program.name}</CardTitle>
-            {program.isTemplate && <Badge variant="secondary">Template</Badge>}
+            {program.isTemplate && <Badge variant="secondary">Шаблон</Badge>}
         </div>
         <CardDescription className="h-10 text-ellipsis overflow-hidden">{program.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
-        {/* We can add more details here later, like workout count */}
         <div className="text-sm text-muted-foreground">
-            <p>3 Workouts / Week</p>
-            <p>6 Weeks</p>
+            <p>3 тренировки в неделю</p>
+            <p>6 недель</p>
         </div>
       </CardContent>
       <CardFooter>
         {program.isTemplate ? (
             <Button className="w-full" onClick={handleAddClick} disabled={isAdding}>
                 <Plus className="mr-2 h-4 w-4" />
-                {isAdding ? 'Adding...' : 'Add to My Programs'}
+                {isAdding ? 'Добавление...' : 'Добавить в мои программы'}
             </Button>
         ) : (
             <Button variant="outline" className="w-full" asChild>
-                <Link href={`/programs/${program.id}`}>View Program</Link>
+                <Link href={`/programs/${program.id}`}>Просмотр программы</Link>
             </Button>
         )}
       </CardFooter>

@@ -5,11 +5,17 @@ import {
   SidebarHeader,
   SidebarFooter
 } from '@/components/ui/sidebar';
-import { Button } from './ui/button';
-import { Settings } from 'lucide-react';
 import { ThemeMenu } from './theme-menu';
 import { UserNav } from './user-nav';
 
+/**
+ * @fileoverview Компонент боковой панели (Sidebar) приложения.
+ */
+
+/**
+ * Компонент-логотип приложения.
+ * @returns {JSX.Element} SVG-логотип.
+ */
 const Logo = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
         <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -18,7 +24,13 @@ const Logo = () => (
     </svg>
 );
 
-
+/**
+ * Основной компонент боковой панели.
+ * Включает в себя заголовок с логотипом, основную навигацию,
+ * и футер с переключателем темы и меню пользователя.
+ * Панель может быть свернута до иконок.
+ * @returns {JSX.Element} React-компонент боковой панели.
+ */
 export function Sidebar() {
   return (
     <SidebarPrimitive collapsible="icon" variant="sidebar" side="left">

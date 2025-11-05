@@ -12,12 +12,30 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { freezeStreak } from '@/lib/habits';
 
+/**
+ * @fileoverview Диалоговое окно для просмотра и управления сериями выполнения привычек.
+ */
+
+/**
+ * @interface StreaksDialogProps
+ * @description Свойства для компонента StreaksDialog.
+ */
 interface StreaksDialogProps {
+  /** Массив всех привычек пользователя. */
   habits: Habit[];
+  /** Массив всех логов привычек пользователя. */
   habitLogs: HabitLog[];
+  /** Карта, содержащая данные о сериях для каждой привычки. */
   streaks: Map<string, HabitStreak>;
 }
 
+/**
+ * Компонент-диалог, позволяющий пользователю выбрать привычку и просмотреть
+ * подробную статистику по ее серии выполнения, включая возможность "заморозки"
+ * и использования токенов пропуска.
+ * @param {StreaksDialogProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function StreaksDialog({ habits, habitLogs, streaks }: StreaksDialogProps) {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -29,69 +47,43 @@ export function StreaksDialog({ habits, habitLogs, streaks }: StreaksDialogProps
   const selectedStreak = selectedHabitId ? streaks.get(selectedHabitId) : undefined;
   const selectedLogs = selectedHabitId ? habitLogs.filter(l => l.habitId === selectedHabitId) : [];
 
+  /**
+   * Обрабатывает "заморозку" серии для выбранной привычки.
+   * @param {string} habitId - ID привычки.
+   * @param {string} untilDate - Дата, до которой серия будет заморожена.
+   */
   const handleFreeze = async (habitId: string, untilDate: string) => {
     if (!user || !firestore) return;
-    
     try {
       const streakDoc = doc(firestore, `users/${user.uid}/habitStreaks/${habitId}`);
       const currentStreak = streaks.get(habitId);
-      
-      if (!currentStreak) {
-        throw new Error('Streak not found');
-      }
-
+      if (!currentStreak) throw new Error('Серия не найдена');
       const frozen = freezeStreak(currentStreak, untilDate);
-      
-      await updateDoc(streakDoc, {
-        frozenUntil: frozen.frozenUntil,
-      });
-
-      toast({
-        title: 'Streak frozen',
-        description: `Streak frozen until ${new Date(untilDate).toLocaleDateString()}`,
-      });
+      await updateDoc(streakDoc, { frozenUntil: frozen.frozenUntil });
+      toast({ title: 'Серия заморожена' });
     } catch (error) {
-      console.error('Error freezing streak:', error);
+      console.error('Ошибка заморозки серии:', error);
       throw error;
     }
   };
 
+  /**
+   * Обрабатывает использование токена пропуска для привычки.
+   * @param {string} habitId - ID привычки.
+   */
   const handleUseSkipToken = async (habitId: string) => {
     if (!user || !firestore) return;
-    
     try {
       const streakDoc = doc(firestore, `users/${user.uid}/habitStreaks/${habitId}`);
       const currentStreak = streaks.get(habitId);
-      
-      if (!currentStreak) {
-        throw new Error('Streak not found');
-      }
-
-      const skipTokens = currentStreak.skipTokens ?? 0;
-      if (skipTokens === 0) {
-        toast({
-          title: 'No skip tokens',
-          description: 'You have no skip tokens remaining',
-          variant: 'destructive',
-        });
+      if (!currentStreak || (currentStreak.skipTokens ?? 0) === 0) {
+        toast({ title: 'Нет токенов пропуска', variant: 'destructive' });
         return;
       }
-
-      await updateDoc(streakDoc, {
-        skipTokens: skipTokens - 1,
-      });
-
-      toast({
-        title: 'Skip token used',
-        description: `${skipTokens - 1} token(s) remaining`,
-      });
+      await updateDoc(streakDoc, { skipTokens: (currentStreak.skipTokens ?? 0) - 1 });
+      toast({ title: 'Токен пропуска использован' });
     } catch (error) {
-      console.error('Error using skip token:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to use skip token',
-        variant: 'destructive',
-      });
+      console.error('Ошибка использования токена:', error);
     }
   };
 
@@ -100,28 +92,26 @@ export function StreaksDialog({ habits, habitLogs, streaks }: StreaksDialogProps
       <DialogTrigger asChild>
         <Button variant="secondary" size="sm">
           <Flame className="h-4 w-4 mr-1" />
-          Streaks
+          Серии
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Habit Streaks</DialogTitle>
+          <DialogTitle>Серии привычек</DialogTitle>
           <DialogDescription>
-            View and manage your habit streaks, tokens, and freezes
+            Просмотр и управление сериями, токенами и заморозками.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium mb-2 block">Select habit</label>
+            <label className="text-sm font-medium mb-2 block">Выберите привычку</label>
             <Select value={selectedHabitId} onValueChange={setSelectedHabitId}>
               <SelectTrigger>
-                <SelectValue placeholder="Choose a habit..." />
+                <SelectValue placeholder="Выберите привычку..." />
               </SelectTrigger>
               <SelectContent>
                 {habits.map(h => (
-                  <SelectItem key={h.id} value={h.id}>
-                    {h.name}
-                  </SelectItem>
+                  <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -139,7 +129,7 @@ export function StreaksDialog({ habits, habitLogs, streaks }: StreaksDialogProps
 
           {!selectedHabitId && (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              Select a habit to view streak details
+              Выберите привычку для просмотра деталей серии.
             </div>
           )}
         </div>
@@ -147,4 +137,3 @@ export function StreaksDialog({ habits, habitLogs, streaks }: StreaksDialogProps
     </Dialog>
   );
 }
-

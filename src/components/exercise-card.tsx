@@ -8,14 +8,34 @@ import { AddExerciseDialog } from './add-exercise-dialog';
 import { Pencil } from 'lucide-react';
 import { Button } from './ui/button';
 
+/**
+ * @fileoverview Компонент карточки для отображения информации об упражнении.
+ */
+
+/**
+ * @interface ExerciseCardProps
+ * @description Свойства для компонента ExerciseCard.
+ */
 interface ExerciseCardProps {
+  /** Объект упражнения для отображения. */
   exercise: Exercise;
+  /** Список всех доступных категорий упражнений. */
   categories: ExerciseCategory[];
+  /** Callback-функция, вызываемая при обновлении упражнения. */
   onUpdate: (exercise: Exercise) => Promise<void>;
+  /** Callback-функция, вызываемая при удалении упражнения. */
   onDelete: (exerciseId: string) => Promise<void>;
+  /** Функция для открытия диалогового окна управления категориями. */
   openManageCategories: () => void;
 }
 
+/**
+ * Компонент-карточка, отображающий основную информацию об упражнении,
+ * включая изображение, название, категорию и описание.
+ * Также содержит кнопку для редактирования упражнения.
+ * @param {ExerciseCardProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function ExerciseCard({ exercise, categories, onUpdate, onDelete, openManageCategories }: ExerciseCardProps) {
   const category = categories.find(cat => cat.id === exercise.categoryId);
 
@@ -28,7 +48,7 @@ export function ExerciseCard({ exercise, categories, onUpdate, onDelete, openMan
             alt={exercise.name}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            data-ai-hint="fitness exercise"
+            data-ai-hint="фитнес-упражнение"
           />
            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
            <div className="absolute top-2 right-2">
@@ -36,7 +56,7 @@ export function ExerciseCard({ exercise, categories, onUpdate, onDelete, openMan
                 exerciseToEdit={exercise}
                 onExerciseUpdate={onUpdate}
                 onExerciseDelete={onDelete}
-                onExerciseAdd={async () => {}} // Not used in edit mode
+                onExerciseAdd={async () => {}} // Не используется в режиме редактирования
                 categories={categories}
                 openManageCategories={openManageCategories}
                 trigger={
@@ -48,7 +68,7 @@ export function ExerciseCard({ exercise, categories, onUpdate, onDelete, openMan
            </div>
         </div>
         <div className="p-4">
-          <Badge variant="secondary" className="mb-2">{category?.name || 'Uncategorized'}</Badge>
+          <Badge variant="secondary" className="mb-2">{category?.name || 'Без категории'}</Badge>
           <h3 className="font-semibold text-lg truncate">{exercise.name}</h3>
           <p className="text-sm text-muted-foreground h-10 overflow-hidden text-ellipsis">
             {exercise.description}

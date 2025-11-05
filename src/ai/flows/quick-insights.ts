@@ -1,7 +1,7 @@
 'use server';
 /**
- * AI-powered quick insights for workout analytics using Genkit + Gemini.
- * Falls back to mock generator if NEXT_PUBLIC_AI_MOCK=1 or API key is missing.
+ * @fileoverview Быстрые инсайты по аналитике тренировок с помощью AI (Genkit + Gemini).
+ * Использует мок-генератор, если NEXT_PUBLIC_AI_MOCK=1 или отсутствует API-ключ.
  */
 
 import { ai } from '@/ai/genkit';
@@ -10,6 +10,15 @@ import type { WorkoutLog, Program } from '@/lib/types';
 import { generateQuickInsightsMock } from '@/lib/workout-ai-mocks';
 import type { QuickInsightsOutput } from '@/lib/workout-ai-mocks';
 
+/**
+ * Схема для быстрого инсайта.
+ * @property {('positive'|'warning'|'recommendation')} type - Тип инсайта.
+ * @property {(1|2|3)} priority - Приоритет (1 - самый высокий).
+ * @property {string} title - Заголовок.
+ * @property {string} description - Описание.
+ * @property {boolean} actionable - Можно ли действовать немедленно.
+ * @property {string} [relatedProgram] - Связанная программа.
+ */
 const QuickInsightSchema = z.object({
   type: z.enum(['positive', 'warning', 'recommendation']),
   priority: z.union([z.literal(1), z.literal(2), z.literal(3)]),
@@ -19,6 +28,13 @@ const QuickInsightSchema = z.object({
   relatedProgram: z.string().optional(),
 });
 
+/**
+ * Схема входных данных для быстрых инсайтов.
+ * @property {Array<object>} workoutLogs - Логи тренировок.
+ * @property {Array<object>} activePrograms - Активные программы.
+ * @property {string} [userGoal] - Цель пользователя.
+ * @property {('2weeks'|'4weeks')} timeframe - Временной промежуток.
+ */
 const QuickInsightsInputSchema = z.object({
   workoutLogs: z.array(z.object({
     id: z.string(),
@@ -46,6 +62,12 @@ const QuickInsightsInputSchema = z.object({
   timeframe: z.enum(['2weeks', '4weeks']),
 });
 
+/**
+ * Схема выходных данных для быстрых инсайтов.
+ * @property {Array<QuickInsight>} insights - Массив инсайтов.
+ * @property {string} summary - Резюме.
+ * @property {number} confidence - Уверенность (0-1).
+ */
 const QuickInsightsOutputSchema = z.object({
   insights: z.array(QuickInsightSchema),
   summary: z.string(),
@@ -53,16 +75,19 @@ const QuickInsightsOutputSchema = z.object({
 });
 
 export type QuickInsightsInput = z.infer<typeof QuickInsightsInputSchema>;
-// QuickInsightsOutput is imported from workout-ai-mocks.ts
+// QuickInsightsOutput импортируется из workout-ai-mocks.ts
 
 /**
- * Real AI insights generation using Gemini via Genkit.
+ * Генерация быстрых инсайтов с помощью AI (Gemini через Genkit).
+ * @param {QuickInsightsInput} input - Входные данные.
+ * @returns {Promise<z.infer<typeof QuickInsightsOutputSchema>>} - Обещание, которое разрешается с быстрыми инсайтами.
+ * @throws {Error} - Если генерация с помощью AI не удалась.
  */
 async function generateQuickInsightsWithAI(input: QuickInsightsInput): Promise<z.infer<typeof QuickInsightsOutputSchema>> {
   const workoutsSummary = input.workoutLogs.slice(0, 50).map(log => {
     const volume = log.totalVolume || 0;
     const duration = log.duration || 0;
-    return `Date: ${log.date}, Volume: ${Math.round(volume)}kg, Duration: ${duration}min`;
+    return `Дата: ${log.date}, Объем: ${Math.round(volume)}кг, Длительность: ${duration}мин`;
   }).join('\n');
 
   const programsList = input.activePrograms.map(p => `- ${p.name} (${p.status})`).join('\n');
@@ -71,44 +96,44 @@ async function generateQuickInsightsWithAI(input: QuickInsightsInput): Promise<z
     name: 'quickInsightsPrompt',
     input: { schema: QuickInsightsInputSchema },
     output: { schema: QuickInsightsOutputSchema },
-    prompt: `You are an elite strength & conditioning coach with 15+ years of experience.
+    prompt: `Вы — элитный тренер по силовой и кондиционной подготовке с опытом более 15 лет.
 
-SPECIALIZATION:
-- Evidence-based programming
-- Progressive overload strategies
-- RPE-based training
-- Periodization and recovery
-- Injury prevention
+СПЕЦИАЛИЗАЦИЯ:
+- Программирование на основе фактических данных
+- Стратегии прогрессивной перегрузки
+- Тренировки на основе RPE
+- Периодизация и восстановление
+- Профилактика травм
 
-RESPONSE STYLE:
-- Brief and actionable (2-3 sentences max)
-- Specific numbers and dates
-- Avoid generic phrases
-- Focus on next 1-2 weeks
+СТИЛЬ ОТВЕТА:
+- Краткий и действенный (максимум 2-3 предложения)
+- Конкретные цифры и даты
+- Избегайте общих фраз
+- Сосредоточьтесь на следующих 1-2 неделях
 
-ANALYZE:
-1. Volume trends (increasing/decreasing/plateauing)
-2. RPE patterns (overtraining/undertraining)
-3. Progressive overload (is there progression?)
-4. Recovery (missed workouts, fatigue indicators)
-5. Exercise-specific (strong/weak points)
+АНАЛИЗ:
+1. Тренды объема (рост/снижение/плато)
+2. Паттерны RPE (перетренированность/недотренированность)
+3. Прогрессивная перегрузка (есть ли прогресс?)
+4. Восстановление (пропущенные тренировки, индикаторы усталости)
+5. Специфика упражнений (сильные/слабые стороны)
 
-USER DATA:
-Timeframe: ${input.timeframe}
-Goal: ${input.userGoal || 'Not specified'}
+ДАННЫЕ ПОЛЬЗОВАТЕЛЯ:
+Временной промежуток: ${input.timeframe}
+Цель: ${input.userGoal || 'Не указана'}
 
-Recent Workouts:
+Последние тренировки:
 ${workoutsSummary}
 
-Active Programs:
-${programsList || 'None'}
+Активные программы:
+${programsList || 'Нет'}
 
-Generate 3-5 insights with:
-- type: 'positive' (what's going well + why), 'warning' (red flags + consequences), 'recommendation' (what to change + how + when)
-- priority: 1 (highest) to 3 (lowest)
-- actionable: true if user can act immediately
+Сгенерируйте 3-5 инсайтов с:
+- type: 'positive' (что идет хорошо + почему), 'warning' (тревожные сигналы + последствия), 'recommendation' (что изменить + как + когда)
+- priority: от 1 (самый высокий) до 3 (самый низкий)
+- actionable: true, если пользователь может действовать немедленно
 
-Return structured JSON response matching the schema.`,
+Верните структурированный JSON-ответ, соответствующий схеме.`,
   });
 
   try {
@@ -119,23 +144,28 @@ Return structured JSON response matching the schema.`,
       timeframe: input.timeframe,
     });
     
-    // Extract token usage if available
+    // Извлечение использования токенов, если доступно
     const tokensUsed = (result as any)?.usage?.totalTokens || (result as any)?.tokensUsed || 0;
     if (tokensUsed > 0) {
       (result as any).tokensUsed = tokensUsed;
     }
 
-    // Genkit returns a wrapper; use .output for typed result
-    // @ts-expect-error - Genkit type wrapper issue
+    // Genkit возвращает обертку; используйте .output для типизированного результата
+    // @ts-expect-error - Проблема с оберткой типов Genkit
     return result.output ?? result;
   } catch (error) {
-    console.error('[quick-insights] AI generation error:', error);
+    console.error('[quick-insights] Ошибка генерации AI:', error);
     throw error;
   }
 }
 
 /**
- * Main insights generation function with fallback logic.
+ * Основная функция генерации инсайтов с логикой отката.
+ * @param {WorkoutLog[]} workoutLogs - Логи тренировок.
+ * @param {Program[]} programs - Программы.
+ * @param {string} [userGoal] - Цель пользователя.
+ * @param {('2weeks'|'4weeks')} timeframe - Временной промежуток.
+ * @returns {Promise<QuickInsightsOutput>} - Обещание, которое разрешается с быстрыми инсайтами.
  */
 export async function getQuickInsights(
   workoutLogs: WorkoutLog[],
@@ -143,20 +173,20 @@ export async function getQuickInsights(
   userGoal?: string,
   timeframe: '2weeks' | '4weeks' = '2weeks'
 ): Promise<QuickInsightsOutput> {
-  // Check if mock mode is enabled
+  // Проверка, включен ли режим мок-данных
   if (process.env.NEXT_PUBLIC_AI_MOCK === '1') {
-    console.log('[quick-insights] Using mock generator (NEXT_PUBLIC_AI_MOCK=1)');
+    console.log('[quick-insights] Используется мок-генератор (NEXT_PUBLIC_AI_MOCK=1)');
     return generateQuickInsightsMock(workoutLogs, programs, userGoal);
   }
 
-  // Check if API key is available
+  // Проверка наличия API-ключа
   if (!process.env.GOOGLE_GENAI_API_KEY) {
-    console.warn('[quick-insights] No GOOGLE_GENAI_API_KEY found, falling back to mock');
+    console.warn('[quick-insights] Не найден GOOGLE_GENAI_API_KEY, используется мок');
     return generateQuickInsightsMock(workoutLogs, programs, userGoal);
   }
 
   try {
-    // Prepare input
+    // Подготовка входных данных
     const input: QuickInsightsInput = {
       workoutLogs: workoutLogs.map(log => ({
         id: log.id,
@@ -184,13 +214,13 @@ export async function getQuickInsights(
       timeframe,
     };
 
-    // Try AI generation with retry logic (3 attempts with exponential backoff)
+    // Попытка генерации AI с логикой повторных попыток (3 попытки с экспоненциальной задержкой)
     let lastError: Error | null = null;
     let tokensUsed = 0;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const result = await generateQuickInsightsWithAI(input);
-        // Track token usage
+        // Отслеживание использования токенов
         tokensUsed = (result as any).tokensUsed || 0;
         if (tokensUsed > 0) {
           (result as any).tokensUsed = tokensUsed;
@@ -199,18 +229,18 @@ export async function getQuickInsights(
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
         if (attempt < 2) {
-          // Exponential backoff: 100ms, 200ms, 400ms
+          // Экспоненциальная задержка: 100мс, 200мс, 400мс
           await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, attempt)));
         }
       }
     }
 
-    // If all retries failed, fall back to mock
-    console.error('[quick-insights] AI generation failed after retries, falling back to mock:', lastError);
+    // Если все повторные попытки не увенчались успехом, вернуться к мок-данным
+    console.error('[quick-insights] Генерация AI не удалась после повторных попыток, используется мок:', lastError);
     return generateQuickInsightsMock(workoutLogs, programs, userGoal);
   } catch (error) {
-    // Any other error, fall back to mock
-    console.error('[quick-insights] Unexpected error, falling back to mock:', error);
+    // Любая другая ошибка, вернуться к мок-данным
+    console.error('[quick-insights] Непредвиденная ошибка, используется мок:', error);
     return generateQuickInsightsMock(workoutLogs, programs, userGoal);
   }
 }

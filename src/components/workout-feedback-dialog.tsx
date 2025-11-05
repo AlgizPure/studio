@@ -6,26 +6,45 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 
+/**
+ * @fileoverview Диалоговое окно для сбора обратной связи после тренировки.
+ */
+
 const TAGS = [
-  { id: 'strong', label: '💪 Strong' },
-  { id: 'tired', label: '😰 Tired' },
-  { id: 'pain', label: '⚠️ Pain' },
-  { id: 'poor_sleep', label: '😴 Poor Sleep' },
-  { id: 'great_pump', label: '🔥 Great Pump' },
-  { id: 'low_motivation', label: '😕 Low Motivation' },
+  { id: 'strong', label: '💪 Сильный' },
+  { id: 'tired', label: '😰 Устал' },
+  { id: 'pain', label: '⚠️ Боль' },
+  { id: 'poor_sleep', label: '😴 Плохой сон' },
+  { id: 'great_pump', label: '🔥 Отличный памп' },
+  { id: 'low_motivation', label: '😕 Низкая мотивация' },
 ] as const;
 
+/**
+ * Свойства для компонента WorkoutFeedbackDialog.
+ * @interface WorkoutFeedbackDialogProps
+ * @property {boolean} open - Определяет, открыто ли диалоговое окно.
+ * @property {(v: boolean) => void} onOpenChange - Функция обратного вызова при изменении состояния открытости.
+ * @property {(feedback: string, tags: string[]) => void} onSubmit - Функция обратного вызова при отправке данных.
+ * @property {string} [workoutName] - Название тренировки.
+ */
+interface WorkoutFeedbackDialogProps {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSubmit: (feedback: string, tags: string[]) => void;
+  workoutName?: string;
+}
+
+/**
+ * Компонент диалогового окна для обратной связи по тренировке.
+ * @param {WorkoutFeedbackDialogProps} props - Свойства компонента.
+ * @returns {JSX.Element} - Диалоговое окно для обратной связи по тренировке.
+ */
 export function WorkoutFeedbackDialog({
   open,
   onOpenChange,
   onSubmit,
   workoutName,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  onSubmit: (feedback: string, tags: string[]) => void;
-  workoutName?: string;
-}) {
+}: WorkoutFeedbackDialogProps) {
   const [text, setText] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -44,9 +63,9 @@ export function WorkoutFeedbackDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>How was your workout?</DialogTitle>
+          <DialogTitle>Как прошла ваша тренировка?</DialogTitle>
           <DialogDescription>
-            Optional feedback helps improve recommendations{workoutName ? ` for ${workoutName}` : ''}.
+            Необязательная обратная связь помогает улучшить рекомендации{workoutName ? ` для ${workoutName}` : ''}.
           </DialogDescription>
         </DialogHeader>
 
@@ -62,17 +81,14 @@ export function WorkoutFeedbackDialog({
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={4}
-          placeholder="E.g., Felt strong today, bench moved easily..."
+          placeholder="Например, сегодня чувствовал себя сильным, жим лежа шел легко..."
         />
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Skip</Button>
-          <Button onClick={handleSave}>Save Feedback</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Пропустить</Button>
+          <Button onClick={handleSave}>Сохранить отзыв</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-
-

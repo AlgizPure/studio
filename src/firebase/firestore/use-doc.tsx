@@ -11,32 +11,36 @@ import {
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-/** Utility type to add an 'id' field to a given type T. */
+/**
+ * @fileoverview Хук React для подписки на один документ Firestore в реальном времени.
+ */
+
+/** Вспомогательный тип для добавления поля 'id' к заданному типу T. */
 type WithId<T> = T & { id: string };
 
 /**
- * Interface for the return value of the useDoc hook.
- * @template T Type of the document data.
+ * Интерфейс для возвращаемого значения хука useDoc.
+ * @template T Тип данных документа.
  */
 export interface UseDocResult<T> {
-  data: WithId<T> | null; // Document data with ID, or null.
-  isLoading: boolean;       // True if loading.
-  error: FirestoreError | Error | null; // Error object, or null.
+  data: WithId<T> | null; // Данные документа с ID или null.
+  isLoading: boolean;       // true, если идет загрузка.
+  error: FirestoreError | Error | null; // Объект ошибки или null.
 }
 
 /**
- * React hook to subscribe to a single Firestore document in real-time.
- * Handles nullable references.
+ * Хук React для подписки на один документ Firestore в реальном времени.
+ * Обрабатывает nullable ссылки.
  * 
- * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use useMemo to memoize it per React guidence.  Also make sure that it's dependencies are stable
- * references
+ * ВАЖНО! ВЫ ДОЛЖНЫ МЕМОИЗИРОВАТЬ входной memoizedTargetRefOrQuery, иначе ПРОИЗОЙДУТ ПЛОХИЕ ВЕЩИ
+ * используйте useMemo для его мемоизации согласно руководству React. Также убедитесь, что его зависимости являются стабильными
+ * ссылками
  *
  *
- * @template T Optional type for document data. Defaults to any.
- * @param {DocumentReference<DocumentData> | null | undefined} docRef -
- * The Firestore DocumentReference. Waits if null/undefined.
- * @returns {UseDocResult<T>} Object with data, isLoading, error.
+ * @template T Необязательный тип для данных документа. По умолчанию any.
+ * @param {DocumentReference<DocumentData> | null | undefined} memoizedDocRef -
+ * Ссылка на документ Firestore. Ожидает, если null/undefined.
+ * @returns {UseDocResult<T>} Объект с данными, isLoading, error.
  */
 export function useDoc<T = any>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,

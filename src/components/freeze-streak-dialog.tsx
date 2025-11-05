@@ -11,14 +11,33 @@ import { Snowflake, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { addDays, format } from 'date-fns';
 
+/**
+ * @fileoverview Диалоговое окно для "заморозки" серии выполнения привычки.
+ */
+
+/**
+ * @interface FreezeStreakDialogProps
+ * @description Свойства для компонента FreezeStreakDialog.
+ */
 interface FreezeStreakDialogProps {
+  /** Определяет, открыто ли диалоговое окно. */
   open: boolean;
+  /** Callback-функция при изменении состояния открытости. */
   onOpenChange: (open: boolean) => void;
+  /** Название привычки, серию которой нужно заморозить. */
   habitName: string;
+  /** Текущая длина серии. */
   currentStreak: number;
+  /** Callback-функция, вызываемая при подтверждении заморозки. */
   onConfirm: (untilDate: string) => Promise<void>;
 }
 
+/**
+ * Компонент диалогового окна, позволяющий пользователю временно "заморозить"
+ * серию выполнения привычки, чтобы не прерывать ее во время отпуска или болезни.
+ * @param {FreezeStreakDialogProps} props - Свойства компонента.
+ * @returns {JSX.Element} React-компонент.
+ */
 export function FreezeStreakDialog({
   open,
   onOpenChange,
@@ -31,6 +50,10 @@ export function FreezeStreakDialog({
   const [customDate, setCustomDate] = useState('');
   const [busy, setBusy] = useState(false);
 
+  /**
+   * Рассчитывает дату окончания заморозки на основе выбора пользователя.
+   * @returns {string} - Дата в формате 'yyyy-MM-dd'.
+   */
   const calculateUntilDate = (): string => {
     if (preset === 'custom') {
       return customDate;
@@ -39,35 +62,37 @@ export function FreezeStreakDialog({
     return format(addDays(new Date(), days), 'yyyy-MM-dd');
   };
 
+  /**
+   * Обрабатывает подтверждение заморозки серии.
+   * Валидирует дату и вызывает onConfirm callback.
+   */
   const handleConfirm = async () => {
     const untilDate = calculateUntilDate();
     if (!untilDate) {
       toast({
-        title: 'Invalid date',
-        description: 'Please select a valid freeze period',
+        title: 'Неверная дата',
+        description: 'Пожалуйста, выберите действительный период заморозки',
         variant: 'destructive',
       });
       return;
     }
 
-    // Validate date is in future
     const until = new Date(untilDate);
     const now = new Date();
     if (until <= now) {
       toast({
-        title: 'Invalid date',
-        description: 'Freeze date must be in the future',
+        title: 'Неверная дата',
+        description: 'Дата заморозки должна быть в будущем',
         variant: 'destructive',
       });
       return;
     }
 
-    // Validate max 14 days
     const diffDays = Math.ceil((until.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays > 14) {
       toast({
-        title: 'Maximum freeze period',
-        description: 'You can freeze a streak for maximum 14 days',
+        title: 'Максимальный период заморозки',
+        description: 'Вы можете заморозить серию максимум на 14 дней',
         variant: 'destructive',
       });
       return;
@@ -77,14 +102,14 @@ export function FreezeStreakDialog({
     try {
       await onConfirm(untilDate);
       toast({
-        title: 'Streak frozen',
-        description: `${habitName} streak frozen until ${format(until, 'MMM d, yyyy')}`,
+        title: 'Серия заморожена',
+        description: `Серия для "${habitName}" заморожена до ${format(until, 'd MMM, yyyy')}`,
       });
       onOpenChange(false);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to freeze streak',
+        title: 'Ошибка',
+        description: 'Не удалось заморозить серию',
         variant: 'destructive',
       });
     } finally {
@@ -103,10 +128,10 @@ export function FreezeStreakDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Snowflake className="h-5 w-5 text-blue-600" />
-            Freeze Streak
+            Заморозить серию
           </DialogTitle>
           <DialogDescription>
-            Pause tracking for <strong>{habitName}</strong> without breaking your streak
+            Приостановите отслеживание для <strong>{habitName}</strong>, не прерывая вашу серию
           </DialogDescription>
         </DialogHeader>
 
@@ -114,35 +139,35 @@ export function FreezeStreakDialog({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-xs">
-              Freezing is perfect for vacations, illness, or planned breaks. Your {currentStreak}-day streak will be preserved.
+              Заморозка идеальна для отпуска, болезни или запланированных перерывов. Ваша серия из {currentStreak} дней будет сохранена.
             </AlertDescription>
           </Alert>
 
           <div className="space-y-3">
-            <Label>Freeze period</Label>
+            <Label>Период заморозки</Label>
             <RadioGroup value={preset} onValueChange={setPreset}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="3" id="3days" />
                 <Label htmlFor="3days" className="cursor-pointer font-normal">
-                  3 days (Weekend)
+                  3 дня (Выходные)
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="7" id="7days" />
                 <Label htmlFor="7days" className="cursor-pointer font-normal">
-                  7 days (Week)
+                  7 дней (Неделя)
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="14" id="14days" />
                 <Label htmlFor="14days" className="cursor-pointer font-normal">
-                  14 days (Maximum)
+                  14 дней (Максимум)
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="custom" id="custom" />
                 <Label htmlFor="custom" className="cursor-pointer font-normal">
-                  Custom date
+                  Выбрать дату
                 </Label>
               </div>
             </RadioGroup>
@@ -150,7 +175,7 @@ export function FreezeStreakDialog({
             {preset === 'custom' && (
               <div className="ml-6">
                 <Label htmlFor="customDate" className="text-xs">
-                  Freeze until
+                  Заморозить до
                 </Label>
                 <Input
                   id="customDate"
@@ -168,31 +193,30 @@ export function FreezeStreakDialog({
           {untilDate && daysCount > 0 && (
             <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
               <p className="text-sm font-medium text-blue-900">
-                Streak will be frozen for {daysCount} day{daysCount > 1 ? 's' : ''}
+                Серия будет заморожена на {daysCount} {daysCount > 1 ? 'дней' : 'день'}
               </p>
               <p className="text-xs text-blue-700 mt-1">
-                Until {format(new Date(untilDate), 'EEEE, MMMM d, yyyy')}
+                До {format(new Date(untilDate), 'EEEE, d MMMM, yyyy г.')}
               </p>
             </div>
           )}
 
           <div className="text-xs text-muted-foreground space-y-1">
-            <p>• Frozen days won't count toward or against your streak</p>
-            <p>• You can use freeze once per quarter</p>
-            <p>• Maximum freeze period is 14 days</p>
+            <p>• Замороженные дни не будут ни засчитываться, ни прерывать серию</p>
+            <p>• Вы можете использовать заморозку один раз в квартал</p>
+            <p>• Максимальный период заморозки составляет 14 дней</p>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>
-            Cancel
+            Отмена
           </Button>
           <Button onClick={handleConfirm} disabled={busy || !untilDate || daysCount <= 0}>
-            {busy ? 'Freezing...' : 'Freeze Streak'}
+            {busy ? 'Заморозка...' : 'Заморозить серию'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-

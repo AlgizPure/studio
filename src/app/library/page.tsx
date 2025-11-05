@@ -13,6 +13,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
+/**
+ * @fileoverview Страница библиотеки упражнений.
+ * Позволяет пользователям просматривать, создавать, редактировать и удалять упражнения и категории.
+ */
+
+/**
+ * Компонент страницы библиотеки упражнений.
+ * @returns {JSX.Element} - Страница библиотеки упражнений.
+ */
 export default function LibraryPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -33,6 +42,10 @@ export default function LibraryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
 
+  /**
+   * Добавляет новое упражнение.
+   * @param {Omit<Exercise, 'id' | 'authorId'>} newExercise - Новое упражнение.
+   */
   const handleAddExercise = (newExercise: Omit<Exercise, 'id' | 'authorId'>) => {
     if (!user || !firestore) return;
     const exercisesCollection = collection(firestore, `users/${user.uid}/exercises`);
@@ -46,6 +59,10 @@ export default function LibraryPage() {
     });
   };
   
+  /**
+   * Обновляет существующее упражнение.
+   * @param {Exercise} exercise - Упражнение для обновления.
+   */
   const handleUpdateExercise = async (exercise: Exercise) => {
     if (!user || !firestore || !exercise.id) return;
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exercise.id);
@@ -60,6 +77,10 @@ export default function LibraryPage() {
     });
   }
 
+  /**
+   * Удаляет упражнение.
+   * @param {string} exerciseId - ID упражнения для удаления.
+   */
   const handleDeleteExercise = async (exerciseId: string) => {
     if (!user || !firestore) return;
     const exerciseDoc = doc(firestore, `users/${user.uid}/exercises`, exerciseId);
@@ -72,6 +93,10 @@ export default function LibraryPage() {
     });
   }
 
+  /**
+   * Добавляет новую категорию.
+   * @param {string} name - Название новой категории.
+   */
   const handleAddCategory = (name: string) => {
     if (!user || !firestore) return;
     const categoriesCollection = collection(firestore, `users/${user.uid}/exerciseCategories`);
@@ -85,6 +110,10 @@ export default function LibraryPage() {
     });
   };
 
+  /**
+   * Обновляет существующую категорию.
+   * @param {ExerciseCategory} category - Категория для обновления.
+   */
   const handleUpdateCategory = (category: ExerciseCategory) => {
     if (!user || !firestore || !category.id) return;
     const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, category.id);
@@ -98,6 +127,10 @@ export default function LibraryPage() {
     });
   };
 
+  /**
+   * Удаляет категорию.
+   * @param {string} categoryId - ID категории для удаления.
+   */
   const handleDeleteCategory = (categoryId: string) => {
     if (!user || !firestore) return;
     const categoryDoc = doc(firestore, `users/${user.uid}/exerciseCategories`, categoryId);
@@ -114,7 +147,7 @@ export default function LibraryPage() {
     ex.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  const allCategory = { id: 'all', name: 'All' };
+  const allCategory = { id: 'all', name: 'Все' };
   const categories = [allCategory, ...(exerciseCategories || [])];
   
   const isLoading = exercisesLoading || categoriesLoading;
@@ -125,15 +158,15 @@ export default function LibraryPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Exercise Library
+            Библиотека упражнений
           </h1>
           <p className="text-muted-foreground">
-            Browse, create, and manage your exercises.
+            Просматривайте, создавайте и управляйте своими упражнениями.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Input 
-            placeholder="Search exercises..." 
+            placeholder="Поиск упражнений..."
             className="w-full md:w-64" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -181,7 +214,7 @@ export default function LibraryPage() {
               </div>
               {filteredExercises.filter(ex => category.id === 'all' || ex.categoryId === category.id).length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
-                  <p>No exercises found in this category.</p>
+                  <p>В этой категории упражнений не найдено.</p>
                 </div>
               )}
             </TabsContent>

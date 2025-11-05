@@ -10,16 +10,29 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
+/**
+ * @fileoverview Компонент основной навигации, отображаемый на боковой панели.
+ */
+
+/**
+ * Элементы навигации.
+ * @type {Array<{ href: string, label: string, icon: React.ElementType }>}
+ */
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: Home },
-  { href: '/programs', label: 'Programs', icon: Target },
-  { href: '/schedule', label: 'Schedule', icon: CalendarDays },
-  { href: '/workout-history', label: 'History', icon: History },
-  { href: '/library', label: 'Exercise Library', icon: Dumbbell },
-  { href: '/workouts', label: 'Workouts Library', icon: Dumbbell },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/', label: 'Панель управления', icon: Home },
+  { href: '/programs', label: 'Программы', icon: Target },
+  { href: '/schedule', label: 'Расписание', icon: CalendarDays },
+  { href: '/workout-history', label: 'История', icon: History },
+  { href: '/library', label: 'Библиотека упражнений', icon: Dumbbell },
+  { href: '/workouts', label: 'Библиотека тренировок', icon: Dumbbell },
+  { href: '/analytics', label: 'Аналитика', icon: BarChart3 },
 ];
 
+/**
+ * Компонент основной навигации.
+ * @param {React.HTMLAttributes<HTMLElement>} props - Свойства компонента.
+ * @returns {JSX.Element} - Основная навигация.
+ */
 export function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
 

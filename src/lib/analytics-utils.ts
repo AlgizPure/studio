@@ -3,8 +3,14 @@
 
 import type { WorkoutLog } from './types';
 
+/**
+ * @fileoverview Утилиты для расчета статистики и аналитики тренировок.
+ */
+
+/** Временной диапазон для аналитики. */
 export type TimeRange = '7d' | '30d' | '90d' | 'all';
 
+/** Сгруппированная тренировка. */
 export type GroupedWorkout = {
   date: string; // YYYY-MM-DD or YYYY-WW or YYYY-MM
   totalVolume: number;
@@ -12,6 +18,7 @@ export type GroupedWorkout = {
   workoutCount: number;
 };
 
+/** Данные о прогрессе по упражнению. */
 export type ExerciseProgressData = {
   date: string;
   exerciseName: string;
@@ -22,12 +29,18 @@ export type ExerciseProgressData = {
   totalReps: number;
 };
 
+/** Данные о тренде. */
 export type TrendData = {
   slope: number;
   trend: 'increasing' | 'stable' | 'decreasing';
   changePercentage: number;
 };
 
+/**
+ * Вычисляет объем тренировки.
+ * @param {WorkoutLog} workout - Лог тренировки.
+ * @returns {number} - Общий объем.
+ */
 export function calculateWorkoutVolume(workout: WorkoutLog): number {
   let total = 0;
   workout.cycles?.forEach(cycle => {
@@ -42,12 +55,23 @@ export function calculateWorkoutVolume(workout: WorkoutLog): number {
   return total;
 }
 
+/**
+ * Вычисляет общий объем для нескольких тренировок.
+ * @param {WorkoutLog[]} workouts - Массив логов тренировок.
+ * @returns {number} - Общий объем.
+ */
 export function calculateTotalVolume(workouts: WorkoutLog[]): number {
   return workouts.reduce((sum, workout) => {
     return sum + (workout.totalVolume || calculateWorkoutVolume(workout));
   }, 0);
 }
 
+/**
+ * Фильтрует тренировки по временному диапазону.
+ * @param {WorkoutLog[]} workouts - Массив логов тренировок.
+ * @param {TimeRange} range - Временной диапазон.
+ * @returns {WorkoutLog[]} - Отфильтрованный массив логов тренировок.
+ */
 export function getWorkoutsByDateRange(workouts: WorkoutLog[], range: TimeRange): WorkoutLog[] {
   if (range === 'all') return workouts;
   const now = new Date();
@@ -59,6 +83,12 @@ export function getWorkoutsByDateRange(workouts: WorkoutLog[], range: TimeRange)
   });
 }
 
+/**
+ * Группирует тренировки по периоду (день, неделя, месяц).
+ * @param {WorkoutLog[]} workouts - Массив логов тренировок.
+ * @param {'day' | 'week' | 'month'} [period='day'] - Период группировки.
+ * @returns {GroupedWorkout[]} - Массив сгруппированных тренировок.
+ */
 export function groupWorkoutsByPeriod(
   workouts: WorkoutLog[],
   period: 'day' | 'week' | 'month' = 'day'
@@ -101,6 +131,13 @@ function getWeekNumber(date: Date): number {
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
 
+/**
+ * Получает данные о прогрессе по конкретному упражнению.
+ * @param {WorkoutLog[]} workouts - Массив логов тренировок.
+ * @param {string} exerciseId - ID упражнения.
+ * @param {string} exerciseName - Название упражнения.
+ * @returns {ExerciseProgressData[]} - Массив данных о прогрессе.
+ */
 export function getExerciseProgress(
   workouts: WorkoutLog[],
   exerciseId: string,
@@ -151,6 +188,11 @@ export function getExerciseProgress(
   return progressData.sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/**
+ * Получает уникальные упражнения из логов тренировок.
+ * @param {WorkoutLog[]} workouts - Массив логов тренировок.
+ * @returns {Array<{ id: string; name: string }>} - Массив уникальных упражнений.
+ */
 export function getUniqueExercises(workouts: WorkoutLog[]): Array<{ id: string; name: string }> {
   const exerciseMap = new Map<string, string>();
   workouts.forEach(workout => {
@@ -165,6 +207,11 @@ export function getUniqueExercises(workouts: WorkoutLog[]): Array<{ id: string; 
   return Array.from(exerciseMap.entries()).map(([id, name]) => ({ id, name }));
 }
 
+/**
+ * Вычисляет тренд для набора данных.
+ * @param {number[]} data - Массив числовых данных.
+ * @returns {TrendData} - Объект с данными о тренде.
+ */
 export function calculateTrend(data: number[]): TrendData {
   if (data.length < 2) {
     return { slope: 0, trend: 'stable', changePercentage: 0 };
@@ -190,6 +237,11 @@ export function calculateTrend(data: number[]): TrendData {
   return { slope, trend, changePercentage };
 }
 
+/**
+ * Генерирует линию тренда для набора данных.
+ * @param {number[]} data - Массив числовых данных.
+ * @returns {number[]} - Массив значений линии тренда.
+ */
 export function generateTrendLine(data: number[]): number[] {
   if (data.length < 2) return data;
   const n = data.length;
@@ -203,6 +255,12 @@ export function generateTrendLine(data: number[]): number[] {
   return indices.map(x => slope * x + intercept);
 }
 
+/**
+ * Вычисляет основную статистику по тренировкам.
+ * @param {WorkoutLog[]} workouts - Массив логов тренировок.
+ * @param {TimeRange} range - Временной диапазон.
+ * @returns {object} - Объект со статистикой.
+ */
 export function calculateStats(workouts: WorkoutLog[], range: TimeRange) {
   const filteredWorkouts = getWorkoutsByDateRange(workouts, range);
   const totalWorkouts = filteredWorkouts.length;
@@ -219,20 +277,28 @@ export function calculateStats(workouts: WorkoutLog[], range: TimeRange) {
   };
 }
 
+/**
+ * Форматирует объем.
+ * @param {number} volume - Объем.
+ * @returns {string} - Отформатированный объем.
+ */
 export function formatVolume(volume: number): string {
   if (volume >= 1000) {
-    return `${(volume / 1000).toFixed(1)}k kg`;
+    return `${(volume / 1000).toFixed(1)}тыс. кг`;
   }
-  return `${Math.round(volume)} kg`;
+  return `${Math.round(volume)} кг`;
 }
 
+/**
+ * Форматирует продолжительность.
+ * @param {number} minutes - Продолжительность в минутах.
+ * @returns {string} - Отформатированная продолжительность.
+ */
 export function formatDuration(minutes: number): string {
   if (minutes >= 60) {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
+    return `${hours}ч ${mins}м`;
   }
-  return `${minutes}m`;
+  return `${minutes}м`;
 }
-
-

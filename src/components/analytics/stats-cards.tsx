@@ -8,11 +8,26 @@ import type { WorkoutLog } from '@/lib/types';
 import type { TimeRange } from '@/lib/analytics-utils';
 import { calculateStats, formatVolume, formatDuration } from '@/lib/analytics-utils';
 
+/**
+ * @fileoverview Компонент, отображающий карточки с основной статистикой по тренировкам.
+ */
+
+/**
+ * Свойства для компонента StatsCards.
+ * @interface StatsCardsProps
+ * @property {WorkoutLog[]} workouts - Массив логов тренировок.
+ * @property {TimeRange} timeRange - Временной диапазон для анализа.
+ */
 interface StatsCardsProps {
   workouts: WorkoutLog[];
   timeRange: TimeRange;
 }
 
+/**
+ * Компонент карточек со статистикой.
+ * @param {StatsCardsProps} props - Свойства компонента.
+ * @returns {JSX.Element} - Карточки со статистикой.
+ */
 export function StatsCards({ workouts, timeRange }: StatsCardsProps) {
   const stats = useMemo(() => {
     return calculateStats(workouts, timeRange);
@@ -20,31 +35,31 @@ export function StatsCards({ workouts, timeRange }: StatsCardsProps) {
 
   const cards = [
     {
-      title: 'Total Workouts',
+      title: 'Всего тренировок',
       value: stats.totalWorkouts,
       icon: Calendar,
-      description: 'Completed sessions',
+      description: 'Завершенные сессии',
       color: 'text-blue-600 dark:text-blue-400',
     },
     {
-      title: 'Total Volume',
+      title: 'Общий объем',
       value: formatVolume(stats.totalVolume),
       icon: Dumbbell,
-      description: 'Weight × reps',
+      description: 'Вес × повторения',
       color: 'text-green-600 dark:text-green-400',
     },
     {
-      title: 'Avg Duration',
+      title: 'Сред. длительность',
       value: formatDuration(stats.avgDuration),
       icon: Clock,
-      description: 'Per workout',
+      description: 'За тренировку',
       color: 'text-purple-600 dark:text-purple-400',
     },
     {
-      title: 'Consistency',
+      title: 'Постоянство',
       value: `${stats.consistency}%`,
       icon: TrendingUp,
-      description: 'Training frequency',
+      description: 'Частота тренировок',
       color: 'text-orange-600 dark:text-orange-400',
     },
   ];
@@ -73,5 +88,3 @@ export function StatsCards({ workouts, timeRange }: StatsCardsProps) {
     </div>
   );
 }
-
-

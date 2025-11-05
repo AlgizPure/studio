@@ -1,11 +1,16 @@
 /**
- * Helper functions for AI analytics: fetching workouts, aggregating exercise history, caching
+ * @fileoverview Вспомогательные функции для аналитики AI: получение тренировок, агрегация истории упражнений, кэширование.
  */
 
 import type { WorkoutLog, Program } from '@/lib/types';
 import type { Firestore } from 'firebase-admin/firestore';
 import type { Timestamp } from 'firebase-admin/firestore';
 
+/**
+ * @typedef {object} ExerciseHistory
+ * История выполнения упражнения.
+ * @property {Array<{ date: string; sets: Array<{ reps: number; weight?: number; rpe?: number }>; avgRPE: number; totalVolume: number }>} sessions - Массив сессий.
+ */
 export type ExerciseHistory = {
   sessions: Array<{
     date: string;
@@ -19,6 +24,18 @@ export type ExerciseHistory = {
   }>;
 };
 
+/**
+ * @typedef {object} AIInsightCache
+ * Кэш инсайтов AI.
+ * @property {string} id - ID кэша.
+ * @property {'quick_insights' | 'progressions'} type - Тип инсайта.
+ * @property {any} data - Данные инсайта.
+ * @property {string} [timeframe] - Временной промежуток.
+ * @property {string} [programId] - ID программы.
+ * @property {Timestamp} generatedAt - Время генерации.
+ * @property {Timestamp} expiresAt - Время истечения.
+ * @property {number} [tokensUsed] - Использованные токены.
+ */
 export type AIInsightCache = {
   id: string;
   type: 'quick_insights' | 'progressions';
@@ -31,7 +48,11 @@ export type AIInsightCache = {
 };
 
 /**
- * Fetch recent workouts from Firestore
+ * Получает недавние тренировки из Firestore.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @param {number} days - Количество дней для получения.
+ * @returns {Promise<WorkoutLog[]>} - Массив логов тренировок.
  */
 export async function getRecentWorkouts(
   firestore: Firestore,
@@ -52,7 +73,12 @@ export async function getRecentWorkouts(
 }
 
 /**
- * Aggregate exercise history from workout logs
+ * Агрегирует историю упражнений из логов тренировок.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @param {string} programId - ID программы.
+ * @param {number} [days=30] - Количество дней для агрегации.
+ * @returns {Promise<Record<string, ExerciseHistory>>} - Объект с историей упражнений.
  */
 export async function getExerciseHistory(
   firestore: Firestore,
@@ -62,7 +88,7 @@ export async function getExerciseHistory(
 ): Promise<Record<string, ExerciseHistory>> {
   const workouts = await getRecentWorkouts(firestore, userId, days);
   
-  // Filter workouts for this program
+  // Фильтруем тренировки для этой программы
   const programWorkouts = workouts.filter(w => w.programId === programId);
 
   const history: Record<string, ExerciseHistory> = {};
@@ -75,11 +101,11 @@ export async function getExerciseHistory(
           history[exId] = { sessions: [] };
         }
 
-        // Calculate RPE and volume for this session
+        // Вычисляем RPE и объем для этой сессии
         const setsWithRPE = ex.sets.filter(s => s.rpe !== undefined);
         const avgRPE = setsWithRPE.length > 0
           ? setsWithRPE.reduce((sum, s) => sum + (s.rpe || 0), 0) / setsWithRPE.length
-          : 7.5; // Default if no RPE
+          : 7.5; // Значение по умолчанию, если нет RPE
 
         const totalVolume = ex.sets.reduce((sum, set) => {
           if (set.weight && set.completed) {
@@ -106,7 +132,13 @@ export async function getExerciseHistory(
 }
 
 /**
- * Get cached insights from Firestore
+ * Получает кэшированные инсайты из Firestore.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @param {'quick_insights' | 'progressions'} type - Тип инсайта.
+ * @param {string} [timeframe] - Временной промежуток.
+ * @param {string} [programId] - ID программы.
+ * @returns {Promise<AIInsightCache | null>} - Кэшированный инсайт или null.
  */
 export async function getCachedInsights(
   firestore: Firestore,
@@ -128,7 +160,7 @@ export async function getCachedInsights(
     expiresAt: any;
   };
 
-  // Check if expired
+  // Проверяем, не истек ли срок действия
   if (data.expiresAt?.toMillis && data.expiresAt.toMillis() < Date.now()) {
     return null;
   }
@@ -141,7 +173,15 @@ export async function getCachedInsights(
 }
 
 /**
- * Save insights to cache in Firestore
+ * Сохраняет инсайты в кэш в Firestore.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @param {'quick_insights' | 'progressions'} type - Тип инсайта.
+ * @param {any} data - Данные для кэширования.
+ * @param {string} [timeframe] - Временной промежуток.
+ * @param {string} [programId] - ID программы.
+ * @param {number} [tokensUsed] - Использованные токены.
+ * @returns {Promise<void>}
  */
 export async function saveInsightsCache(
   firestore: Firestore,
@@ -155,7 +195,7 @@ export async function saveInsightsCache(
   const { Timestamp } = await import('firebase-admin/firestore');
   const now = Timestamp.now();
   const expiresAt = Timestamp.fromMillis(
-    now.toMillis() + (type === 'quick_insights' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000) // 24h or 7 days
+    now.toMillis() + (type === 'quick_insights' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000) // 24 часа или 7 дней
   );
 
   const cacheRef = firestore.collection(`users/${userId}/aiInsights`)
@@ -174,7 +214,12 @@ export async function saveInsightsCache(
 }
 
 /**
- * Check and update AI usage limits
+ * @typedef {object} AIUsage
+ * Использование AI.
+ * @property {string} date - Дата (ГГГГ-ММ-ДД).
+ * @property {number} insightsCount - Количество инсайтов.
+ * @property {number} progressionsCount - Количество прогрессий.
+ * @property {number} tokensUsed - Использованные токены.
  */
 export type AIUsage = {
   date: string; // YYYY-MM-DD
@@ -183,6 +228,13 @@ export type AIUsage = {
   tokensUsed: number;
 };
 
+/**
+ * Проверяет и обновляет лимиты использования AI.
+ * @param {Firestore} firestore - Экземпляр Firestore.
+ * @param {string} userId - ID пользователя.
+ * @param {'insights' | 'progressions'} type - Тип использования.
+ * @returns {Promise<{ allowed: boolean; usage: AIUsage }>} - Объект с разрешением и использованием.
+ */
 export async function checkAndUpdateUsage(
   firestore: Firestore,
   userId: string,
@@ -203,7 +255,7 @@ export async function checkAndUpdateUsage(
     };
   }
 
-  // Check limits (10 insights/day, 10 progressions/day)
+  // Проверяем лимиты (10 инсайтов/день, 10 прогрессий/день)
   const maxCount = 10;
   const currentCount = type === 'insights' ? usage.insightsCount : usage.progressionsCount;
 
@@ -211,7 +263,7 @@ export async function checkAndUpdateUsage(
     return { allowed: false, usage };
   }
 
-  // Update usage
+  // Обновляем использование
   const updatedUsage: AIUsage = {
     ...usage,
     date: today,

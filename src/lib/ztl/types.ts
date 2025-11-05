@@ -1,5 +1,13 @@
 import type { Program as AppProgram, WorkoutExtended as AppWorkout, WorkoutLog as AppWorkoutLog } from '@/lib/types';
 
+/**
+ * @fileoverview Определения типов TypeScript для ZTL (Zenith Training Language) и их сопоставление с типами приложения.
+ */
+
+/**
+ * @typedef {'strong' | 'tired' | 'pain' | 'poor_sleep' | 'great_pump' | 'low_motivation'} FeedbackTag
+ * @description Теги обратной связи для описания состояния во время тренировки.
+ */
 export type FeedbackTag =
   | 'strong'
   | 'tired'
@@ -8,7 +16,19 @@ export type FeedbackTag =
   | 'great_pump'
   | 'low_motivation';
 
-// ZTL v1.0
+/**
+ * @typedef {object} ZTLExercise
+ * @description Представляет одно упражнение в рамках ZTL.
+ * @property {string} id - Уникальный идентификатор упражнения.
+ * @property {string} name - Название упражнения.
+ * @property {number} [sets] - Количество подходов.
+ * @property {string} [target_reps] - Целевое количество повторений (например, "8-10").
+ * @property {number} [target_weight_kg] - Целевой вес в килограммах.
+ * @property {number} [target_rpe] - Целевой RPE (Rate of Perceived Exertion) от 1 до 10.
+ * @property {number} [target_duration_s] - Целевая длительность в секундах.
+ * @property {'zone1' | 'zone2' | 'zone3' | 'zone4' | 'zone5'} [target_intensity] - Целевая зона интенсивности.
+ * @property {number} [rest_s] - Время отдыха в секундах.
+ */
 export type ZTLExercise = {
   id: string;
   name: string;
@@ -21,6 +41,14 @@ export type ZTLExercise = {
   rest_s?: number;
 };
 
+/**
+ * @typedef {object} ZTLCycle
+ * @description Представляет цикл упражнений в ZTL (например, суперсет, дроп-сет).
+ * @property {'normal' | 'circuit' | 'superset' | 'dropset'} type - Тип цикла.
+ * @property {number} [repetitions] - Количество повторений цикла.
+ * @property {number} [rest_after] - Отдых после завершения цикла.
+ * @property {ZTLExercise[]} exercises - Массив упражнений в цикле.
+ */
 export type ZTLCycle = {
   type: 'normal' | 'circuit' | 'superset' | 'dropset';
   repetitions?: number;
@@ -28,6 +56,15 @@ export type ZTLCycle = {
   exercises: ZTLExercise[];
 };
 
+/**
+ * @typedef {object} ZTLWorkout
+ * @description Представляет одну тренировку в ZTL.
+ * @property {string} id - Уникальный идентификатор тренировки.
+ * @property {string} name - Название тренировки.
+ * @property {'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'} day - День недели.
+ * @property {number} [estimated_duration_min] - Предполагаемая длительность в минутах.
+ * @property {ZTLCycle[]} cycles - Массив циклов упражнений.
+ */
 export type ZTLWorkout = {
   id: string;
   name: string;
@@ -36,6 +73,13 @@ export type ZTLWorkout = {
   cycles: ZTLCycle[];
 };
 
+/**
+ * @typedef {object} ZTLProgression
+ * @description Определяет правила прогрессии нагрузки в программе ZTL.
+ * @property {Array<object>} rules - Массив правил для изменения нагрузки.
+ * @property {number} [microcycle_weeks] - Длительность микроцикла в неделях.
+ * @property {object} [deload] - Параметры разгрузочной недели.
+ */
 export type ZTLProgression = {
   rules: Array<{
     when: {
@@ -54,6 +98,15 @@ export type ZTLProgression = {
   };
 };
 
+/**
+ * @typedef {object} ZTLProgram
+ * @description Представляет полную программу тренировок в ZTL.
+ * @property {object} meta - Метаданные программы.
+ * @property {Array<object>} [phases] - Фазы программы.
+ * @property {object} schedule - Расписание тренировок.
+ * @property {ZTLWorkout[]} workouts - Массив тренировок.
+ * @property {ZTLProgression} [progression] - Правила прогрессии.
+ */
 export type ZTLProgram = {
   meta: {
     version: '1.0';
@@ -74,6 +127,10 @@ export type ZTLProgram = {
   progression?: ZTLProgression;
 };
 
+/**
+ * @typedef {object} ZTLPatchOp
+ * @description Определяет операцию для изменения (патча) программы ZTL.
+ */
 export type ZTLPatchOp =
   | {
       op: 'update-exercise';
@@ -86,12 +143,28 @@ export type ZTLPatchOp =
   | { op: 'update-program'; program_id: string; program: Partial<ZTLProgram> }
   | { op: 'remove-exercise'; program_id: string; workout_id: string; exercise_id: string };
 
+/**
+ * @typedef {object} ZTLPatch
+ * @description Представляет набор операций для изменения программы ZTL.
+ * @property {ZTLPatchOp[]} patch - Массив операций.
+ */
 export type ZTLPatch = { patch: ZTLPatchOp[] };
 
-// Bridges to app domain
+// Мосты к домену приложения
+/**
+ * @typedef {AppProgram} Program
+ * @description Тип программы, используемый в приложении.
+ */
 export type Program = AppProgram;
+
+/**
+ * @typedef {AppWorkout} Workout
+ * @description Расширенный тип тренировки, используемый в приложении.
+ */
 export type Workout = AppWorkout;
+
+/**
+ * @typedef {AppWorkoutLog} WorkoutLog
+ * @description Тип для лога выполненной тренировки в приложении.
+ */
 export type WorkoutLog = AppWorkoutLog;
-
-
-

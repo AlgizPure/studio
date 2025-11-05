@@ -17,6 +17,18 @@ import type { WorkoutExtended } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
+/**
+ * @fileoverview Диалоговое окно для редактирования и удаления существующей тренировки.
+ */
+
+/**
+ * Свойства для компонента EditWorkoutDialog.
+ * @interface EditWorkoutDialogProps
+ * @property {WorkoutExtended} workout - Тренировка для редактирования.
+ * @property {(workout: WorkoutExtended) => Promise<void>} onUpdate - Функция обратного вызова при обновлении тренировки.
+ * @property {(workoutId: string) => Promise<void>} onDelete - Функция обратного вызова при удалении тренировки.
+ * @property {React.ReactNode} trigger - Триггер для открытия диалогового окна.
+ */
 interface EditWorkoutDialogProps {
   workout: WorkoutExtended;
   onUpdate: (workout: WorkoutExtended) => Promise<void>;
@@ -24,6 +36,11 @@ interface EditWorkoutDialogProps {
   trigger: React.ReactNode;
 }
 
+/**
+ * Компонент диалогового окна для редактирования тренировки.
+ * @param {EditWorkoutDialogProps} props - Свойства компонента.
+ * @returns {JSX.Element} - Диалоговое окно для редактирования тренировки.
+ */
 export function EditWorkoutDialog({ workout, onUpdate, onDelete, trigger }: EditWorkoutDialogProps) {
   const [open, setOpen] = useState(false);
   const [currentWorkout, setCurrentWorkout] = useState<Omit<WorkoutExtended, 'id'> | null>(null);
@@ -55,8 +72,8 @@ export function EditWorkoutDialog({ workout, onUpdate, onDelete, trigger }: Edit
     onUpdate(updated);
     setOpen(false);
     toast({
-      title: 'Workout Updated',
-      description: 'Workout has been saved.',
+      title: 'Тренировка обновлена',
+      description: 'Тренировка была сохранена.',
     });
   };
 
@@ -64,8 +81,8 @@ export function EditWorkoutDialog({ workout, onUpdate, onDelete, trigger }: Edit
     await onDelete(workout.id);
     setOpen(false);
     toast({
-      title: 'Workout Deleted',
-      description: 'Workout has been removed.',
+      title: 'Тренировка удалена',
+      description: 'Тренировка была удалена.',
     });
   };
 
@@ -76,16 +93,16 @@ export function EditWorkoutDialog({ workout, onUpdate, onDelete, trigger }: Edit
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
-          <DialogTitle>Edit Workout</DialogTitle>
+          <DialogTitle>Редактировать тренировку</DialogTitle>
           <DialogDescription>
-            Modify your workout structure and cycles.
+            Измените структуру и циклы вашей тренировки.
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as 'edit' | 'delete')} className="flex-1 flex flex-col overflow-hidden min-h-0 px-6">
           <TabsList className="grid w-full grid-cols-2 mt-4 flex-shrink-0">
-            <TabsTrigger value="edit">Edit</TabsTrigger>
-            <TabsTrigger value="delete">Delete</TabsTrigger>
+            <TabsTrigger value="edit">Редактировать</TabsTrigger>
+            <TabsTrigger value="delete">Удалить</TabsTrigger>
           </TabsList>
 
           <TabsContent value="edit" className="flex-1 overflow-y-auto overflow-x-hidden pb-6 pt-4" style={{ minHeight: 0 }}>
@@ -101,23 +118,23 @@ export function EditWorkoutDialog({ workout, onUpdate, onDelete, trigger }: Edit
           <TabsContent value="delete" className="flex-1 overflow-y-auto overflow-x-hidden pb-6 pt-4" style={{ minHeight: 0 }}>
             <div className="space-y-4">
               <p className="text-muted-foreground">
-                Are you sure you want to delete this workout? This action cannot be undone.
+                Вы уверены, что хотите удалить эту тренировку? Это действие нельзя будет отменить.
               </p>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive">Delete Workout</Button>
+                  <Button variant="destructive">Удалить тренировку</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Вы абсолютно уверены?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete "{workout.name}" and all associated data.
+                      Это действие навсегда удалит "{workout.name}" и все связанные с ней данные.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>Отмена</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Delete
+                      Удалить
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -129,4 +146,3 @@ export function EditWorkoutDialog({ workout, onUpdate, onDelete, trigger }: Edit
     </Dialog>
   );
 }
-

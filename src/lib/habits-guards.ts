@@ -1,51 +1,63 @@
 /**
- * Type guards and helpers for habit type safety.
- * Eliminates need for `as any` casts by providing runtime type checks.
+ * @fileoverview Type guards и вспомогательные функции для типобезопасности привычек.
+ * Устраняет необходимость в приведении типов `as any` путем предоставления проверок типов во время выполнения.
  */
 
 import type { Habit, HabitV2, HabitTarget, HabitSchedule, Reminder } from './types';
 
 /**
- * Type guard: checks if a habit is HabitV2 (has 'type' field)
+ * Type guard: проверяет, является ли привычка HabitV2 (имеет поле 'type').
+ * @param {Habit | HabitV2} habit - Привычка для проверки.
+ * @returns {habit is HabitV2}
  */
 export function isHabitV2(habit: Habit | HabitV2): habit is HabitV2 {
   return 'type' in habit && typeof (habit as HabitV2).type === 'string';
 }
 
 /**
- * Type guard: checks if a habit has quantity target
+ * Type guard: проверяет, имеет ли привычка количественную цель.
+ * @param {HabitTarget} [target] - Цель для проверки.
+ * @returns {target is HabitTarget & { type: 'quantity' }}
  */
 export function isQuantityTarget(target?: HabitTarget): target is HabitTarget & { type: 'quantity' } {
   return target?.type === 'quantity';
 }
 
 /**
- * Type guard: checks if a habit has duration target
+ * Type guard: проверяет, имеет ли привычка цель по продолжительности.
+ * @param {HabitTarget} [target] - Цель для проверки.
+ * @returns {target is HabitTarget & { type: 'duration' }}
  */
 export function isDurationTarget(target?: HabitTarget): target is HabitTarget & { type: 'duration' } {
   return target?.type === 'duration';
 }
 
 /**
- * Type guard: checks if a habit has range target
+ * Type guard: проверяет, имеет ли привычка цель-диапазон.
+ * @param {HabitTarget} [target] - Цель для проверки.
+ * @returns {target is HabitTarget & { type: 'range' }}
  */
 export function isRangeTarget(target?: HabitTarget): target is HabitTarget & { type: 'range' } {
   return target?.type === 'range';
 }
 
 /**
- * Safely get tags from habit (V2 or Legacy)
+ * Безопасно получает теги из привычки (V2 или Legacy).
+ * @param {Habit | HabitV2} habit - Привычка.
+ * @returns {string[]} - Массив тегов.
  */
 export function getHabitTags(habit: Habit | HabitV2): string[] {
   if (isHabitV2(habit)) {
     return habit.tags || [];
   }
-  // Legacy habits don't have tags
+  // Устаревшие привычки не имеют тегов
   return [];
 }
 
 /**
- * Safely get priority from habit (V2 or Legacy)
+ * Безопасно получает приоритет из привычки (V2 или Legacy).
+ * @param {Habit | HabitV2} habit - Привычка.
+ * @returns {number | undefined} - Приоритет.
  */
 export function getHabitPriority(habit: Habit | HabitV2): number | undefined {
   if (isHabitV2(habit)) {
@@ -55,7 +67,9 @@ export function getHabitPriority(habit: Habit | HabitV2): number | undefined {
 }
 
 /**
- * Safely get difficulty from habit (V2 or Legacy)
+ * Безопасно получает сложность из привычки (V2 или Legacy).
+ * @param {Habit | HabitV2} habit - Привычка.
+ * @returns {'easy' | 'medium' | 'hard' | undefined} - Сложность.
  */
 export function getHabitDifficulty(habit: Habit | HabitV2): 'easy' | 'medium' | 'hard' | undefined {
   if (isHabitV2(habit)) {
@@ -65,7 +79,9 @@ export function getHabitDifficulty(habit: Habit | HabitV2): 'easy' | 'medium' | 
 }
 
 /**
- * Safely get target from habit (V2 only)
+ * Безопасно получает цель из привычки (только V2).
+ * @param {Habit | HabitV2} habit - Привычка.
+ * @returns {HabitTarget | undefined} - Цель.
  */
 export function getHabitTarget(habit: Habit | HabitV2): HabitTarget | undefined {
   if (isHabitV2(habit)) {
@@ -75,7 +91,9 @@ export function getHabitTarget(habit: Habit | HabitV2): HabitTarget | undefined 
 }
 
 /**
- * Safely get reminders from habit (V2 only)
+ * Безопасно получает напоминания из привычки (только V2).
+ * @param {Habit | HabitV2} habit - Привычка.
+ * @returns {Reminder[]} - Массив напоминаний.
  */
 export function getHabitReminders(habit: Habit | HabitV2): Reminder[] {
   if (isHabitV2(habit)) {
@@ -85,7 +103,9 @@ export function getHabitReminders(habit: Habit | HabitV2): Reminder[] {
 }
 
 /**
- * Safely get stacking rule from habit (V2 only)
+ * Безопасно получает правило группировки из привычки (только V2).
+ * @param {Habit | HabitV2} habit - Привычка.
+ * @returns {{ triggerId: string; position: 'before' | 'after'; delay?: number } | undefined} - Правило группировки.
  */
 export function getHabitStackingRule(habit: Habit | HabitV2): { triggerId: string; position: 'before' | 'after'; delay?: number } | undefined {
   if (isHabitV2(habit)) {
@@ -95,7 +115,9 @@ export function getHabitStackingRule(habit: Habit | HabitV2): { triggerId: strin
 }
 
 /**
- * Safely get schedule from habit (V2 only)
+ * Безопасно получает расписание из привычки (только V2).
+ * @param {Habit | HabitV2} habit - Привычка.
+ * @returns {HabitSchedule | undefined} - Расписание.
  */
 export function getHabitSchedule(habit: Habit | HabitV2): HabitSchedule | undefined {
   if (isHabitV2(habit)) {
@@ -105,7 +127,9 @@ export function getHabitSchedule(habit: Habit | HabitV2): HabitSchedule | undefi
 }
 
 /**
- * Safely check if habit is quantity type (V2 only)
+ * Безопасно проверяет, является ли привычка количественного типа (только V2).
+ * @param {Habit | HabitV2} habit - Привычка.
+ * @returns {boolean} - true, если привычка количественного типа.
  */
 export function isQuantityHabit(habit: Habit | HabitV2): boolean {
   if (isHabitV2(habit)) {
@@ -115,7 +139,9 @@ export function isQuantityHabit(habit: Habit | HabitV2): boolean {
 }
 
 /**
- * Safely check if habit is duration type (V2 only)
+ * Безопасно проверяет, является ли привычка типа "продолжительность" (только V2).
+ * @param {Habit | HabitV2} habit - Привычка.
+ * @returns {boolean} - true, если привычка типа "продолжительность".
  */
 export function isDurationHabit(habit: Habit | HabitV2): boolean {
   if (isHabitV2(habit)) {
@@ -125,13 +151,14 @@ export function isDurationHabit(habit: Habit | HabitV2): boolean {
 }
 
 /**
- * Safely check if habit is boolean type (V2) or legacy
+ * Безопасно проверяет, является ли привычка логического типа (V2) или устаревшей.
+ * @param {Habit | HabitV2} habit - Привычка.
+ * @returns {boolean} - true, если привычка логического типа.
  */
 export function isBooleanHabit(habit: Habit | HabitV2): boolean {
   if (isHabitV2(habit)) {
     return habit.type === 'boolean';
   }
-  // Legacy habits are treated as boolean
+  // Устаревшие привычки рассматриваются как логические
   return true;
 }
-

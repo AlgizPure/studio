@@ -2,8 +2,20 @@ import { collection, getDocs } from 'firebase/firestore';
 import type { AnalysisSystem, Habit, HabitExportV1, HabitLog, HabitStreak, HabitInsight } from './types';
 import { BUILTIN_SYSTEMS } from './systems';
 
+/**
+ * @fileoverview Функция для создания экспорта данных о привычках пользователя.
+ */
+
 type DateRange = { from: string; to: string };
 
+/**
+ * Создает экспорт данных о привычках в формате HabitExportV1.
+ * @param {object} opts - Опции для экспорта.
+ * @param {any} opts.firestore - Экземпляр Firestore.
+ * @param {string} opts.userId - ID пользователя.
+ * @param {DateRange} [opts.dateRange] - Диапазон дат для экспорта логов.
+ * @returns {Promise<HabitExportV1>} - Объект экспорта данных о привычках.
+ */
 export async function buildHabitExport(opts: {
   firestore: any;
   userId: string;
@@ -56,5 +68,3 @@ export async function buildHabitExport(opts: {
   };
   return exportData;
 }
-
-
