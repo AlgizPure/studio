@@ -6,6 +6,7 @@
 import type { Habit, Reminder } from './types';
 import { isHabitDueToday } from './habits';
 import { scheduleLocalNotification } from '@/firebase/messaging';
+import { logger } from './logger';
 
 export type ReminderStatus = 'pending' | 'shown' | 'snoozed' | 'dismissed';
 
@@ -85,7 +86,10 @@ export function scheduleEscalatingReminders(
   isCompleted: boolean
 ): void {
   if (isCompleted) {
-    console.log(`[Reminders] Habit ${reminder.habitName} completed, cancelling reminders`);
+    logger.debug('Habit completed, cancelling reminders', {
+      habitName: reminder.habitName,
+      habitId: reminder.habitId
+    });
     return;
   }
 
@@ -133,7 +137,11 @@ export function snoozeReminder(reminder: ScheduledReminder, delayMinutes: number
     delayMinutes * 60000
   );
 
-  console.log(`[Reminders] Snoozed ${reminder.habitName} for ${delayMinutes} minutes`);
+  logger.debug('Reminder snoozed', {
+    habitName: reminder.habitName,
+    habitId: reminder.habitId,
+    delayMinutes
+  });
 }
 
 /**

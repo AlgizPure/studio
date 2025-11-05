@@ -15,6 +15,7 @@ import { parseReflectionMock } from '@/lib/reflection';
 import { parseDailyReflection } from '@/ai/flows/parse-reflection';
 import { isHabitV2 } from '@/lib/habits-guards';
 import { validateAndCreateHabitLog } from '@/lib/habits-validators';
+import { logger } from '@/lib/logger';
 
 interface DailyReflectionReviewProps {
   habits: Habit[];
@@ -59,7 +60,7 @@ export function DailyReflectionReview({ habits, trigger }: DailyReflectionReview
         durationMin: p.extractedDuration != null ? String(p.extractedDuration) : '',
       })));
     } catch (error) {
-      console.error('[DailyReflectionReview] Parsing error:', error);
+      logger.error('Daily reflection review: Parsing error, using mock fallback', error instanceof Error ? error : new Error(String(error)));
       // Fallback to mock
       const parsed = parseReflectionMock(rawText, habits || []);
       setEntries(parsed.map(p => ({

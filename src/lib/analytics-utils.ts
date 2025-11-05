@@ -328,14 +328,30 @@ export function calculateDayFrequency(workouts: WorkoutLog[]): DayFrequency[] {
 
 /**
  * Calculate personal records for each exercise
+ *
+ * @param workouts - Array of workout logs
+ * @param exerciseNameMap - Optional map of exerciseId to exercise name. If not provided, uses exerciseId as name
  */
-export function calculatePersonalRecords(workouts: WorkoutLog[]): PersonalRecord[] {
+export function calculatePersonalRecords(
+  workouts: WorkoutLog[],
+  exerciseNameMap?: Map<string, string> | Record<string, string>
+): PersonalRecord[] {
   const exerciseRecords = new Map<string, PersonalRecord>();
+
+  // Convert exerciseNameMap to Map if it's an object
+  const nameMap = exerciseNameMap instanceof Map
+    ? exerciseNameMap
+    : exerciseNameMap
+      ? new Map(Object.entries(exerciseNameMap))
+      : null;
 
   workouts.forEach(workout => {
     workout.cycles?.forEach(cycle => {
       cycle.exercises?.forEach(exercise => {
         const exId = exercise.exerciseId;
+
+        // Resolve exercise name from map or fall back to ID
+        const exerciseName = nameMap?.get(exId) || exId;
 
         // Максимальный вес за один подход
         const completedSets = exercise.sets?.filter(s => s.completed && s.weight) || [];
@@ -360,7 +376,7 @@ export function calculatePersonalRecords(workouts: WorkoutLog[]): PersonalRecord
         if (!existing || maxWeightInSession > existing.maxWeight) {
           exerciseRecords.set(exId, {
             exerciseId: exId,
-            exerciseName: exId, // TODO: resolve exercise name from exercises collection
+            exerciseName: exerciseName,
             maxWeight: maxWeightInSession,
             maxVolume: volumeInSession,
             maxReps: maxRepsInSession,

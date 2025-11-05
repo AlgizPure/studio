@@ -9,6 +9,7 @@ import { useUser, useFirebaseApp, useFirestore } from '@/firebase/provider';
 import { subscribeToHabitReminders, getNotificationPermission, isNotificationSupported, onForegroundMessage } from '@/firebase/messaging';
 import { doc, updateDoc } from 'firebase/firestore';
 import { createNotificationFromPush, createNotification } from '@/lib/notification-helpers';
+import { logger } from '@/lib/logger';
 
 export function NotificationPermissionDialog() {
   const { user } = useUser();
@@ -62,7 +63,7 @@ export function NotificationPermissionDialog() {
           const notificationData = createNotificationFromPush(payload, user.uid);
           await createNotification(firestore, user.uid, notificationData);
         } catch (error) {
-          console.error('[NotificationPermission] Failed to save notification:', error);
+          logger.error('Notification permission: Failed to save notification', error instanceof Error ? error : new Error(String(error)));
         }
       }
     );
@@ -97,7 +98,7 @@ export function NotificationPermissionDialog() {
         });
       }
     } catch (error) {
-      console.error('[NotificationPermission] Error:', error);
+      logger.error('Notification permission: Failed to enable notifications', error instanceof Error ? error : new Error(String(error)));
       toast({
         title: 'Error',
         description: 'Failed to enable notifications',

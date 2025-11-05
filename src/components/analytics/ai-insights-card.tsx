@@ -8,6 +8,7 @@ import { Loader2, Sparkles, RefreshCw, CheckCircle2, AlertTriangle, Lightbulb } 
 import { useUser } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { logger } from '@/lib/logger';
 
 type QuickInsight = {
   type: 'positive' | 'warning' | 'recommendation';
@@ -53,7 +54,7 @@ export function AIInsightsCard() {
       const data = await response.json();
       setInsights(data);
     } catch (error: any) {
-      console.error('[AIInsightsCard] Error:', error);
+      logger.error('AI Insights Card: Failed to generate insights', error instanceof Error ? error : new Error(String(error)));
       toast({
         title: 'Error',
         description: error.message || 'Failed to generate insights',
