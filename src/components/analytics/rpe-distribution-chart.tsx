@@ -19,7 +19,7 @@ interface RPEDistributionChartProps {
   workouts: WorkoutLog[];
 }
 
-export function RPEDistributionChart({ workouts }: RPEDistributionChartProps) {
+export const RPEDistributionChart = React.memo(function RPEDistributionChart({ workouts }: RPEDistributionChartProps) {
   const chartData = useMemo(() => {
     return calculateRPEDistribution(workouts);
   }, [workouts]);
@@ -123,4 +123,4 @@ export function RPEDistributionChart({ workouts }: RPEDistributionChartProps) {
       </CardContent>
     </Card>
   );
-}
+});

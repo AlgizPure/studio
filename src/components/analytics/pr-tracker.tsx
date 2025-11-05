@@ -11,7 +11,7 @@ interface PRTrackerProps {
   workouts: WorkoutLog[];
 }
 
-export function PRTracker({ workouts }: PRTrackerProps) {
+export const PRTracker = React.memo(function PRTracker({ workouts }: PRTrackerProps) {
   const records = useMemo(() => {
     return calculatePersonalRecords(workouts);
   }, [workouts]);
@@ -108,4 +108,4 @@ export function PRTracker({ workouts }: PRTrackerProps) {
       </CardContent>
     </Card>
   );
-}
+});

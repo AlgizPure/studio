@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
+import { useUser, useFirestore } from '@/firebase/provider';
+import { useUserCollection } from '@/hooks/use-user-collection';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { DailySchedule } from '@/components/daily-schedule';
 import { AddHabitDialog } from '@/components/add-habit-dialog';
@@ -20,29 +20,10 @@ export default function SchedulePage() {
   const firestore = useFirestore();
 
   // Data fetching from Firestore
-  const programsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/programs`) : null),
-    [user, firestore]
-  );
-  const { data: programs, isLoading: programsLoading } = useCollection<Program>(programsQuery);
-
-  const workoutsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/workouts`) : null),
-    [user, firestore]
-  );
-  const { data: workouts, isLoading: workoutsLoading } = useCollection<WorkoutExtended>(workoutsQuery);
-
-  const habitsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
-    [user, firestore]
-  );
-  const { data: habits, isLoading: habitsLoading } = useCollection<Habit>(habitsQuery);
-
-  const habitCatQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habitCategories`) : null),
-    [user, firestore]
-  );
-  const { data: habitCategories, isLoading: habitCatLoading } = useCollection<HabitCategory>(habitCatQuery);
+  const { data: programs, isLoading: programsLoading } = useUserCollection<Program>('programs');
+  const { data: workouts, isLoading: workoutsLoading } = useUserCollection<WorkoutExtended>('workouts');
+  const { data: habits, isLoading: habitsLoading } = useUserCollection<Habit>('habits');
+  const { data: habitCategories, isLoading: habitCatLoading } = useUserCollection<HabitCategory>('habitCategories');
   
   const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);
   

@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
-import { useCollection } from '@/firebase/firestore/use-collection';
+import { useState, useMemo } from 'react';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { useFirestore, useMemoFirebase, useUser } from '@/firebase/provider';
+import { useFirestore, useUser } from '@/firebase/provider';
+import { useUserCollection } from '@/hooks/use-user-collection';
 import { WorkoutCard } from '@/components/workout-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,18 +21,8 @@ export default function WorkoutsPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const workoutsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/workouts`) : null),
-    [user, firestore]
-  );
-  const { data: workouts, isLoading: workoutsLoading } = useCollection<WorkoutExtended>(workoutsQuery);
-
-  // Загружаем упражнения для расчета estimatedDuration
-  const exercisesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
-    [user, firestore]
-  );
-  const { data: exercises } = useCollection(exercisesQuery);
+  const { data: workouts, isLoading: workoutsLoading } = useUserCollection<WorkoutExtended>('workouts');
+  const { data: exercises } = useUserCollection('exercises');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -132,9 +122,10 @@ export default function WorkoutsPage() {
     });
   };
 
-  const filteredWorkouts = (workouts || []).filter(w => 
-    w.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredWorkouts = useMemo(() =>
+    (workouts || []).filter(w =>
+      w.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ), [workouts, searchTerm]);
 
   const isLoading = workoutsLoading;
 

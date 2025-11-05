@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ interface WorkoutCardProps {
   onDuplicate: (workout: WorkoutExtended) => Promise<void>;
 }
 
-export function WorkoutCard({ workout, onUpdate, onDelete, onDuplicate }: WorkoutCardProps) {
+export const WorkoutCard = React.memo(function WorkoutCard({ workout, onUpdate, onDelete, onDuplicate }: WorkoutCardProps) {
   const handleDuplicate = async () => {
     const duplicated: WorkoutExtended = {
       ...workout,
@@ -92,5 +93,5 @@ export function WorkoutCard({ workout, onUpdate, onDelete, onDuplicate }: Workou
       </CardContent>
     </Card>
   );
-}
+});
 

@@ -5,20 +5,16 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BUILTIN_SYSTEMS } from '@/lib/systems';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { useUser, useFirestore } from '@/firebase/provider';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { useUserCollection } from '@/hooks/use-user-collection';
 
 export function SystemLibraryDialog() {
   const { user } = useUser();
   const firestore = useFirestore();
   const [open, setOpen] = useState(false);
 
-  const activeQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/activeSystems`) : null),
-    [user, firestore]
-  );
-  const { data: activeSystems } = useCollection<any>(activeQuery);
+  const { data: activeSystems } = useUserCollection<any>('activeSystems');
 
   const isActive = (systemId: string) => !!(activeSystems || []).find(s => s.systemId === systemId);
 

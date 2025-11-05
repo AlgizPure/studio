@@ -22,10 +22,8 @@ import { useState, useEffect } from 'react';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from './ui/select';
-import { useFirestore, useMemoFirebase, useUser } from '@/firebase/provider';
-import { collection } from 'firebase/firestore';
-import { useCollection } from '@/firebase/firestore/use-collection';
 import type { AnalysisSystem } from '@/lib/types';
+import { useUserCollection } from '@/hooks/use-user-collection';
 
 const daysOfWeek: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -67,13 +65,7 @@ export function AddHabitDialog({ onHabitAdd, onHabitUpdate, onHabitDelete, habit
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const isEditMode = !!habitToEdit;
-  const { user } = useUser();
-  const firestore = useFirestore();
-  const activeQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/activeSystems`) : null),
-    [user, firestore]
-  );
-  const { data: activeSystems } = useCollection<any>(activeQuery);
+  const { data: activeSystems } = useUserCollection<any>('activeSystems');
 
   const {
     register,

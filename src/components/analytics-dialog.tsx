@@ -3,12 +3,10 @@
 import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection } from 'firebase/firestore';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { HabitLog } from '@/lib/types';
+import { useUserCollection } from '@/hooks/use-user-collection';
 
 function computeWheelOfLife(logs: HabitLog[]) {
   const areas = ['health','career','relationships','growth','finance','recreation','environment','spirituality'] as const;
@@ -43,15 +41,9 @@ function computeMaslowBase(logs: HabitLog[]) {
 }
 
 export function AnalyticsDialog() {
-  const { user } = useUser();
-  const firestore = useFirestore();
   const [open, setOpen] = useState(false);
 
-  const logsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habitLogs`) : null),
-    [user, firestore]
-  );
-  const { data: rawLogs } = useCollection<HabitLog>(logsQuery);
+  const { data: rawLogs } = useUserCollection<HabitLog>('habitLogs');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 

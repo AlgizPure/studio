@@ -11,7 +11,7 @@ interface PeriodComparisonProps {
   workouts: WorkoutLog[];
 }
 
-export function PeriodComparison({ workouts }: PeriodComparisonProps) {
+export const PeriodComparison = React.memo(function PeriodComparison({ workouts }: PeriodComparisonProps) {
   const [periodDays, setPeriodDays] = useState(30);
 
   const comparison = useMemo(() => {
@@ -141,4 +141,4 @@ export function PeriodComparison({ workouts }: PeriodComparisonProps) {
       </CardContent>
     </Card>
   );
-}
+});

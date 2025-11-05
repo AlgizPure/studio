@@ -23,7 +23,8 @@ import { cn } from '@/lib/utils';
 import { AddHabitDialog } from './add-habit-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
+import { useUser, useFirestore } from '@/firebase/provider';
+import { useUserCollection } from '@/hooks/use-user-collection';
 import { doc, updateDoc, addDoc, deleteDoc, collection } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { Skeleton } from './ui/skeleton';
@@ -58,23 +59,9 @@ export function HabitTracker() {
     return false;
   });
 
-  const habitsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
-    [user, firestore]
-  );
-  const { data: trackedHabits, isLoading: habitsLoading } = useCollection<Habit>(habitsQuery);
-  
-  const categoriesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habitCategories`) : null),
-    [user, firestore]
-  );
-  const { data: habitCategories, isLoading: categoriesLoading } = useCollection<HabitCategory>(categoriesQuery);
-
-  const logsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habitLogs`) : null),
-    [user, firestore]
-  );
-  const { data: habitLogs } = useCollection<HabitLog>(logsQuery);
+  const { data: trackedHabits, isLoading: habitsLoading } = useUserCollection<Habit>('habits');
+  const { data: habitCategories, isLoading: categoriesLoading } = useUserCollection<HabitCategory>('habitCategories');
+  const { data: habitLogs } = useUserCollection<HabitLog>('habitLogs');
 
   const [today, setToday] = useState<Day | null>(null);
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);

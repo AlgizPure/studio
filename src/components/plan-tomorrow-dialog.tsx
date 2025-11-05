@@ -16,9 +16,9 @@ import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { useMemo } from 'react';
 import type { Habit, HabitCategory, Day, Program, WorkoutExtended } from '@/lib/types';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { collection, doc, updateDoc } from 'firebase/firestore';
+import { useUser, useFirestore } from '@/firebase/provider';
+import { doc, updateDoc } from 'firebase/firestore';
+import { useUserCollection } from '@/hooks/use-user-collection';
 import { addDays } from 'date-fns';
 import { buildDailySchedule } from '@/lib/utils/schedule-builder';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -30,29 +30,10 @@ export function PlanTomorrowDialog() {
     const firestore = useFirestore();
 
     // Загружаем программы и тренировки для отображения запланированных тренировок
-    const programsQuery = useMemoFirebase(
-      () => (user ? collection(firestore, `users/${user.uid}/programs`) : null),
-      [user, firestore]
-    );
-    const { data: programs } = useCollection<Program>(programsQuery);
-
-    const workoutsQuery = useMemoFirebase(
-      () => (user ? collection(firestore, `users/${user.uid}/workouts`) : null),
-      [user, firestore]
-    );
-    const { data: workouts } = useCollection<WorkoutExtended>(workoutsQuery);
-    
-    const habitsQuery = useMemoFirebase(
-      () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
-      [user, firestore]
-    );
-    const { data: habits } = useCollection<Habit>(habitsQuery);
-    
-    const habitCatQuery = useMemoFirebase(
-      () => (user ? collection(firestore, `users/${user.uid}/habitCategories`) : null),
-      [user, firestore]
-    );
-    const { data: habitCategories } = useCollection<HabitCategory>(habitCatQuery);
+    const { data: programs } = useUserCollection<Program>('programs');
+    const { data: workouts } = useUserCollection<WorkoutExtended>('workouts');
+    const { data: habits } = useUserCollection<Habit>('habits');
+    const { data: habitCategories } = useUserCollection<HabitCategory>('habitCategories');
     
     const tomorrow = useMemo(() => {
         return addDays(new Date(), 1);

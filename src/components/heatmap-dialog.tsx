@@ -3,10 +3,8 @@
 import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection } from 'firebase/firestore';
 import type { HabitLog, Habit } from '@/lib/types';
+import { useUserCollection } from '@/hooks/use-user-collection';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function buildHeatmap(logs: HabitLog[], habitId?: string) {
@@ -21,16 +19,10 @@ function buildHeatmap(logs: HabitLog[], habitId?: string) {
 }
 
 export function HeatmapDialog({ habits = [] }: { habits?: Habit[] }) {
-  const { user } = useUser();
-  const firestore = useFirestore();
   const [open, setOpen] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<string>('all');
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
-  const logsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habitLogs`) : null),
-    [user, firestore]
-  );
-  const { data: logs } = useCollection<HabitLog>(logsQuery);
+  const { data: logs } = useUserCollection<HabitLog>('habitLogs');
 
   const safeLogs: HabitLog[] = (logs ?? []) as unknown as HabitLog[];
 

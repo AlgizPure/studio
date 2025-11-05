@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useAuth, useUser } from '@/firebase/provider';
-import { useFirestore, useMemoFirebase } from '@/firebase/provider';
+import { useFirestore } from '@/firebase/provider';
 import { signOut } from '@/firebase/auth';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,7 +20,7 @@ import {
   DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import type { HabitCategory, ExerciseCategory } from '@/lib/types';
-import { useCollection } from '@/firebase/firestore/use-collection';
+import { useUserCollection } from '@/hooks/use-user-collection';
 import { CreditCard, LogOut, Settings, User, Timer, FolderKanban, Dumbbell, LogIn } from 'lucide-react';
 import { PomodoroSettingsDialog } from './pomodoro-settings-dialog';
 import { ManageCategoriesDialog } from './manage-categories-dialog';
@@ -37,17 +37,8 @@ export function UserNav() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const habitCategoriesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habitCategories`) : null),
-    [user, firestore]
-  );
-  const { data: habitCategories } = useCollection<HabitCategory>(habitCategoriesQuery);
-
-  const exerciseCategoriesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
-    [user, firestore]
-  );
-  const { data: exerciseCategories } = useCollection<ExerciseCategory>(exerciseCategoriesQuery);
+  const { data: habitCategories } = useUserCollection<HabitCategory>('habitCategories');
+  const { data: exerciseCategories } = useUserCollection<ExerciseCategory>('exerciseCategories');
 
   const [isPomodoroSettingsOpen, setIsPomodoroSettingsOpen] = useState(false);
   const [isManageHabitCategoriesOpen, setIsManageHabitCategoriesOpen] = useState(false);

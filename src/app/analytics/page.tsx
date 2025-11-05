@@ -10,10 +10,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Download, FileText, Table } from 'lucide-react';
 import { useUser } from '@/firebase/provider';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { collection, orderBy, query } from 'firebase/firestore';
+import { useUserCollection } from '@/hooks/use-user-collection';
+import { orderBy } from 'firebase/firestore';
 import type { WorkoutLog, Program } from '@/lib/types';
-import { useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { generateFullAnalysisExport, downloadMarkdownFile } from '@/lib/ztl/export-full-analysis';
 import { programToZTL, generateScheduledWorkouts, calculateCurrentWeek } from '@/lib/ztl/helpers';
 import { convertWorkoutsToCSV, convertSetsToCSV, convertPRsToCSV, downloadCSV } from '@/lib/export-to-csv';
@@ -21,22 +20,9 @@ import { calculatePersonalRecords } from '@/lib/analytics-utils';
 
 export default function AnalyticsPage() {
   const { user } = useUser();
-  const firestore = useFirestore();
 
-  const workoutLogsQuery = useMemoFirebase(
-    () =>
-      user
-        ? query(collection(firestore, `users/${user.uid}/workoutLogs`), orderBy('startTime', 'desc'))
-        : null,
-    [user, firestore]
-  );
-  const programsQuery = useMemoFirebase(
-    () => (user ? query(collection(firestore, `users/${user.uid}/programs`)) : null),
-    [user, firestore]
-  );
-
-  const { data: workoutLogs } = useCollection<WorkoutLog>(workoutLogsQuery);
-  const { data: programs } = useCollection<Program>(programsQuery);
+  const { data: workoutLogs } = useUserCollection<WorkoutLog>('workoutLogs', orderBy('startTime', 'desc'));
+  const { data: programs } = useUserCollection<Program>('programs');
 
   const handleExportMarkdown = async () => {
     if (!user) return;

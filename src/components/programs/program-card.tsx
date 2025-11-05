@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Calendar, Play, Pause, Trash2, Edit2, MoreVertical } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +25,7 @@ interface ProgramCardProps extends ProgramCardHandlers {
   program: Program;
 }
 
-export function ProgramCard({ 
+export const ProgramCard = React.memo(function ProgramCard({ 
   program, 
   onEdit, 
   onDelete, 
@@ -140,4 +141,4 @@ export function ProgramCard({
       </CardFooter>
     </Card>
   );
-}
+});

@@ -4,28 +4,16 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Dumbbell } from 'lucide-react';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { collection, orderBy, query } from 'firebase/firestore';
+import { useUser } from '@/firebase/provider';
+import { useUserCollection } from '@/hooks/use-user-collection';
+import { orderBy } from 'firebase/firestore';
 import type { WorkoutLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WorkoutHistoryPage() {
   const { user } = useUser();
-  const firestore = useFirestore();
 
-  const workoutLogsQuery = useMemoFirebase(
-    () =>
-      user
-        ? query(
-            collection(firestore, `users/${user.uid}/workoutLogs`),
-            orderBy('startTime', 'desc')
-          )
-        : null,
-    [user, firestore]
-  );
-
-  const { data: workoutLogs, isLoading } = useCollection<WorkoutLog>(workoutLogsQuery);
+  const { data: workoutLogs, isLoading } = useUserCollection<WorkoutLog>('workoutLogs', orderBy('startTime', 'desc'));
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

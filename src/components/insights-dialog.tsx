@@ -3,10 +3,10 @@
 import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { useCollection } from '@/firebase/firestore/use-collection';
+import { useUser, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc } from 'firebase/firestore';
+import { useUserCollection } from '@/hooks/use-user-collection';
 import type { HabitLog, HabitInsight, AnalysisSystem } from '@/lib/types';
 import { generateInsightsFromLogs } from '@/lib/insights';
 
@@ -17,17 +17,8 @@ export function InsightsDialog() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const logsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habitLogs`) : null),
-    [user, firestore]
-  );
-  const { data: logs } = useCollection<HabitLog>(logsQuery);
-
-  const activeSystemsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/activeSystems`) : null),
-    [user, firestore]
-  );
-  const { data: activeSystems } = useCollection<AnalysisSystem>(activeSystemsQuery);
+  const { data: logs } = useUserCollection<HabitLog>('habitLogs');
+  const { data: activeSystems } = useUserCollection<AnalysisSystem>('activeSystems');
 
   const safeLogs: HabitLog[] = (logs ?? []) as unknown as HabitLog[];
   const safeActiveSystems: AnalysisSystem[] = (activeSystems ?? []) as unknown as AnalysisSystem[];
