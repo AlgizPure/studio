@@ -9,6 +9,7 @@ import { z } from 'genkit';
 import type { Program, WorkoutLog } from '@/lib/types';
 import { generateProgressionSuggestionsMock } from '@/lib/workout-ai-mocks';
 import type { ProgressionSuggestionsOutput } from '@/lib/workout-ai-mocks';
+import { logger } from '@/lib/logger';
 
 const ProgressionSuggestionSchema = z.object({
   exerciseId: z.string(),
@@ -126,7 +127,7 @@ Return structured JSON response matching the schema.`,
     // @ts-expect-error - Genkit type wrapper issue
     return result.output ?? result;
   } catch (error) {
-    console.error('[progression-suggestions] AI generation error:', error);
+    logger.error('Progression suggestions: AI generation error', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -141,13 +142,13 @@ export async function getProgressionSuggestions(
 ): Promise<ProgressionSuggestionsOutput> {
   // Check if mock mode is enabled
   if (process.env.NEXT_PUBLIC_AI_MOCK === '1') {
-    console.log('[progression-suggestions] Using mock generator (NEXT_PUBLIC_AI_MOCK=1)');
+    logger.info('Progression suggestions using mock generator', { reason: 'NEXT_PUBLIC_AI_MOCK=1' });
     return generateProgressionSuggestionsMock(program, recentWorkouts);
   }
 
   // Check if API key is available
   if (!process.env.GOOGLE_GENAI_API_KEY) {
-    console.warn('[progression-suggestions] No GOOGLE_GENAI_API_KEY found, falling back to mock');
+    logger.warn('Progression suggestions: No API key found, using mock', { key: 'GOOGLE_GENAI_API_KEY' });
     return generateProgressionSuggestionsMock(program, recentWorkouts);
   }
 
@@ -198,11 +199,11 @@ export async function getProgressionSuggestions(
     }
 
     // If all retries failed, fall back to mock
-    console.error('[progression-suggestions] AI generation failed after retries, falling back to mock:', lastError);
+    logger.error('Progression suggestions: AI generation failed after retries, using mock', lastError);
     return generateProgressionSuggestionsMock(program, recentWorkouts);
   } catch (error) {
     // Any other error, fall back to mock
-    console.error('[progression-suggestions] Unexpected error, falling back to mock:', error);
+    logger.error('Progression suggestions: Unexpected error, using mock', error instanceof Error ? error : new Error(String(error)));
     return generateProgressionSuggestionsMock(program, recentWorkouts);
   }
 }

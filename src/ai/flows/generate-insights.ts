@@ -8,6 +8,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import type { HabitLog, HabitInsight, AnalysisSystem } from '@/lib/types';
 import { generateInsightsFromLogsMock } from '@/lib/insights';
+import { logger } from '@/lib/logger';
 
 const HabitInsightSchema = z.object({
   id: z.string(),
@@ -106,7 +107,7 @@ Return structured JSON response with insights array matching the schema.`,
     // @ts-expect-error - Genkit type wrapper issue
     return result.output ?? result;
   } catch (error) {
-    console.error('[generate-insights] AI generation error:', error);
+    logger.error('Generate insights: AI generation error', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -120,13 +121,13 @@ export async function generateInsights(
 ): Promise<HabitInsight[]> {
   // Check if mock mode is enabled
   if (process.env.NEXT_PUBLIC_AI_MOCK === '1') {
-    console.log('[generate-insights] Using mock generator (NEXT_PUBLIC_AI_MOCK=1)');
+    logger.info('Generate insights using mock generator', { reason: 'NEXT_PUBLIC_AI_MOCK=1' });
     return generateInsightsFromLogsMock(logs);
   }
 
   // Check if API key is available
   if (!process.env.GOOGLE_GENAI_API_KEY) {
-    console.warn('[generate-insights] No GOOGLE_GENAI_API_KEY found, falling back to mock');
+    logger.warn('Generate insights: No API key found, using mock', { key: 'GOOGLE_GENAI_API_KEY' });
     return generateInsightsFromLogsMock(logs);
   }
 
@@ -175,11 +176,11 @@ export async function generateInsights(
     }
 
     // If all retries failed, fall back to mock
-    console.error('[generate-insights] AI generation failed after retries, falling back to mock:', lastError);
+    logger.error('Generate insights: AI generation failed after retries, using mock', lastError);
     return generateInsightsFromLogsMock(logs);
   } catch (error) {
     // Any other error, fall back to mock
-    console.error('[generate-insights] Unexpected error, falling back to mock:', error);
+    logger.error('Generate insights: Unexpected error, using mock', error instanceof Error ? error : new Error(String(error)));
     return generateInsightsFromLogsMock(logs);
   }
 }

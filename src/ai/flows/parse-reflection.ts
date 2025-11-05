@@ -8,6 +8,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import type { Habit, HabitLogStatus } from '@/lib/types';
 import { parseReflectionMock } from '@/lib/reflection';
+import { logger } from '@/lib/logger';
 
 const ParsedEntrySchema = z.object({
   habitId: z.string(),
@@ -79,7 +80,7 @@ Return a structured JSON response with entries array matching the schema.`,
     // @ts-expect-error - Genkit type wrapper issue
     return result.output ?? result;
   } catch (error) {
-    console.error('[parse-reflection] AI parsing error:', error);
+    logger.error('Parse reflection: AI parsing error', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -93,13 +94,13 @@ export async function parseDailyReflection(
 ): Promise<ParsedEntry[]> {
   // Check if mock mode is enabled
   if (process.env.NEXT_PUBLIC_AI_MOCK === '1') {
-    console.log('[parse-reflection] Using mock parser (NEXT_PUBLIC_AI_MOCK=1)');
+    logger.info('Parse reflection using mock parser', { reason: 'NEXT_PUBLIC_AI_MOCK=1' });
     return parseReflectionMock(rawText, habits);
   }
 
   // Check if API key is available
   if (!process.env.GOOGLE_GENAI_API_KEY) {
-    console.warn('[parse-reflection] No GOOGLE_GENAI_API_KEY found, falling back to mock');
+    logger.warn('Parse reflection: No API key found, using mock', { key: 'GOOGLE_GENAI_API_KEY' });
     return parseReflectionMock(rawText, habits);
   }
 
@@ -130,11 +131,11 @@ export async function parseDailyReflection(
     }
 
     // If all retries failed, fall back to mock
-    console.error('[parse-reflection] AI parsing failed after retries, falling back to mock:', lastError);
+    logger.error('Parse reflection: AI parsing failed after retries, using mock', lastError);
     return parseReflectionMock(rawText, habits);
   } catch (error) {
     // Any other error, fall back to mock
-    console.error('[parse-reflection] Unexpected error, falling back to mock:', error);
+    logger.error('Parse reflection: Unexpected error, using mock', error instanceof Error ? error : new Error(String(error)));
     return parseReflectionMock(rawText, habits);
   }
 }

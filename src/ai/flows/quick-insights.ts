@@ -9,6 +9,7 @@ import { z } from 'genkit';
 import type { WorkoutLog, Program } from '@/lib/types';
 import { generateQuickInsightsMock } from '@/lib/workout-ai-mocks';
 import type { QuickInsightsOutput } from '@/lib/workout-ai-mocks';
+import { logger } from '@/lib/logger';
 
 const QuickInsightSchema = z.object({
   type: z.enum(['positive', 'warning', 'recommendation']),
@@ -129,7 +130,7 @@ Return structured JSON response matching the schema.`,
     // @ts-expect-error - Genkit type wrapper issue
     return result.output ?? result;
   } catch (error) {
-    console.error('[quick-insights] AI generation error:', error);
+    logger.error('Quick insights AI generation error', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -145,13 +146,13 @@ export async function getQuickInsights(
 ): Promise<QuickInsightsOutput> {
   // Check if mock mode is enabled
   if (process.env.NEXT_PUBLIC_AI_MOCK === '1') {
-    console.log('[quick-insights] Using mock generator (NEXT_PUBLIC_AI_MOCK=1)');
+    logger.info('Quick insights using mock generator', { reason: 'NEXT_PUBLIC_AI_MOCK=1' });
     return generateQuickInsightsMock(workoutLogs, programs, userGoal);
   }
 
   // Check if API key is available
   if (!process.env.GOOGLE_GENAI_API_KEY) {
-    console.warn('[quick-insights] No GOOGLE_GENAI_API_KEY found, falling back to mock');
+    logger.warn('Quick insights: No API key found, using mock', { key: 'GOOGLE_GENAI_API_KEY' });
     return generateQuickInsightsMock(workoutLogs, programs, userGoal);
   }
 
@@ -206,11 +207,11 @@ export async function getQuickInsights(
     }
 
     // If all retries failed, fall back to mock
-    console.error('[quick-insights] AI generation failed after retries, falling back to mock:', lastError);
+    logger.error('Quick insights: AI generation failed after retries, using mock', lastError);
     return generateQuickInsightsMock(workoutLogs, programs, userGoal);
   } catch (error) {
     // Any other error, fall back to mock
-    console.error('[quick-insights] Unexpected error, falling back to mock:', error);
+    logger.error('Quick insights: Unexpected error, using mock', error instanceof Error ? error : new Error(String(error)));
     return generateQuickInsightsMock(workoutLogs, programs, userGoal);
   }
 }
