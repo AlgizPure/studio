@@ -18,12 +18,16 @@ import {
 import { StatsCards } from '@/components/analytics/stats-cards';
 import { VolumeChart } from '@/components/analytics/volume-chart';
 import { ExerciseProgressChart } from '@/components/analytics/exercise-progress-chart';
+import { FrequencyHeatmap } from '@/components/analytics/frequency-heatmap';
+import { PRTracker } from '@/components/analytics/pr-tracker';
+import { RPEDistributionChart } from '@/components/analytics/rpe-distribution-chart';
+import { PeriodComparison } from '@/components/analytics/period-comparison';
 
 export function AnalyticsCharts() {
   const { user } = useUser();
   const firestore = useFirestore();
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
-  const [activeTab, setActiveTab] = useState<'overview' | 'exercises'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'exercises' | 'advanced'>('overview');
 
   const workoutLogsQuery = useMemoFirebase(
     () =>
@@ -77,10 +81,11 @@ export function AnalyticsCharts() {
     <div className="space-y-6">
       {/* Header with Time Range Selector */}
       <div className="flex items-center justify-between">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'overview' | 'exercises')}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'overview' | 'exercises' | 'advanced')}>
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="exercises">Exercise Details</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
         </Tabs>
         
@@ -107,6 +112,17 @@ export function AnalyticsCharts() {
 
       <TabsContent value="exercises" className="space-y-6">
         <ExerciseProgressChart workouts={workoutLogs} timeRange={timeRange} />
+      </TabsContent>
+
+      <TabsContent value="advanced" className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <FrequencyHeatmap workouts={workoutLogs} />
+          <RPEDistributionChart workouts={workoutLogs} />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <PRTracker workouts={workoutLogs} />
+          <PeriodComparison workouts={workoutLogs} />
+        </div>
       </TabsContent>
     </div>
   );
