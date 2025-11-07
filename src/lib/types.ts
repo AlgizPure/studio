@@ -323,7 +323,7 @@ export type HabitV2 = {
   graceDays?: number;
   priority?: 1 | 2 | 3 | 4 | 5;
   difficulty?: 'easy' | 'medium' | 'hard';
-  contextParams?: { [systemId: string]: { [paramId: string]: any } };
+  contextParams?: Record<string, Record<string, unknown>>;
   archived?: boolean;
   authorId?: string;
   createdAt?: string;
@@ -351,7 +351,7 @@ export type HabitLog = {
   note?: string;
   mood?: 'low' | 'neutral' | 'high';
   energy?: 'low' | 'neutral' | 'high';
-  contextData?: { [systemId: string]: { [paramId: string]: any } };
+  contextData?: Record<string, Record<string, unknown>>;
   extractedFrom?: 'reflection' | 'manual' | 'auto';
   aiConfidence?: number;
   manuallyEdited?: boolean;
@@ -392,8 +392,8 @@ export type DailyReflection = {
   manualCorrections: boolean;
   correctedEntries?: {
     habitId: string;
-    originalParsed: any;
-    userCorrected: any;
+    originalParsed: unknown;
+    userCorrected: unknown;
   }[];
   createdAt: string;
   updatedAt: string;
@@ -410,7 +410,7 @@ export type SystemParameter = {
   options?: { value: string; label: string; icon?: string }[];
   min?: number;
   max?: number;
-  default?: any;
+  default?: string | number | boolean;
   required: boolean;
   aiAssignable: boolean;
   description?: string;
@@ -457,7 +457,7 @@ export type ActiveSystem = {
   settings?: {
     notificationsEnabled?: boolean;
     insightFrequency?: 'daily' | 'weekly' | 'monthly';
-    customParams?: any;
+    customParams?: Record<string, unknown>;
   };
 };
 
@@ -493,7 +493,7 @@ export type InAppNotification = {
     programId?: string;
     streakValue?: number;
     achievementId?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   priority?: 1 | 2 | 3 | 4 | 5; // Higher = more important
   expiresAt?: string; // ISO timestamp - auto-delete after this
@@ -521,7 +521,7 @@ export type HabitInsight = {
     suggestions?: {
       action: 'add' | 'modify' | 'remove' | 'pause' | 'change_schedule';
       habitId?: string;
-      newParams?: any;
+      newParams?: Record<string, unknown>;
       reason?: string;
     }[];
   };

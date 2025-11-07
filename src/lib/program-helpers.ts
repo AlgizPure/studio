@@ -4,6 +4,15 @@
 
 import type { Program, WorkoutExtended, Cycle, CycleExercise } from '@/lib/types';
 
+type ProgramWithExerciseUpdates = Program & {
+  exerciseUpdates?: Record<string, {
+    targetWeight?: number;
+    targetReps?: string;
+    targetRPE?: number;
+    updatedAt: string;
+  }>;
+};
+
 /**
  * Find and update an exercise's targetWeight in a program.
  * Since Program.workouts only contains references (workoutId), we need to work with the full workout structure.
@@ -18,21 +27,21 @@ export function updateExerciseTargetInProgram(
     targetReps?: string;
     targetRPE?: number;
   }
-): Program {
+): ProgramWithExerciseUpdates {
   // Create updated program copy
-  const updatedProgram = { ...program };
+  const updatedProgram: ProgramWithExerciseUpdates = { ...program };
 
   // If program has stored workout details (in a custom field), update them
   // Otherwise, we return the program as-is and rely on external workout updates
-  
+
   // For now, we'll add the update info to program metadata
   // In a full implementation, you'd update the actual WorkoutExtended document
-  if (!(updatedProgram as any).exerciseUpdates) {
-    (updatedProgram as any).exerciseUpdates = {};
+  if (!updatedProgram.exerciseUpdates) {
+    updatedProgram.exerciseUpdates = {};
   }
 
   const updateKey = `${workoutId}_${exerciseId}`;
-  (updatedProgram as any).exerciseUpdates[updateKey] = {
+  updatedProgram.exerciseUpdates[updateKey] = {
     ...updates,
     updatedAt: new Date().toISOString(),
   };
