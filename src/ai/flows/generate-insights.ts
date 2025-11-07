@@ -18,7 +18,7 @@ const HabitInsightSchema = z.object({
   priority: z.number().min(1).max(5),
   title: z.string(),
   description: z.string(),
-  data: z.record(z.any()).optional(),
+  data: z.record(z.unknown()).optional(),
   createdAt: z.string().datetime(),
 });
 
@@ -30,7 +30,7 @@ const GenerateInsightsInputSchema = z.object({
     status: z.enum(['done', 'partial', 'skipped', 'missed']),
     value: z.number().optional(),
     durationMin: z.number().optional(),
-    contextData: z.record(z.any()).optional(),
+    contextData: z.record(z.unknown()).optional(),
   })),
   activeSystems: z.array(z.object({
     id: z.string(),
@@ -51,6 +51,27 @@ const GenerateInsightsOutputSchema = z.object({
 
 export type GenerateInsightsInput = z.infer<typeof GenerateInsightsInputSchema>;
 export type GenerateInsightsOutput = z.infer<typeof GenerateInsightsOutputSchema>;
+
+/**
+ * Helper type for habit parameters that may have name or label
+ */
+type HabitParameterSource = {
+  id: string;
+  type: string;
+  name?: string;
+  label?: string;
+};
+
+/**
+ * AI response insight type (may have incomplete data that needs normalization)
+ */
+type AIInsightResponse = Partial<z.infer<typeof HabitInsightSchema>> & {
+  systemId: string;
+  type: 'warning' | 'recommendation' | 'achievement';
+  title: string;
+  description: string;
+  date: string;
+};
 
 /**
  * Real AI insights generation using Gemini via Genkit.
@@ -147,11 +168,14 @@ export async function generateInsights(
         id: s.id,
         name: s.name,
         description: s.description,
-        habitParameters: (s.habitParameters || []).map(p => ({
-          id: p.id,
-          name: (p as any).name ?? p.label ?? p.id,
-          type: p.type,
-        })),
+        habitParameters: (s.habitParameters || []).map(p => {
+          const param = p as unknown as HabitParameterSource;
+          return {
+            id: param.id,
+            name: param.name ?? param.label ?? param.id,
+            type: param.type,
+          };
+        }),
       })),
     };
 
@@ -160,13 +184,16 @@ export async function generateInsights(
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const result = await generateInsightsWithAI(input);
-        // Add IDs if missing and coerce priority to 1..5 union
-        return result.insights.map(ins => ({
-          ...ins,
-          id: (ins as any).id || crypto.randomUUID(),
-          createdAt: (ins as any).createdAt || new Date().toISOString(),
-          priority: (Math.max(1, Math.min(5, (ins as any).priority ?? 3)) as 1 | 2 | 3 | 4 | 5),
-        })) as HabitInsight[];
+        // Normalize AI response: add IDs if missing and coerce priority to 1..5 union
+        return result.insights.map(ins => {
+          const aiInsight = ins as AIInsightResponse;
+          return {
+            ...aiInsight,
+            id: aiInsight.id || crypto.randomUUID(),
+            createdAt: aiInsight.createdAt || new Date().toISOString(),
+            priority: (Math.max(1, Math.min(5, aiInsight.priority ?? 3)) as 1 | 2 | 3 | 4 | 5),
+          } as HabitInsight;
+        });
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
         if (attempt < 2) {
