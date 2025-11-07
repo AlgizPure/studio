@@ -5,7 +5,7 @@
  * Handles permission requests, token management, and notification scheduling
  */
 
-import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
+import { getMessaging, getToken, onMessage, type Messaging, type MessagePayload } from 'firebase/messaging';
 import type { FirebaseApp } from 'firebase/app';
 
 let messaging: Messaging | null = null;
@@ -93,9 +93,9 @@ async function getMessagingToken(app: FirebaseApp): Promise<string | null> {
  * Also saves notification to Firestore for in-app display
  */
 export function onForegroundMessage(
-  app: FirebaseApp, 
-  callback: (payload: any) => void,
-  saveToFirestore?: (notification: any) => Promise<void>
+  app: FirebaseApp,
+  callback: (payload: MessagePayload) => void,
+  saveToFirestore?: (notification: MessagePayload) => Promise<void>
 ) {
   const messagingInstance = initializeMessaging(app);
   if (!messagingInstance) return () => {};
