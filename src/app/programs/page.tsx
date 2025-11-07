@@ -7,11 +7,25 @@ import { AddProgramDialog } from '@/components/add-program-dialog';
 import { ImportProgramDialog } from '@/components/import-program-dialog';
 import { mockPrograms } from '@/lib/mock-programs';
 import { useState } from 'react';
-import type { Program } from '@/lib/types';
+import type { Program, ProgramWorkout } from '@/lib/types';
 import { DialogTrigger } from '@/components/ui/dialog';
 
+// Types for patch operations
+type PatchOperation =
+  | { op: 'add-program'; program: any }  // Keep any for now since import format varies
+  | { op: 'update-program'; program_id: string; program: Partial<Program> }
+  | { op: 'remove-exercise'; program_id: string; workout_id: string; exercise_id: string };
+
+type Patch = {
+  patch: PatchOperation[];
+};
+
+type ProgramWorkoutWithExercises = ProgramWorkout & {
+  exercises?: Array<{ exerciseId: string }>;
+};
+
 // Collision detection/diff/patch utilities:
-function diffPrograms(oldProg: any, newProg: any) {
+function diffPrograms(oldProg: Program | null, newProg: Program) {
   if (!oldProg) return 'Program is new.';
   const oldJSON = JSON.stringify(oldProg, null, 2);
   const newJSON = JSON.stringify(newProg, null, 2);
@@ -19,7 +33,7 @@ function diffPrograms(oldProg: any, newProg: any) {
   return `Old:\n${oldJSON}\n\nNew:\n${newJSON}`;
 }
 
-function applyPatch(programs: Program[], patch: any): Program[] {
+function applyPatch(programs: Program[], patch: Patch): Program[] {
   let next = [...programs];
   for (const op of patch.patch || []) {
     if (op.op === 'add-program' && op.program) {
@@ -44,16 +58,17 @@ function applyPatch(programs: Program[], patch: any): Program[] {
     if (op.op === 'remove-exercise' && op.program_id && op.workout_id && op.exercise_id) {
       const idx = next.findIndex(p => p.id === op.program_id);
       if (idx >= 0 && Array.isArray(next[idx].workouts)) {
-        next[idx].workouts = next[idx].workouts.map(w =>
-          w.workoutId === op.workout_id
+        next[idx].workouts = next[idx].workouts.map(w => {
+          const workoutWithExercises = w as ProgramWorkoutWithExercises;
+          return w.workoutId === op.workout_id
             ? {
                 ...w,
-                exercises: Array.isArray((w as any).exercises)
-                  ? (w as any).exercises.filter((e: any) => e.exerciseId !== op.exercise_id)
+                exercises: Array.isArray(workoutWithExercises.exercises)
+                  ? workoutWithExercises.exercises.filter(e => e.exerciseId !== op.exercise_id)
                   : [],
               }
-            : w
-        );
+            : w;
+        });
       }
     }
     // Could add update-exercise...
@@ -165,19 +180,24 @@ export default function ProgramsPage() {
       <ImportProgramDialog
         open={importOpen}
         onOpenChange={setImportOpen}
-        onImport={async (data: any) => {
-          if (data.kind === 'program') {
-            const newId = data.value.meta?.id ?? data.value.id;
+        onImport={async (data: unknown) => {
+          // Type guard for import data
+          if (!data || typeof data !== 'object') return;
+
+          const importData = data as { kind?: string; value?: any };
+
+          if (importData.kind === 'program' && importData.value) {
+            const newId = importData.value.meta?.id ?? importData.value.id;
             const duplicate = programs.find(p => p.id === newId);
             if (duplicate) {
-              const diff = diffPrograms(duplicate, data.value);
+              const diff = diffPrograms(duplicate, importData.value);
               const overwrite = window.confirm(`Программа с ID "${newId}" уже существует. Перезаписать?\n\nDiff:\n${diff}`);
               if (!overwrite) return;
               setPrograms(prev => prev.map(p =>
                 p.id === newId
                   ? {
                       ...p,
-                      name: data.value.meta.name,
+                      name: importData.value.meta.name,
                       workouts: [],
                       updatedAt: new Date().toISOString(),
                       // ...other fields if needed from ZTL
@@ -190,14 +210,14 @@ export default function ProgramsPage() {
                 ...prev,
                 {
                   id: newId,
-                  name: data.value.meta.name,
+                  name: importData.value.meta.name,
                   description: undefined,
                   startDate: new Date().toISOString().split('T')[0],
                   endDate: undefined,
                   durationType: 'fixed',
                   status: 'active',
-                  goal: data.value.meta.goal,
-                  tags: Array.isArray(data.value.meta.tags) ? data.value.meta.tags : [],
+                  goal: importData.value.meta.goal,
+                  tags: Array.isArray(importData.value.meta.tags) ? importData.value.meta.tags : [],
                   workouts: [],
                   createdAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
@@ -207,8 +227,8 @@ export default function ProgramsPage() {
               ]);
               alert('Программа успешно импортирована!');
             }
-          } else if (data.kind === 'patch') {
-            setPrograms(p => applyPatch(p, data.value));
+          } else if (importData.kind === 'patch' && importData.value) {
+            setPrograms(p => applyPatch(p, importData.value));
             alert('Изменения по патчу применены.');
           }
         }}
