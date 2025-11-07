@@ -15,6 +15,41 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { Skeleton } from './ui/skeleton';
 import { buildDailySchedule } from '@/lib/utils/schedule-builder';
 
+// Type definitions for schedule items
+type HabitItem = {
+  id: string;
+  time: string;
+  activityType: 'Habit';
+  activityName: string;
+  duration: string;
+  icon: typeof Target;
+  raw: Habit;
+  completed: boolean;
+  onToggle: () => void;
+  hasParameters: boolean;
+};
+
+type WorkoutItem = {
+  id: string;
+  time: string;
+  activityType: 'Workout';
+  activityName: string;
+  duration: string;
+  icon: typeof Dumbbell;
+  raw: { workoutId: string; programId?: string; status?: string };
+  completed: boolean;
+  onToggle: () => void;
+  hasParameters: boolean;
+  isPaused: boolean;
+};
+
+type ScheduleItem = HabitItem | WorkoutItem;
+
+// Type guard to check if an item is a workout
+function isWorkoutItem(item: ScheduleItem): item is WorkoutItem {
+  return item.activityType === 'Workout';
+}
+
 export function TodaySchedule() {
   const [today, setToday] = useState<Date>(new Date());
   const { user } = useUser();
@@ -36,11 +71,11 @@ export function TodaySchedule() {
     if (!user || !firestore || !habit.id) return;
     // Для legacy привычек используем completed, для V2 - отдельная логика
     const isLegacy = !('type' in habit);
-    const currentCompleted = isLegacy ? (habit as any).completed : false;
+    const currentCompleted = isLegacy ? habit.completed : false;
     const newCompletedStatus = !currentCompleted;
-    
+
     const habitDoc = doc(firestore, `users/${user.uid}/habits`, habit.id);
-    const updatedData = isLegacy 
+    const updatedData = isLegacy
       ? { completed: newCompletedStatus }
       : {}; // Для V2 привычек нужно логировать в отдельную коллекцию
     updateDoc(habitDoc, updatedData).catch(async (err) => {
@@ -93,10 +128,10 @@ export function TodaySchedule() {
     return habit.days?.includes(todayDay);
   });
 
-  const allItems = useMemo(() => {
-    const items = [
+  const allItems = useMemo<ScheduleItem[]>(() => {
+    const items: ScheduleItem[] = [
       // Привычки
-      ...dailyHabits.map(habit => ({
+      ...dailyHabits.map((habit): HabitItem => ({
         id: habit.id,
         time: 'Any time',
         activityType: 'Habit' as const,
@@ -109,7 +144,7 @@ export function TodaySchedule() {
         hasParameters: false,
       })),
       // Тренировки из расписания
-      ...scheduledWorkouts.map(scheduled => {
+      ...scheduledWorkouts.map((scheduled): WorkoutItem => {
         const workout = workoutsMap.get(scheduled.workoutId);
         return {
           id: scheduled.workoutId,
@@ -166,11 +201,14 @@ export function TodaySchedule() {
             {allItems.map((item) => {
               const Icon = item.icon as LucideIcon;
               const itemId = `today-${item.id}`;
+              const isWorkout = isWorkoutItem(item);
+              const isPaused = isWorkout && item.isPaused;
+
               return (
-                <div 
-                  key={item.id} 
+                <div
+                  key={item.id}
                   className={`flex items-center p-3 rounded-lg hover:bg-accent/50 transition-colors ${
-                    (item as any).isPaused ? 'opacity-50' : ''
+                    isPaused ? 'opacity-50' : ''
                   }`}
                 >
                   {item.activityType === 'Workout' ? (
@@ -179,14 +217,14 @@ export function TodaySchedule() {
                       size="sm"
                       className="mr-4"
                       onClick={() => item.onToggle()}
-                      disabled={(item as any).isPaused}
+                      disabled={isPaused}
                     >
                       Start
                     </Button>
                   ) : (
-                    <Checkbox 
-                      id={itemId} 
-                      className="mr-4" 
+                    <Checkbox
+                      id={itemId}
+                      className="mr-4"
                       checked={item.completed}
                       onCheckedChange={() => item.onToggle()}
                     />
@@ -197,7 +235,7 @@ export function TodaySchedule() {
                   <div className="flex-1">
                     <Label htmlFor={itemId} className="font-semibold cursor-pointer">
                       {item.activityName}
-                      {(item as any).isPaused && (
+                      {isPaused && (
                         <span className="ml-2 text-xs text-muted-foreground">(Paused)</span>
                       )}
                     </Label>

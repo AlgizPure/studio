@@ -15,6 +15,18 @@ import { useFirestore } from '@/firebase/provider';
 import { applyProgressionToWorkout, findExerciseInWorkout } from '@/lib/program-helpers';
 import type { WorkoutExtended } from '@/lib/types';
 
+// Extended Program type with optional AI progression fields
+type ProgramWithProgressionData = Program & {
+  detailedWorkouts?: WorkoutExtended[];
+  exerciseUpdates?: Record<string, {
+    exerciseId: string;
+    exerciseName: string;
+    targetWeight?: number;
+    targetReps?: number;
+    updatedAt: string;
+  }>;
+};
+
 type ProgressionSuggestion = {
   exerciseId: string;
   exerciseName: string;
@@ -35,7 +47,7 @@ type SuggestionsData = {
 };
 
 interface ProgressionSuggestionsPanelProps {
-  program: Program;
+  program: ProgramWithProgressionData;
 }
 
 export function ProgressionSuggestionsPanel({ program }: ProgressionSuggestionsPanelProps) {
@@ -73,11 +85,12 @@ export function ProgressionSuggestionsPanel({ program }: ProgressionSuggestionsP
 
       const data = await response.json();
       setSuggestions(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[ProgressionSuggestionsPanel] Error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate suggestions';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to generate suggestions',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -99,8 +112,8 @@ export function ProgressionSuggestionsPanel({ program }: ProgressionSuggestionsP
       // Try to find the exercise in workouts stored in the program or fetch them
       for (const programWorkout of program.workouts) {
         // Option 1: Check if workout is stored inline (for template programs)
-        const inlineWorkout = (program as any).detailedWorkouts?.find(
-          (w: WorkoutExtended) => w.id === programWorkout.workoutId
+        const inlineWorkout = program.detailedWorkouts?.find(
+          (w) => w.id === programWorkout.workoutId
         );
 
         if (inlineWorkout) {
@@ -150,7 +163,7 @@ export function ProgressionSuggestionsPanel({ program }: ProgressionSuggestionsP
       if (!workoutFound || !workoutUpdated) {
         // Fallback: Store update metadata in Program document
         const programRef = doc(firestore, `users/${user.uid}/programs/${program.id}`);
-        const existingUpdates = (program as any).exerciseUpdates || {};
+        const existingUpdates = program.exerciseUpdates || {};
         await updateDoc(programRef, {
           exerciseUpdates: {
             ...existingUpdates,
@@ -181,11 +194,12 @@ export function ProgressionSuggestionsPanel({ program }: ProgressionSuggestionsP
         ...prev,
         suggestions: prev.suggestions.filter(s => s.exerciseId !== suggestion.exerciseId),
       } : null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[ProgressionSuggestionsPanel] Apply error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to apply suggestion';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to apply suggestion',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
