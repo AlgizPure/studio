@@ -7,15 +7,15 @@ import { HabitTracker } from '@/components/habit-tracker';
 import { AiOptimizerDialog } from '@/components/ai-optimizer-dialog';
 import { PlanTomorrowDialog } from '@/components/plan-tomorrow-dialog';
 import { useUser } from '@/firebase/auth/use-user';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { useFirestore, useMemoFirebase } from '@/firebase/provider';
+import { useUserCollection } from '@/hooks/use-user-collection';
+import { useFirestore } from '@/firebase/provider';
 import type { AppUser } from '@/firebase/auth/use-user';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { startOfWeek, isWithinInterval, isToday, isYesterday, formatISO } from 'date-fns';
 import type { Exercise, Habit, WorkoutExtended } from '@/lib/types';
 import { useMemo, useEffect } from 'react';
-import { collection, doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -68,23 +68,9 @@ export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const exercisesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
-    [user, firestore]
-  );
-  const { data: exercises } = useCollection<Exercise>(exercisesQuery);
-  
-  const habitsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
-    [user, firestore]
-  );
-  const { data: habits } = useCollection<Habit>(habitsQuery);
-
-  const workoutsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/workouts`) : null),
-    [user, firestore]
-  );
-  const { data: workouts } = useCollection<WorkoutExtended>(workoutsQuery);
+  const { data: exercises } = useUserCollection<Exercise>('exercises');
+  const { data: habits } = useUserCollection<Habit>('habits');
+  const { data: workouts } = useUserCollection<WorkoutExtended>('workouts');
 
   const weeklyStats = useMemo(() => {
     const now = new Date();

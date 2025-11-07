@@ -13,7 +13,7 @@ interface StatsCardsProps {
   timeRange: TimeRange;
 }
 
-export function StatsCards({ workouts, timeRange }: StatsCardsProps) {
+export const StatsCards = React.memo(function StatsCards({ workouts, timeRange }: StatsCardsProps) {
   const stats = useMemo(() => {
     return calculateStats(workouts, timeRange);
   }, [workouts, timeRange]);
@@ -72,6 +72,6 @@ export function StatsCards({ workouts, timeRange }: StatsCardsProps) {
       })}
     </div>
   );
-}
+});
 
 

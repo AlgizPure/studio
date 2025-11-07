@@ -22,7 +22,7 @@ export type ExerciseHistory = {
 export type AIInsightCache = {
   id: string;
   type: 'quick_insights' | 'progressions';
-  data: any;
+  data: Record<string, unknown>; // JSON-serializable data
   timeframe?: string;
   programId?: string;
   generatedAt: Timestamp;
@@ -124,8 +124,8 @@ export async function getCachedInsights(
   }
 
   const data = cacheDoc.data() as Omit<AIInsightCache, 'generatedAt' | 'expiresAt'> & {
-    generatedAt: any;
-    expiresAt: any;
+    generatedAt: Timestamp;
+    expiresAt: Timestamp;
   };
 
   // Check if expired
@@ -147,7 +147,7 @@ export async function saveInsightsCache(
   firestore: Firestore,
   userId: string,
   type: 'quick_insights' | 'progressions',
-  data: any,
+  data: Record<string, unknown>, // JSON-serializable data
   timeframe?: string,
   programId?: string,
   tokensUsed?: number

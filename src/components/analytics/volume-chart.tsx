@@ -27,7 +27,7 @@ interface VolumeChartProps {
   timeRange: TimeRange;
 }
 
-export function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
+export const VolumeChart = React.memo(function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
   const chartData = useMemo(() => {
     const filteredWorkouts = getWorkoutsByDateRange(workouts, timeRange);
     const period = timeRange === '90d' ? 'week' : 'day';
@@ -142,6 +142,6 @@ export function VolumeChart({ workouts, timeRange }: VolumeChartProps) {
       </CardContent>
     </Card>
   );
-}
+});
 
 

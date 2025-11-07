@@ -34,7 +34,7 @@ interface ExerciseProgressChartProps {
   timeRange: TimeRange;
 }
 
-export function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressChartProps) {
+export const ExerciseProgressChart = React.memo(function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressChartProps) {
   const exercises = useMemo(() => {
     return getUniqueExercises(workouts);
   }, [workouts]);
@@ -187,6 +187,6 @@ export function ExerciseProgressChart({ workouts, timeRange }: ExerciseProgressC
       </CardContent>
     </Card>
   );
-}
+});
 
 

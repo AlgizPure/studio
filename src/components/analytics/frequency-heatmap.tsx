@@ -19,7 +19,7 @@ interface FrequencyHeatmapProps {
   workouts: WorkoutLog[];
 }
 
-export function FrequencyHeatmap({ workouts }: FrequencyHeatmapProps) {
+export const FrequencyHeatmap = React.memo(function FrequencyHeatmap({ workouts }: FrequencyHeatmapProps) {
   const chartData = useMemo(() => {
     return calculateDayFrequency(workouts);
   }, [workouts]);
@@ -123,4 +123,4 @@ export function FrequencyHeatmap({ workouts }: FrequencyHeatmapProps) {
       </CardContent>
     </Card>
   );
-}
+});

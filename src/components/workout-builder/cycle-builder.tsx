@@ -8,9 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, GripVertical, Plus } from 'lucide-react';
 import type { Cycle, CycleType, CycleExercise, Exercise, ExerciseCategory } from '@/lib/types';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
+import { useUser, useFirestore } from '@/firebase/provider';
 import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { useUserCollection } from '@/hooks/use-user-collection';
 import { AddExerciseDialog } from '@/components/add-exercise-dialog';
 import { ManageCategoriesDialog } from '@/components/manage-categories-dialog';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -45,24 +45,15 @@ export function CycleBuilder({ cycle, onUpdate, onDelete, dragHandleProps }: Cyc
   const [isAddExerciseDialogOpen, setIsAddExerciseDialogOpen] = useState(false);
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
   const dialogTriggerRef = React.useRef<HTMLButtonElement>(null);
-  
+
   useEffect(() => {
     if (isAddExerciseDialogOpen && dialogTriggerRef.current) {
       dialogTriggerRef.current.click();
     }
   }, [isAddExerciseDialogOpen]);
-  
-  const exercisesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
-    [user, firestore]
-  );
-  const { data: exercises } = useCollection<Exercise>(exercisesQuery);
-  
-  const exerciseCategoriesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
-    [user, firestore]
-  );
-  const { data: exerciseCategories } = useCollection<ExerciseCategory>(exerciseCategoriesQuery);
+
+  const { data: exercises } = useUserCollection<Exercise>('exercises');
+  const { data: exerciseCategories } = useUserCollection<ExerciseCategory>('exerciseCategories');
 
   const sensors = useSensors(
     useSensor(PointerSensor),

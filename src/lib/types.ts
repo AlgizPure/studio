@@ -538,7 +538,7 @@ export type HabitExportV1 = {
   version: '1.0';
   exportDate: string;
   userId: string;
-  habits: HabitV2[];
+  habits: Habit[]; // Can be both Legacy and V2 habits
   logs: HabitLog[];
   streaks: HabitStreak[];
   insights: HabitInsight[];

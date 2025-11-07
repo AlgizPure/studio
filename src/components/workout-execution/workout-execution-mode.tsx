@@ -10,9 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { SetTracker } from './set-tracker';
 import { RestTimer } from './rest-timer';
 import { WorkoutFeedbackDialog } from '@/components/workout-feedback-dialog';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { collection } from 'firebase/firestore';
+import { useUserCollection } from '@/hooks/use-user-collection';
 
 interface WorkoutExecutionModeProps {
   workout: WorkoutExtended;
@@ -27,15 +25,8 @@ export function WorkoutExecutionMode({
   onComplete,
   onCancel,
 }: WorkoutExecutionModeProps) {
-  const { user } = useUser();
-  const firestore = useFirestore();
-
   // Загружаем упражнения для проверки trackDuration
-  const exercisesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
-    [user, firestore]
-  );
-  const { data: exercises } = useCollection<Exercise>(exercisesQuery);
+  const { data: exercises } = useUserCollection<Exercise>('exercises');
   const exercisesMap = useMemo(() => {
     const map = new Map<string, Exercise>();
     exercises?.forEach(ex => map.set(ex.id, ex));

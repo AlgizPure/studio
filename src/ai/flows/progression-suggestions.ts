@@ -68,6 +68,22 @@ export type ProgressionSuggestionsInput = z.infer<typeof ProgressionSuggestionsI
 // ProgressionSuggestionsOutput is imported from workout-ai-mocks.ts
 
 /**
+ * Genkit response wrapper type with usage metadata
+ */
+interface GenkitResult<T = unknown> {
+  output?: T;
+  usage?: {
+    totalTokens?: number;
+  };
+  tokensUsed?: number;
+}
+
+/**
+ * Extended output type with optional token usage tracking
+ */
+type ResultWithTokens<T> = T & { tokensUsed?: number };
+
+/**
  * Real AI progression suggestions generation using Gemini via Genkit.
  */
 async function generateProgressionSuggestionsWithAI(
@@ -115,17 +131,20 @@ Return structured JSON response matching the schema.`,
       program: input.program,
       recentWorkouts: input.recentWorkouts,
       exerciseHistory: input.exerciseHistory,
-    });
-    
+    }) as GenkitResult<z.infer<typeof ProgressionSuggestionsOutputSchema>>;
+
     // Extract token usage if available
-    const tokensUsed = (result as any)?.usage?.totalTokens || (result as any)?.tokensUsed || 0;
-    if (tokensUsed > 0) {
-      (result as any).tokensUsed = tokensUsed;
-    }
+    const tokensUsed = result?.usage?.totalTokens || result?.tokensUsed || 0;
 
     // Genkit returns a wrapper; use .output for typed result
-    // @ts-expect-error - Genkit type wrapper issue
-    return result.output ?? result;
+    const output = result.output ?? result as z.infer<typeof ProgressionSuggestionsOutputSchema>;
+
+    // Attach token usage for tracking
+    if (tokensUsed > 0) {
+      (output as ResultWithTokens<typeof output>).tokensUsed = tokensUsed;
+    }
+
+    return output;
   } catch (error) {
     logger.error('Progression suggestions: AI generation error', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -179,15 +198,10 @@ export async function getProgressionSuggestions(
 
     // Try AI generation with retry logic (3 attempts with exponential backoff)
     let lastError: Error | null = null;
-    let tokensUsed = 0;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const result = await generateProgressionSuggestionsWithAI(input);
-        // Track token usage
-        tokensUsed = (result as any).tokensUsed || 0;
-        if (tokensUsed > 0) {
-          (result as any).tokensUsed = tokensUsed;
-        }
+        // Token usage is already attached in generateProgressionSuggestionsWithAI
         return result;
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { collection, orderBy, query } from 'firebase/firestore';
+import { useUser } from '@/firebase/provider';
+import { useUserCollection } from '@/hooks/use-user-collection';
+import { orderBy } from 'firebase/firestore';
 import type { WorkoutLog } from '@/lib/types';
 import type { TimeRange } from '@/lib/analytics-utils';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,22 +25,10 @@ import { PeriodComparison } from '@/components/analytics/period-comparison';
 
 export function AnalyticsCharts() {
   const { user } = useUser();
-  const firestore = useFirestore();
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
   const [activeTab, setActiveTab] = useState<'overview' | 'exercises' | 'advanced'>('overview');
 
-  const workoutLogsQuery = useMemoFirebase(
-    () =>
-      user
-        ? query(
-            collection(firestore, `users/${user.uid}/workoutLogs`),
-            orderBy('startTime', 'desc')
-          )
-        : null,
-    [user, firestore]
-  );
-
-  const { data: workoutLogs, isLoading } = useCollection<WorkoutLog>(workoutLogsQuery);
+  const { data: workoutLogs, isLoading } = useUserCollection<WorkoutLog>('workoutLogs', orderBy('startTime', 'desc'));
 
   const handleTimeRangeChange = (value: string) => {
     setTimeRange(value as TimeRange);

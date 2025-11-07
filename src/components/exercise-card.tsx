@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +17,7 @@ interface ExerciseCardProps {
   openManageCategories: () => void;
 }
 
-export function ExerciseCard({ exercise, categories, onUpdate, onDelete, openManageCategories }: ExerciseCardProps) {
+export const ExerciseCard = React.memo(function ExerciseCard({ exercise, categories, onUpdate, onDelete, openManageCategories }: ExerciseCardProps) {
   const category = categories.find(cat => cat.id === exercise.categoryId);
 
   return (
@@ -57,4 +58,4 @@ export function ExerciseCard({ exercise, categories, onUpdate, onDelete, openMan
       </CardContent>
     </Card>
   );
-}
+});

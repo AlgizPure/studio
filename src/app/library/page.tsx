@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
-import { useCollection } from '@/firebase/firestore/use-collection';
+import { useState, useMemo } from 'react';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { useFirestore, useMemoFirebase, useUser } from '@/firebase/provider';
+import { useFirestore, useUser } from '@/firebase/provider';
+import { useUserCollection } from '@/hooks/use-user-collection';
 import { ExerciseCard } from '@/components/exercise-card';
 import { Input } from '@/components/ui/input';
 import { AddExerciseDialog } from '@/components/add-exercise-dialog';
@@ -17,17 +17,8 @@ export default function LibraryPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const exercisesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
-    [user, firestore]
-  );
-  const { data: exercises, isLoading: exercisesLoading } = useCollection<Exercise>(exercisesQuery);
-  
-  const categoriesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/exerciseCategories`) : null),
-    [user, firestore]
-  );
-  const { data: exerciseCategories, isLoading: categoriesLoading } = useCollection<ExerciseCategory>(categoriesQuery);
+  const { data: exercises, isLoading: exercisesLoading } = useUserCollection<Exercise>('exercises');
+  const { data: exerciseCategories, isLoading: categoriesLoading } = useUserCollection<ExerciseCategory>('exerciseCategories');
 
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -109,11 +100,12 @@ export default function LibraryPage() {
       errorEmitter.emit('permission-error', permissionError);
     });
   };
-  
-  const filteredExercises = (exercises || []).filter(ex => 
-    ex.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
+
+  const filteredExercises = useMemo(() =>
+    (exercises || []).filter(ex =>
+      ex.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ), [exercises, searchTerm]);
+
   const allCategory = { id: 'all', name: 'All' };
   const categories = [allCategory, ...(exerciseCategories || [])];
   

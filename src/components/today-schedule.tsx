@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { Dumbbell, Target } from 'lucide-react';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
+import { useUser, useFirestore } from '@/firebase/provider';
+import { useUserCollection } from '@/hooks/use-user-collection';
 import type { Habit, Day, Program, WorkoutExtended } from '@/lib/types';
 import { doc, updateDoc, collection } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -20,25 +20,9 @@ export function TodaySchedule() {
   const { user } = useUser();
   const firestore = useFirestore();
   
-  const habitsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
-    [user, firestore]
-  );
-  const { data: habits, isLoading: habitsLoading } = useCollection<Habit>(habitsQuery);
-  
-  // Загружаем программы
-  const programsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/programs`) : null),
-    [user, firestore]
-  );
-  const { data: programs, isLoading: programsLoading } = useCollection<Program>(programsQuery);
-  
-  // Загружаем самодостаточные тренировки
-  const workoutsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/workouts`) : null),
-    [user, firestore]
-  );
-  const { data: workouts, isLoading: workoutsLoading } = useCollection<WorkoutExtended>(workoutsQuery);
+  const { data: habits, isLoading: habitsLoading } = useUserCollection<Habit>('habits');
+  const { data: programs, isLoading: programsLoading } = useUserCollection<Program>('programs');
+  const { data: workouts, isLoading: workoutsLoading } = useUserCollection<WorkoutExtended>('workouts');
   
   // ExerciseLogs могут понадобиться для проверки выполнения тренировок
   // Пока оставляем для будущего использования

@@ -21,9 +21,9 @@ import { useToast } from '@/hooks/use-toast';
 import { getOptimizedRoutine } from '@/app/actions';
 import { ScrollArea } from './ui/scroll-area';
 import type { AIRoutineOptimizerOutput, ScheduledActivity } from '@/ai/flows/ai-routine-optimizer';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { useCollection } from '@/firebase/firestore/use-collection';
+import { useUser, useFirestore } from '@/firebase/provider';
 import { writeBatch, doc, collection } from 'firebase/firestore';
+import { useUserCollection } from '@/hooks/use-user-collection';
 import type { Exercise, Habit } from '@/lib/types';
 import { errorEmitter, FirestorePermissionError } from '@/firebase';
 
@@ -45,17 +45,8 @@ export function AiOptimizerDialog() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const exercisesQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/exercises`) : null),
-    [user, firestore]
-  );
-  const { data: exercises } = useCollection<Exercise>(exercisesQuery);
-  
-  const habitsQuery = useMemoFirebase(
-    () => (user ? collection(firestore, `users/${user.uid}/habits`) : null),
-    [user, firestore]
-  );
-  const { data: habits } = useCollection<Habit>(habitsQuery);
+  const { data: exercises } = useUserCollection<Exercise>('exercises');
+  const { data: habits } = useUserCollection<Habit>('habits');
 
   const {
     register,

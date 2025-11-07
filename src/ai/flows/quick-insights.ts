@@ -57,6 +57,22 @@ export type QuickInsightsInput = z.infer<typeof QuickInsightsInputSchema>;
 // QuickInsightsOutput is imported from workout-ai-mocks.ts
 
 /**
+ * Genkit response wrapper type with usage metadata
+ */
+interface GenkitResult<T = unknown> {
+  output?: T;
+  usage?: {
+    totalTokens?: number;
+  };
+  tokensUsed?: number;
+}
+
+/**
+ * Extended output type with optional token usage tracking
+ */
+type ResultWithTokens<T> = T & { tokensUsed?: number };
+
+/**
  * Real AI insights generation using Gemini via Genkit.
  */
 async function generateQuickInsightsWithAI(input: QuickInsightsInput): Promise<z.infer<typeof QuickInsightsOutputSchema>> {
@@ -118,17 +134,20 @@ Return structured JSON response matching the schema.`,
       activePrograms: input.activePrograms,
       userGoal: input.userGoal,
       timeframe: input.timeframe,
-    });
-    
+    }) as GenkitResult<z.infer<typeof QuickInsightsOutputSchema>>;
+
     // Extract token usage if available
-    const tokensUsed = (result as any)?.usage?.totalTokens || (result as any)?.tokensUsed || 0;
-    if (tokensUsed > 0) {
-      (result as any).tokensUsed = tokensUsed;
-    }
+    const tokensUsed = result?.usage?.totalTokens || result?.tokensUsed || 0;
 
     // Genkit returns a wrapper; use .output for typed result
-    // @ts-expect-error - Genkit type wrapper issue
-    return result.output ?? result;
+    const output = result.output ?? result as z.infer<typeof QuickInsightsOutputSchema>;
+
+    // Attach token usage for tracking
+    if (tokensUsed > 0) {
+      (output as ResultWithTokens<typeof output>).tokensUsed = tokensUsed;
+    }
+
+    return output;
   } catch (error) {
     logger.error('Quick insights AI generation error', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -187,15 +206,10 @@ export async function getQuickInsights(
 
     // Try AI generation with retry logic (3 attempts with exponential backoff)
     let lastError: Error | null = null;
-    let tokensUsed = 0;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const result = await generateQuickInsightsWithAI(input);
-        // Track token usage
-        tokensUsed = (result as any).tokensUsed || 0;
-        if (tokensUsed > 0) {
-          (result as any).tokensUsed = tokensUsed;
-        }
+        // Token usage is already attached in generateQuickInsightsWithAI
         return result;
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
