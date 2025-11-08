@@ -6,13 +6,25 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useUser, useFirestore } from '@/firebase/provider';
 import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
-import type { Habit } from '@/lib/types';
+import type { Habit, HabitTarget, HabitType } from '@/lib/types';
 
 type Recommendation = {
   action: 'add' | 'modify' | 'pause';
   name?: string;
   habitId?: string;
-  params?: any;
+  params?: Record<string, unknown>;
+};
+
+type HabitImportPayload = {
+  name: string;
+  categoryId: string;
+  completed: boolean;
+  type?: HabitType;
+  target?: HabitTarget;
+};
+
+type HabitUpdatePayload = {
+  target?: HabitTarget;
 };
 
 function parseRecommendations(markdown: string): Recommendation[] {
@@ -60,15 +72,15 @@ export function ImportClaudeDialog() {
       const habitsCol = collection(firestore, `users/${user.uid}/habits`);
       for (const r of recs) {
         if (r.action === 'add' && r.name) {
-          const payload: any = { name: r.name, categoryId: '', completed: false };
-          if (r.params?.type) payload.type = r.params.type;
-          if (r.params?.target) payload.target = { type: r.params?.type || 'quantity', value: r.params.target, unit: r.params?.unit };
+          const payload: HabitImportPayload = { name: r.name, categoryId: '', completed: false };
+          if (r.params?.type) payload.type = r.params.type as HabitType;
+          if (r.params?.target) payload.target = { type: (r.params?.type as HabitType) || 'quantity', value: r.params.target as number, unit: r.params?.unit as string | undefined };
           await addDoc(habitsCol, payload);
         } else if (r.action === 'modify' && r.habitId) {
           const ref = doc(firestore, `users/${user.uid}/habits/${r.habitId}`);
-          const update: any = {};
-          if (r.params?.targetType === 'duration' && typeof r.params.value === 'number') update.target = { type: 'duration', value: r.params.value, unit: r.params?.unit || 'min' };
-          if (r.params?.targetType === 'quantity' && typeof r.params.value === 'number') update.target = { type: 'quantity', value: r.params.value, unit: r.params?.unit };
+          const update: HabitUpdatePayload = {};
+          if (r.params?.targetType === 'duration' && typeof r.params.value === 'number') update.target = { type: 'duration', value: r.params.value, unit: (r.params?.unit as string | undefined) || 'min' };
+          if (r.params?.targetType === 'quantity' && typeof r.params.value === 'number') update.target = { type: 'quantity', value: r.params.value, unit: r.params?.unit as string | undefined };
           await updateDoc(ref, update);
         } else if (r.action === 'pause' && r.habitId) {
           const ref = doc(firestore, `users/${user.uid}/habits/${r.habitId}`);

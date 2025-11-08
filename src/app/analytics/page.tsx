@@ -16,7 +16,7 @@ import type { WorkoutLog, Program } from '@/lib/types';
 import { generateFullAnalysisExport, downloadMarkdownFile } from '@/lib/ztl/export-full-analysis';
 import { programToZTL, generateScheduledWorkouts, calculateCurrentWeek } from '@/lib/ztl/helpers';
 import { convertWorkoutsToCSV, convertSetsToCSV, convertPRsToCSV, downloadCSV } from '@/lib/export-to-csv';
-import { calculatePersonalRecords } from '@/lib/analytics-utils';
+import { calculatePersonalRecords } from '@/lib/analytics';
 
 export default function AnalyticsPage() {
   const { user } = useUser();

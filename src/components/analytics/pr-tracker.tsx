@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus, Trophy } from 'lucide-react';
 import type { WorkoutLog } from '@/lib/types';
-import { calculatePersonalRecords, formatVolume } from '@/lib/analytics-utils';
+import { calculatePersonalRecords, formatVolume } from '@/lib/analytics';
 
 interface PRTrackerProps {
   workouts: WorkoutLog[];

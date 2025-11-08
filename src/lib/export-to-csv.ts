@@ -1,5 +1,5 @@
 import type { WorkoutLog } from '@/lib/types';
-import type { PersonalRecord } from '@/lib/analytics-utils';
+import type { PersonalRecord } from '@/lib/analytics';
 
 /**
  * Escapes a value for CSV format

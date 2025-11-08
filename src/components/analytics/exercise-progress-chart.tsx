@@ -22,12 +22,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { WorkoutLog } from '@/lib/types';
-import type { TimeRange } from '@/lib/analytics-utils';
+import type { TimeRange } from '@/lib/analytics';
 import {
   getExerciseProgress,
   getUniqueExercises,
   getWorkoutsByDateRange,
-} from '@/lib/analytics-utils';
+} from '@/lib/analytics';
 
 interface ExerciseProgressChartProps {
   workouts: WorkoutLog[];

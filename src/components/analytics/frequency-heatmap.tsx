@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { WorkoutLog } from '@/lib/types';
-import { calculateDayFrequency, formatVolume } from '@/lib/analytics-utils';
+import { calculateDayFrequency, formatVolume } from '@/lib/analytics';
 
 interface FrequencyHeatmapProps {
   workouts: WorkoutLog[];

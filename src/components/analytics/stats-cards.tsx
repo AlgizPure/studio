@@ -5,8 +5,8 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dumbbell, Clock, TrendingUp, Calendar } from 'lucide-react';
 import type { WorkoutLog } from '@/lib/types';
-import type { TimeRange } from '@/lib/analytics-utils';
-import { calculateStats, formatVolume, formatDuration } from '@/lib/analytics-utils';
+import type { TimeRange } from '@/lib/analytics';
+import { calculateStats, formatVolume, formatDuration } from '@/lib/analytics';
 
 interface StatsCardsProps {
   workouts: WorkoutLog[];
