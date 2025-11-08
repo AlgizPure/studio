@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { WorkoutBuilder } from '@/components/workout-builder/workout-builder';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { WorkoutExtended } from '@/lib/types';
+import type { WorkoutExtended, Exercise } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -22,7 +22,7 @@ export default function WorkoutsPage() {
   const { toast } = useToast();
 
   const { data: workouts, isLoading: workoutsLoading } = useUserCollection<WorkoutExtended>('workouts');
-  const { data: exercises } = useUserCollection('exercises');
+  const { data: exercises } = useUserCollection<Exercise>('exercises');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -35,7 +35,7 @@ export default function WorkoutsPage() {
     let estimatedDuration = workoutData.estimatedDuration;
     if (exercises && workoutData.cycles) {
       const exercisesMap = new Map(
-        exercises.map((ex: any) => [ex.id, ex])
+        exercises.map((ex: Exercise) => [ex.id, ex])
       );
       estimatedDuration = calculateWorkoutEstimatedDuration(
         workoutData as WorkoutExtended,
@@ -75,7 +75,7 @@ export default function WorkoutsPage() {
     let estimatedDuration = workout.estimatedDuration;
     if (exercises && workout.cycles) {
       const exercisesMap = new Map(
-        exercises.map((ex: any) => [ex.id, ex])
+        exercises.map((ex: Exercise) => [ex.id, ex])
       );
       estimatedDuration = calculateWorkoutEstimatedDuration(workout, exercisesMap);
     }
