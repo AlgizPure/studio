@@ -19,6 +19,11 @@ export type ActiveProgramExport = {
   scheduledWorkouts: ScheduledWorkout[];
 };
 
+type WorkoutLogWithFeedback = WorkoutLog & {
+  userFeedback?: string;
+  feedbackTags?: string[];
+};
+
 type Input = {
   userId: string;
   userGoal?: string;
@@ -68,7 +73,7 @@ export async function generateFullAnalysisExport(input: Input): Promise<string> 
         )
         .join('\n');
       const tableHeader = `| Date | Workout | Exercises | Planned Volume | Status |\n|------|---------|-----------|----------------|--------|`;
-      const ztlYaml = toYAML(ap.ztl as any);
+      const ztlYaml = toYAML(ap.ztl as unknown);
       return `### Program: ${ap.program.name}\n**Status:** ${ap.program.status} • **Progress:** Week ${ap.currentWeek}/${ap.totalWeeks || '∞'}\n\n#### Full Program Specification:\n\n\`\`\`ztl\n${escapeTripleBackticks(ztlYaml)}\n\`\`\`\n\n#### Scheduled Workouts (Next 90 Days):\n${tableHeader}\n${scheduleTable}\n`;
     })
     .join('\n')}`;
@@ -76,9 +81,9 @@ export async function generateFullAnalysisExport(input: Input): Promise<string> 
   const pastSection = `\n---\n\n## 📦 SECTION 3: COMPLETED WORKOUTS (PAST 90 DAYS)\n\n### Chronological Log\n\n\`\`\`json\n${escapeTripleBackticks(truncateJson(input.pastWorkouts))}\n\`\`\`\n`;
 
   const feedbackSection = `\n---\n\n## 📦 SECTION 4: WORKOUT FEEDBACK / NOTES\n\n${input.pastWorkouts
-    .filter((w) => (w as any).userFeedback || (w as any).feedbackTags)
+    .filter((w): w is WorkoutLogWithFeedback => 'userFeedback' in w || 'feedbackTags' in w)
     .slice(0, 200)
-    .map((w) => `**${w.date}** — ${((w as any).feedbackTags || []).join(', ')}\n${(w as any).userFeedback || ''}`)
+    .map((w: WorkoutLogWithFeedback) => `**${w.date}** — ${(w.feedbackTags || []).join(', ')}\n${w.userFeedback || ''}`)
     .join('\n\n')}`;
 
   const questions = `\n---\n\n## 📦 SECTION 5: ANALYSIS QUESTIONS\n- Past performance (progressions, stagnation, overtraining, recovery)\n- Current programs (volume sustainability, selection, missing elements)\n- Future plan 90d (overload risks, schedule, additions)\n- Integration (planned vs actual)\n\n**END OF INSTRUCTIONS - BEGIN ANALYSIS**`;

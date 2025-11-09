@@ -5,6 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import { parseZTLOrPatch, toYAML, toJSON } from '@/lib/ztl/parser';
+import { ZTLProgram, ZTLPatch } from '@/lib/ztl/schema';
+import { z } from 'zod';
+
+type ProgramImportData = z.infer<typeof ZTLProgram> | z.infer<typeof ZTLPatch>;
+type ParsedResult = { kind: 'program'; value: z.infer<typeof ZTLProgram> } | { kind: 'patch'; value: z.infer<typeof ZTLPatch> };
 
 export function ImportProgramDialog({
   open,
@@ -13,10 +18,10 @@ export function ImportProgramDialog({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onImport: (data: any) => Promise<void> | void;
+  onImport: (data: ProgramImportData) => Promise<void> | void;
 }) {
   const [raw, setRaw] = useState('');
-  const [parsed, setParsed] = useState<any | null>(null);
+  const [parsed, setParsed] = useState<ParsedResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [previewAs, setPreviewAs] = useState<'yaml' | 'json'>('yaml');
 
@@ -25,9 +30,9 @@ export function ImportProgramDialog({
     try {
       const res = parseZTLOrPatch(raw);
       setParsed(res);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setParsed(null);
-      setError(e?.message || 'Parse error');
+      setError(e instanceof Error ? e.message : 'Parse error');
     }
   };
 

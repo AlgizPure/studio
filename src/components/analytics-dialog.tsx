@@ -8,11 +8,20 @@ import { Label } from '@/components/ui/label';
 import type { HabitLog } from '@/lib/types';
 import { useUserCollection } from '@/hooks/use-user-collection';
 
+type WheelOfLifeContext = {
+  life_area?: string;
+};
+
+type MaslowHierarchyContext = {
+  need_level?: string;
+};
+
 function computeWheelOfLife(logs: HabitLog[]) {
   const areas = ['health','career','relationships','growth','finance','recreation','environment','spirituality'] as const;
-  const counters: Record<string, { total: number; done: number }> = Object.fromEntries(areas.map(a => [a, { total: 0, done: 0 }])) as any;
+  const counters: Record<string, { total: number; done: number }> = Object.fromEntries(areas.map(a => [a, { total: 0, done: 0 }]));
   for (const l of logs) {
-    const area = (l.contextData && (l.contextData['wheel-of-life-v1'] as any)?.life_area) as string | undefined;
+    const wheelContext = l.contextData?.['wheel-of-life-v1'] as WheelOfLifeContext | undefined;
+    const area = wheelContext?.life_area;
     if (!area || !(area in counters)) continue;
     counters[area].total += 1;
     if (l.status === 'done') counters[area].done += 1;
@@ -29,7 +38,8 @@ function computeMaslowBase(logs: HabitLog[]) {
   const base = ['physiological','safety'] as const;
   const counters: Record<string, { total: number; done: number }> = { physiological: { total: 0, done: 0 }, safety: { total: 0, done: 0 } };
   for (const l of logs) {
-    const level = (l.contextData && (l.contextData['maslow-hierarchy-v1'] as any)?.need_level) as string | undefined;
+    const maslowContext = l.contextData?.['maslow-hierarchy-v1'] as MaslowHierarchyContext | undefined;
+    const level = maslowContext?.need_level;
     if (!level || !(level in counters)) continue;
     counters[level].total += 1;
     if (l.status === 'done') counters[level].done += 1;

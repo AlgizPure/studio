@@ -9,6 +9,30 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
-const eslintConfig = [...compat.extends("next/core-web-vitals")];
+const eslintConfig = [
+  ...compat.extends("next/core-web-vitals"),
+  {
+    ignores: [
+      // Storybook
+      ".storybook/**/*",
+      "**/*.stories.tsx",
+      "**/*.stories.ts",
+      // E2E tests
+      "e2e/**/*",
+      // Test files
+      "**/*.test.tsx",
+      "**/*.test.ts",
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
+      // Build outputs
+      ".next/**/*",
+      "out/**/*",
+      "dist/**/*",
+      "build/**/*",
+      // Dependencies
+      "node_modules/**/*",
+    ],
+  },
+];
 
 export default eslintConfig;

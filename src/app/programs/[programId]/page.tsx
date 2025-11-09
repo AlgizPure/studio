@@ -17,6 +17,10 @@ import { addDoc, collection, doc } from 'firebase/firestore';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useToast } from '@/hooks/use-toast';
 
+type ProgramWithDetailedWorkouts = Program & {
+  detailedWorkouts?: WorkoutExtended[];
+};
+
 export default function ProgramDetailPage({ 
   params 
 }: { 
@@ -36,7 +40,7 @@ export default function ProgramDetailPage({
   const { data: programFromFirestore, isLoading: isLoadingProgram } = useDoc<Program>(programDocRef);
 
   // Fallback to mock data if Firestore doesn't have it
-  const [program, setProgram] = useState<Program | undefined>(
+  const [program, setProgram] = useState<ProgramWithDetailedWorkouts | undefined>(
     programFromFirestore || mockPrograms.find(p => p.id === programId)
   );
 
@@ -118,11 +122,11 @@ export default function ProgramDetailPage({
       completed: 0,
       skipped: 0,
     };
-    
-    if (!(program as any).detailedWorkouts) {
-      (program as any).detailedWorkouts = [];
+
+    if (!program.detailedWorkouts) {
+      program.detailedWorkouts = [];
     }
-    (program as any).detailedWorkouts.push(workout);
+    program.detailedWorkouts.push(workout);
 
 
     setProgram({
@@ -230,7 +234,7 @@ export default function ProgramDetailPage({
           ) : (
             <div className="space-y-4">
               {program.workouts.map((pw, index) => {
-                const workoutDetail = (program as any).detailedWorkouts?.find((w: WorkoutExtended) => w.id === pw.workoutId);
+                const workoutDetail = program.detailedWorkouts?.find((w: WorkoutExtended) => w.id === pw.workoutId);
                 return (
                     <Card key={index}>
                       <CardHeader>

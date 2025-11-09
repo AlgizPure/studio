@@ -89,7 +89,7 @@ export function getHabitReminders(habit: Habit | HabitV2): Reminder[] {
  */
 export function getHabitStackingRule(habit: Habit | HabitV2): { triggerId: string; position: 'before' | 'after'; delay?: number } | undefined {
   if (isHabitV2(habit)) {
-    return habit.stackingRule as any;
+    return habit.stackingRule;
   }
   return undefined;
 }

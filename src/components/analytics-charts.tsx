@@ -5,7 +5,7 @@ import { useUser } from '@/firebase/provider';
 import { useUserCollection } from '@/hooks/use-user-collection';
 import { orderBy } from 'firebase/firestore';
 import type { WorkoutLog } from '@/lib/types';
-import type { TimeRange } from '@/lib/analytics-utils';
+import type { TimeRange } from '@/lib/analytics';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {

@@ -18,6 +18,41 @@ import { PomodoroIcon } from './pomodoro-icon';
 
 const weeklySchedule: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+// Type definitions for schedule items
+type HabitItem = {
+  id: string;
+  time: string;
+  activityType: 'Habit';
+  activityName: string;
+  duration: string;
+  icon: typeof Target;
+  raw: Habit;
+  isPomodoro: boolean;
+};
+
+type WorkoutItem = {
+  id: string;
+  time: string;
+  activityType: 'Workout';
+  activityName: string;
+  duration: string;
+  icon: typeof Dumbbell;
+  raw: { workoutId: string; programId?: string };
+  isPaused: boolean;
+};
+
+type ScheduleItem = HabitItem | WorkoutItem;
+
+// Type guard to check if an item is a habit
+function isHabitItem(item: ScheduleItem): item is HabitItem {
+  return item.activityType === 'Habit';
+}
+
+// Type guard to check if an item is a workout
+function isWorkoutItem(item: ScheduleItem): item is WorkoutItem {
+  return item.activityType === 'Workout';
+}
+
 interface DailyScheduleProps {
     programs?: Program[];
     workouts?: WorkoutExtended[];
@@ -75,8 +110,8 @@ export function DailySchedule({
                 return habit.days?.includes(day);
               });
               
-              const allItems = [
-                ...dailyHabits.map(habit => ({
+              const allItems: ScheduleItem[] = [
+                ...dailyHabits.map((habit): HabitItem => ({
                   id: habit.id,
                   time: habitCategories.find(c => c.id === habit.categoryId)?.name || 'Any time',
                   activityType: 'Habit' as const,
@@ -86,7 +121,7 @@ export function DailySchedule({
                   raw: habit,
                   isPomodoro: !!('pomodoro' in habit ? habit.pomodoro : false),
                 })),
-                ...scheduledWorkouts.map(scheduled => {
+                ...scheduledWorkouts.map((scheduled): WorkoutItem => {
                   const workout = workoutsMap.get(scheduled.workoutId);
                   return {
                     id: scheduled.workoutId,
@@ -134,15 +169,15 @@ export function DailySchedule({
                                     <p className="font-semibold">{item.activityName}</p>
                                     <p className="text-sm text-muted-foreground">{item.time}</p>
                                 </div>
-                                {(item as any).isPomodoro ? <PomodoroIcon className="mr-2"/> : null}
-                                {(item as any).isPaused && (
+                                {isHabitItem(item) && item.isPomodoro ? <PomodoroIcon className="mr-2"/> : null}
+                                {isWorkoutItem(item) && item.isPaused && (
                                   <Badge variant="outline" className="mr-2 opacity-50">Paused</Badge>
                                 )}
                                 <Badge variant={item.activityType === 'Habit' ? 'secondary' : 'outline'} className="mr-2">{item.duration}</Badge>
-                                
-                                {item.activityType === 'Habit' && (
+
+                                {isHabitItem(item) && (
                                     <AddHabitDialog
-                                        habitToEdit={item.raw as Habit}
+                                        habitToEdit={item.raw}
                                         onHabitUpdate={() => {}}
                                         onHabitDelete={() => {}}
                                         onHabitAdd={() => {}}

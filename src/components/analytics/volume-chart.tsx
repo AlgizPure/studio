@@ -14,13 +14,13 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { WorkoutLog } from '@/lib/types';
-import type { TimeRange } from '@/lib/analytics-utils';
+import type { TimeRange } from '@/lib/analytics';
 import {
   groupWorkoutsByPeriod,
   getWorkoutsByDateRange,
   generateTrendLine,
   formatVolume,
-} from '@/lib/analytics-utils';
+} from '@/lib/analytics';
 
 interface VolumeChartProps {
   workouts: WorkoutLog[];

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Calendar } from 'lucide-react';
 import type { WorkoutLog } from '@/lib/types';
-import { calculatePeriodStats, comparePeriods } from '@/lib/analytics-utils';
+import { calculatePeriodStats, comparePeriods } from '@/lib/analytics';
 
 interface PeriodComparisonProps {
   workouts: WorkoutLog[];

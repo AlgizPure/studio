@@ -33,12 +33,13 @@ export default function SignUpPage() {
     try {
       await signUpWithEmail(auth, email, password);
       router.push('/');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-       toast({
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+      toast({
         variant: 'destructive',
         title: 'Sign Up Failed',
-        description: error.message || 'An unexpected error occurred.',
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -50,12 +51,13 @@ export default function SignUpPage() {
     try {
       await signInWithGoogle(auth);
       router.push('/');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
       toast({
         variant: 'destructive',
         title: 'Sign In Failed',
-        description: error.message || 'An unexpected error occurred.',
+        description: errorMessage,
       });
     }
   };

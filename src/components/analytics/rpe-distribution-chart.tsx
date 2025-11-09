@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { WorkoutLog } from '@/lib/types';
-import { calculateRPEDistribution } from '@/lib/analytics-utils';
+import { calculateRPEDistribution } from '@/lib/analytics';
 
 interface RPEDistributionChartProps {
   workouts: WorkoutLog[];
