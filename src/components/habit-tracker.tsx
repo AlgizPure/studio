@@ -170,7 +170,7 @@ export function HabitTracker() {
         title: 'Habit logged',
         description: `Successfully logged ${habit.name}`,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Handle validation errors
       if (err && typeof err === 'object' && 'issues' in err) {
         const zodErr = err as { issues: Array<{ message: string; path: (string | number)[] }> };

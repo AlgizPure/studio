@@ -22,8 +22,9 @@ export const signInWithGoogle = async (auth: Auth) => {
     const provider = new GoogleAuthProvider();
     try {
         return await signInWithPopup(auth, provider);
-    } catch (e: any) {
-        if (e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user') {
+    } catch (e: unknown) {
+        const firebaseError = e as { code?: string };
+        if (firebaseError?.code === 'auth/popup-blocked' || firebaseError?.code === 'auth/popup-closed-by-user') {
             await signInWithRedirect(auth, provider);
             return;
         }

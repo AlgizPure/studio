@@ -15,11 +15,11 @@ import { Button } from '@/components/ui/button';
 import { startOfWeek, isWithinInterval, isToday, isYesterday, formatISO } from 'date-fns';
 import type { Exercise, Habit, WorkoutExtended } from '@/lib/types';
 import { useMemo, useEffect } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, type Firestore } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-function updateStreak(user: AppUser, firestore: any, anyActivityCompletedToday: boolean) {
+function updateStreak(user: AppUser, firestore: Firestore, anyActivityCompletedToday: boolean) {
     if (!user || !firestore) return;
   
     const userRef = doc(firestore, `users/${user.uid}`);

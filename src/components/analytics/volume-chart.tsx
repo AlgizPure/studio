@@ -56,7 +56,7 @@ export const VolumeChart = React.memo(function VolumeChart({ workouts, timeRange
     }
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { date: string; workouts: number } }> }) => {
     if (active && payload && payload.length) {
       return (
         <div className="rounded-lg border bg-background p-2 shadow-md">

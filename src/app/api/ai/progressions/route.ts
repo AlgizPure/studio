@@ -4,6 +4,7 @@ import { getRecentWorkouts, getExerciseHistory, getCachedInsights, saveInsightsC
 import { getFirebaseAdminApp } from '@/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from '@/lib/logger';
+import type { Program } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,14 +39,14 @@ export async function POST(req: NextRequest) {
 
     // Fetch program
     const programDoc = await firestore.collection(`users/${userId}/programs`).doc(programId).get();
-    
+
     if (!programDoc.exists) {
       return NextResponse.json({
         error: 'Program not found',
       }, { status: 404 });
     }
 
-    const program = { id: programDoc.id, ...programDoc.data() };
+    const program: Program = { id: programDoc.id, ...programDoc.data() } as Program;
 
     // Fetch recent workouts (last 30 days)
     const recentWorkouts = await getRecentWorkouts(firestore, userId, 30);
@@ -67,8 +68,8 @@ export async function POST(req: NextRequest) {
 
     // Generate suggestions
     try {
-      const result = await getProgressionSuggestions(program as any, recentWorkouts as any, exerciseHistory);
-      const tokensUsed = (result as any).tokensUsed || 0;
+      const result = await getProgressionSuggestions(program, recentWorkouts, exerciseHistory);
+      const tokensUsed = 0; // TODO: Extract tokensUsed from AI provider metadata
 
       // Update usage with token count
       if (tokensUsed > 0) {

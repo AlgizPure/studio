@@ -52,8 +52,9 @@ export async function seedProgramTemplates(): Promise<{ success: boolean; messag
     await batch.commit();
     logger.debug('[actions.ts] Program templates seeded successfully.');
     return { success: true, message: 'Program templates seeded successfully.' };
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("[actions.ts] Error seeding program templates:", error);
-    return { success: false, message: `Failed to seed templates: ${error.message}` };
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return { success: false, message: `Failed to seed templates: ${message}` };
   }
 }

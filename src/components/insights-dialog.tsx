@@ -59,11 +59,11 @@ export function InsightsDialog() {
         description: `Created ${insights.length} insight(s) based on your logs.`,
       });
       setOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[InsightsDialog] Generation error:', error);
       toast({
         title: 'Error',
-        description: error?.message || 'Failed to generate insights',
+        description: error instanceof Error ? error.message : 'Failed to generate insights',
         variant: 'destructive',
       });
     } finally {
