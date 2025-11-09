@@ -7,6 +7,7 @@
 
 import { getMessaging, getToken, onMessage, type Messaging, type MessagePayload } from 'firebase/messaging';
 import type { FirebaseApp } from 'firebase/app';
+import { logger } from '@/lib/logger';
 
 let messaging: Messaging | null = null;
 
@@ -23,7 +24,7 @@ export function initializeMessaging(app: FirebaseApp): Messaging | null {
     }
     return messaging;
   } catch (error) {
-    console.error('[FCM] Failed to initialize messaging:', error);
+    logger.error('[FCM] Failed to initialize messaging:', error);
     return null;
   }
 }
@@ -35,7 +36,7 @@ export function initializeMessaging(app: FirebaseApp): Messaging | null {
 export async function requestNotificationPermission(app: FirebaseApp): Promise<string | null> {
   if (typeof window === 'undefined') return null;
   if (!('Notification' in window)) {
-    console.warn('[FCM] This browser does not support notifications');
+    logger.warn('[FCM] This browser does not support notifications');
     return null;
   }
 
@@ -50,11 +51,11 @@ export async function requestNotificationPermission(app: FirebaseApp): Promise<s
     if (permission === 'granted') {
       return await getMessagingToken(app);
     } else {
-      console.log('[FCM] Notification permission denied');
+      logger.debug('[FCM] Notification permission denied');
       return null;
     }
   } catch (error) {
-    console.error('[FCM] Error requesting notification permission:', error);
+    logger.error('[FCM] Error requesting notification permission:', error);
     return null;
   }
 }
@@ -70,20 +71,20 @@ async function getMessagingToken(app: FirebaseApp): Promise<string | null> {
     // VAPID key should be set in Firebase Console -> Project Settings -> Cloud Messaging
     const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
     if (!vapidKey) {
-      console.warn('[FCM] VAPID key not configured');
+      logger.warn('[FCM] VAPID key not configured');
       return null;
     }
 
     const token = await getToken(messagingInstance, { vapidKey });
     if (token) {
-      console.log('[FCM] Registration token obtained:', token.substring(0, 20) + '...');
+      logger.debug('[FCM] Registration token obtained: ' + token.substring(0, 20) + '...');
       return token;
     } else {
-      console.log('[FCM] No registration token available');
+      logger.debug('[FCM] No registration token available');
       return null;
     }
   } catch (error) {
-    console.error('[FCM] Error getting token:', error);
+    logger.error('[FCM] Error getting token:', error);
     return null;
   }
 }
@@ -101,14 +102,14 @@ export function onForegroundMessage(
   if (!messagingInstance) return () => {};
 
   return onMessage(messagingInstance, async (payload) => {
-    console.log('[FCM] Foreground message received:', payload);
+    logger.debug('[FCM] Foreground message received', { payload });
     
     // Save to Firestore for in-app notification center
     if (saveToFirestore) {
       try {
         await saveToFirestore(payload);
       } catch (error) {
-        console.error('[FCM] Failed to save notification to Firestore:', error);
+        logger.error('[FCM] Failed to save notification to Firestore:', error);
       }
     }
     
@@ -146,10 +147,10 @@ export async function subscribeToHabitReminders(
 
     // Save token to user profile
     await updateProfile({ fcmToken: token });
-    console.log('[FCM] Subscribed to habit reminders');
+    logger.debug('[FCM] Subscribed to habit reminders');
     return true;
   } catch (error) {
-    console.error('[FCM] Failed to subscribe to reminders:', error);
+    logger.error('[FCM] Failed to subscribe to reminders:', error);
     return false;
   }
 }

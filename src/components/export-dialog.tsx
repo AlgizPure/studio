@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useUser, useFirestore } from '@/firebase/provider';
 import { CLAUDE_INSTRUCTIONS_MD } from '@/lib/claude';
 import { buildHabitExport } from '@/lib/export';
+import { logger } from '@/lib/logger';
 
 export function ExportDialog() {
   const { user } = useUser();
@@ -42,7 +43,7 @@ export function ExportDialog() {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
+      logger.error('Failed to copy to clipboard:', error);
     }
   };
 

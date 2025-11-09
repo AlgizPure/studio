@@ -9,6 +9,7 @@ import { collection, addDoc } from 'firebase/firestore';
 import { useUserCollection } from '@/hooks/use-user-collection';
 import type { HabitLog, HabitInsight, AnalysisSystem } from '@/lib/types';
 import { generateInsightsFromLogs } from '@/lib/insights';
+import { logger } from '@/lib/logger';
 
 export function InsightsDialog() {
   const { user } = useUser();
@@ -59,7 +60,7 @@ export function InsightsDialog() {
       });
       setOpen(false);
     } catch (error: any) {
-      console.error('[InsightsDialog] Generation error:', error);
+      logger.error('[InsightsDialog] Generation error:', error);
       toast({
         title: 'Error',
         description: error?.message || 'Failed to generate insights',

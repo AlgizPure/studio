@@ -3,6 +3,7 @@ import { getProgressionSuggestions } from '@/ai/flows/progression-suggestions';
 import { getRecentWorkouts, getExerciseHistory, getCachedInsights, saveInsightsCache, checkAndUpdateUsage } from '@/lib/ai-helpers';
 import { getFirebaseAdminApp } from '@/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
+import { logger } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
   try {
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
         fromCache: false,
       });
     } catch (error) {
-      console.error('[api/ai/progressions] Generation error:', error);
+      logger.error('[api/ai/progressions] Generation error:', error);
       
       // Try to return cached data even if expired
       const expiredCache = await getCachedInsights(firestore, userId, 'progressions', undefined, programId);
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
   } catch (error) {
-    console.error('[api/ai/progressions] Request error:', error);
+    logger.error('[api/ai/progressions] Request error:', error);
     return NextResponse.json({
       error: 'Internal server error',
     }, { status: 500 });

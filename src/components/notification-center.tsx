@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { logger } from '@/lib/logger';
 
 interface NotificationCenterProps {
   className?: string;
@@ -77,19 +78,19 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
               setLoading(false);
             },
             (error) => {
-              console.error('[NotificationCenter] Error fetching read notifications:', error);
+              logger.error('[NotificationCenter] Error fetching read notifications:', error);
               setNotifications(unread);
               setLoading(false);
             }
           );
         },
         (error) => {
-          console.error('[NotificationCenter] Error fetching notifications:', error);
+          logger.error('[NotificationCenter] Error fetching notifications:', error);
           setLoading(false);
         }
       );
     } catch (error) {
-      console.error('[NotificationCenter] Setup error:', error);
+      logger.error('[NotificationCenter] Setup error:', error);
       setLoading(false);
     }
 
@@ -111,7 +112,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
       try {
         await markNotificationAsRead(firestore, user.uid, notification.id);
       } catch (error) {
-        console.error('[NotificationCenter] Error marking as read:', error);
+        logger.error('[NotificationCenter] Error marking as read:', error);
       }
     }
 
@@ -132,7 +133,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
         description: `${unreadCount} notification${unreadCount !== 1 ? 's' : ''} marked as read`,
       });
     } catch (error) {
-      console.error('[NotificationCenter] Error marking all as read:', error);
+      logger.error('[NotificationCenter] Error marking all as read:', error);
       toast({
         title: 'Error',
         description: 'Failed to mark all as read',
@@ -151,7 +152,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
         title: 'Notification deleted',
       });
     } catch (error) {
-      console.error('[NotificationCenter] Error deleting notification:', error);
+      logger.error('[NotificationCenter] Error deleting notification:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete notification',

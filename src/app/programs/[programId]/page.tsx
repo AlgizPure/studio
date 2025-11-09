@@ -16,6 +16,7 @@ import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { addDoc, collection, doc } from 'firebase/firestore';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/lib/logger';
 
 type ProgramWithDetailedWorkouts = Program & {
   detailedWorkouts?: WorkoutExtended[];
@@ -92,7 +93,7 @@ export default function ProgramDetailPage({
   
       setExecutingWorkout(null);
     } catch (error) {
-      console.error("Failed to save workout log:", error);
+      logger.error("Failed to save workout log:", error);
       toast({
         title: 'Error',
         description: 'Failed to save workout log. Please try again.',

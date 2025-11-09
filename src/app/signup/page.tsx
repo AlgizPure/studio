@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { logger } from '@/lib/logger';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
@@ -34,8 +35,8 @@ export default function SignUpPage() {
       await signUpWithEmail(auth, email, password);
       router.push('/');
     } catch (error: unknown) {
-      console.error(error);
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+      logger.error('Sign up failed', error);
       toast({
         variant: 'destructive',
         title: 'Sign Up Failed',
@@ -52,8 +53,8 @@ export default function SignUpPage() {
       await signInWithGoogle(auth);
       router.push('/');
     } catch (error: unknown) {
-      console.error(error);
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+      logger.error('Google sign in failed (from signup)', error);
       toast({
         variant: 'destructive',
         title: 'Sign In Failed',

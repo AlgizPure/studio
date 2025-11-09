@@ -7,6 +7,7 @@ import type { UserProfile } from '@/lib/types';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
+import { logger } from '@/lib/logger';
 
 export type AppUser = AuthUser & UserProfile;
 
@@ -56,7 +57,7 @@ export const useUser = () => {
                 setUser(mergedUser);
             }
         } catch (error) {
-            console.error("Error fetching or creating user profile:", error);
+            logger.error("Error fetching or creating user profile:", error);
             // Fallback to just the auth user if profile fails
             setUser(authUser as AppUser); 
         }
