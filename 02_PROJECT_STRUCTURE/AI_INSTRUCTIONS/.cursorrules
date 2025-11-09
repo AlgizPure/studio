@@ -1,0 +1,482 @@
+
+STEP 1: Receive Review Comments
+  
+  Read all comments carefully
+  
+  Categorize:
+    - Required fixes
+    - Suggestions
+    - Questions
+
+STEP 2: Address Required Changes
+  
+  For each required fix:
+    
+    2.1 Understand the issue
+        - Re-read requirement
+        - Check what reviewer said
+        - Confirm you understand
+    
+    2.2 Fix the code
+        - Make the change
+        - Run tests
+        - Verify fix works
+    
+    2.3 Respond to comment:
+        "✅ Fixed! Added file size validation at line 15.
+         Tests updated and passing.
+         Commit: abc123"
+
+STEP 3: Discuss Suggestions
+  
+  For suggestions:
+    
+    If you agree:
+      "✅ Good idea! Implemented in commit abc123"
+    
+    If you disagree:
+      "💬 I understand your point, but [reasoning].
+       [Alternative approach] because [reason].
+       What do you think?"
+    
+    Keep discussion professional and constructive
+
+STEP 4: Update PR
+  
+  4.1 Push fixes:
+      
+git add .
+      git commit -m "fix: address review comments
+      
+      - Add file size validation (FR-AUTH-005)
+      - Improve variable naming
+      - Add missing test case
+      
+      Addresses: reviewer comments 1, 2, 3"
+      
+      git push origin feature/avatar-upload
+
+  
+  4.2 Comment on PR:
+      "✅ All comments addressed!
+       
+       Changes:
+       - Added file size validation (commit abc123)
+       - Renamed variables for clarity (commit def456)
+       - Added test for edge case (commit ghi789)
+       
+       Ready for re-review!"
+  
+  4.3 Request re-review
+
+STEP 5: Learn from Review
+  
+  After PR merged:
+    
+    5.1 Update insights.md:
+        "## [Date]: Code Review Learnings
+        
+        From PR #42 review:
+        - Remember to validate all input fields
+        - Always add tests for error cases
+        - Use descriptive variable names
+        
+        For next time:
+        - Double-check requirements before PR
+        - Self-review using same process
+        - Run full test suite"
+    
+    5.2 Apply learnings:
+        In next PR, remember these points
+
+┌─────────────────────────────────────────────────────────┐
+│ CODE REVIEW COMPLETE ✓                                  │
+│ - Requirements verified                                 │
+│ - Quality checked                                       │
+│ - Feedback provided                                     │
+│ - Learning captured                                     │
+└─────────────────────────────────────────────────────────┘
+
+---
+
+## Workflow D-04: Bug Fix Process
+
+**Time Required:** Varies  
+**Frequency:** As needed  
+**Participants:** Developer, AI Assistant
+
+### Step-by-Step:
+┌─────────────────────────────────────────────────────────┐
+│ BUG FIX - From Discovery to Resolution                 │
+└─────────────────────────────────────────────────────────┘
+
+PHASE 1: BUG TRIAGE (5-10 min)
+
+  Step 1.1: Gather Information
+    
+    Questions to answer:
+      - What is expected behavior?
+      - What is actual behavior?
+      - How to reproduce?
+      - Which environment? (dev/staging/prod)
+      - How critical? (P0/P1/P2/P3)
+    
+    Example:
+      Expected: User can upload 5MB image
+      Actual: Upload fails at 3MB
+      Reproduce: Upload any 3MB+ image
+      Environment: Production
+      Priority: P1 (blocks users)
+
+  Step 1.2: Find Relevant Requirements
+    
+    You: "Bug in avatar upload feature"
+    
+    AI searches:
+      - Which module? Auth
+      - Which FR? FR-AUTH-005 (Avatar Upload)
+    
+    AI loads:
+      "📋 REQUIREMENTS: FR-AUTH-005
+      
+      Relevant sections:
+      Input Validation:
+        - Max size: 5MB (5242880 bytes)
+      
+      Current implementation should:
+        - Accept files up to 5MB
+        - Return 400 if file too large
+      
+      Let's diagnose the issue..."
+
+  Step 1.3: Classify Bug Type
+    
+    AI helps determine:
+      
+      Is this a:
+      ✓ Code bug? (implementation wrong)
+      ✓ Requirements bug? (specs unclear/wrong)
+      ✓ Environment issue? (config problem)
+      ✓ User error? (misunderstanding feature)
+    
+    In this case: CODE BUG
+      - Requirements say 5MB
+      - Code should implement 5MB
+      - But fails at 3MB
+      - Implementation is wrong
+
+PHASE 2: DIAGNOSIS (10-30 min)
+
+  Step 2.1: Review Relevant Code
+    
+    AI locates:
+      - File: controllers/avatarController.js
+      - Function: uploadAvatar()
+      - Lines: 15-25 (validation)
+    
+    AI shows code:
+      
+// Line 20
+      if (req.file.size > 3000000) {  // ← BUG HERE!
+        return res.status(400).json({
+          error: 'File too large'
+        });
+      }
+
+    
+    AI identifies:
+      "🐛 BUG FOUND:
+      
+      Line 20: Checking for 3MB (3000000 bytes)
+      FR-AUTH-005: Should be 5MB (5242880 bytes)
+      
+      Root cause: Hardcoded wrong value"
+
+  Step 2.2: Check for Related Issues
+    
+    AI searches:
+      - Same bug elsewhere?
+      - Tests catching this?
+      - Why didn't tests catch it?
+    
+    AI finds:
+      "🔍 RELATED FINDINGS:
+      
+      1. Test file: auth/avatar.test.js
+         Line 45: Test uses 4MB file (would pass)
+         Issue: Test didn't use 5MB edge case
+      
+      2. Documentation: Correct (5MB)
+      3. Other code: No other instances
+      
+      Root cause: Implementation typo + insufficient test"
+
+  Step 2.3: Verify Impact
+    
+    Questions:
+      - How long has bug existed?
+      - How many users affected?
+      - Any data corruption?
+      - Workarounds available?
+    
+    AI helps assess:
+      "📊 IMPACT ASSESSMENT:
+      
+      Introduced: Commit abc123 (2 weeks ago)
+      Affected users: Any trying to upload 3-5MB
+      Data: No corruption
+      Workaround: Resize to <3MB before upload
+      
+      Severity: HIGH (blocks feature)
+      Priority: P1 (fix today)"
+
+PHASE 3: FIX IMPLEMENTATION (15-30 min)
+
+  Step 3.1: Fix the Code
+    
+    AI suggests fix:
+      
+// Line 20 - FIXED
+      const MAX_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+      if (req.file.size > MAX_SIZE) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'FILE_TOO_LARGE',
+            message: 'File exceeds maximum size of 5MB',
+            details: {
+              maxSize: MAX_SIZE,
+              receivedSize: req.file.size
+            }
+          }
+        });
+      }
+
+    
+    Improvements:
+      - Constant for maintainability
+      - Correct value (5MB)
+      - Better error message
+      - Includes actual vs max size
+
+  Step 3.2: Add/Fix Tests
+    
+    AI adds edge case test:
+      
+describe('Avatar Upload - File Size', () => {
+        it('should accept 5MB file', async () => {
+          const file = createMockFile(5 * 1024 * 1024);
+          const res = await uploadAvatar(file);
+          expect(res.status).toBe(200);
+        });
+        
+        it('should reject 5MB + 1 byte file', async () => {
+          const file = createMockFile(5 * 1024 * 1024 + 1);
+          const res = await uploadAvatar(file);
+          expect(res.status).toBe(400);
+          expect(res.body.error.code).toBe('FILE_TOO_LARGE');
+        });
+      });
+
+    
+    Tests now verify exact boundary
+
+  Step 3.3: Verify Fix
+    
+    Run tests:
+      
+npm test auth/avatar.test.js
+
+    
+    Results:
+      ✓ should accept 5MB file
+      ✓ should reject 5MB + 1 byte file
+      ✓ all 15 tests passing
+    
+    Manual test:
+      
+# Upload exactly 5MB file
+      curl -X POST http://localhost:5000/api/profile/avatar \
+        -F "avatar=@5mb-test.jpg"
+      
+      # Should succeed
+      
+      # Upload 5.1MB file
+      curl -X POST http://localhost:5000/api/profile/avatar \
+        -F "avatar=@5.1mb-test.jpg"
+      
+      # Should fail with proper error
+
+
+PHASE 4: DOCUMENTATION (5 min)
+
+  Step 4.1: Update decisions.md
+    
+    file: /CONTEXT_MEMORY/decisions.md
+    
+    add_entry: |
+      ## DEC-044: Bug Fix - Avatar Upload Size Limit
+      **Date:** [today]
+      **Type:** Bug Fix
+      **Severity:** HIGH (P1)
+      
+      **Issue:**
+      Avatar upload was rejecting files over 3MB instead of 
+      specified 5MB limit.
+      
+      **Root Cause:**
+      - Implementation used hardcoded 3000000 (3MB)
+      - Should be 5242880 (5MB) per FR-AUTH-005
+      - Likely typo during initial implementation
+      - Test didn't catch because used 4MB file (inside wrong limit)
+      
+      **Fix:**
+      1. Changed limit to 5MB (correct value)
+      2. Extracted to constant for maintainability
+      3. Improved error message with details
+      4. Added boundary tests (exactly 5MB, 5MB+1)
+      
+      **Verification:**
+      - All tests passing
+      - Manual testing confirmed
+      - Deployed to staging, verified
+      
+      **Prevention:**
+      - Always test boundary values
+      - Use constants instead of magic numbers
+      - Include edge cases in test plan
+      
+      **References:**
+      - FR-AUTH-005: Avatar Upload requirements
+      - Bug report: #123
+      - Fix commit: def456
+
+  Step 4.2: Update insights.md
+    
+    file: /CONTEXT_MEMORY/insights.md
+    
+    add_entry: |
+      ## [Date]: Bug Fix Learning - Avatar Upload
+      
+      **Bug:** File size validation wrong (3MB vs 5MB)
+      
+      **How It Happened:**
+      - Typo in implementation
+      - Test didn't cover edge case
+      - Code review missed it
+      
+      **Lessons:**
+      1. Always test boundary values
+         - Max value
+         - Max value + 1
+         - Max value - 1
+      
+      2. Use constants, not magic numbers
+         - const MAX_SIZE = 5 * 1024 * 1024
+         - Self-documenting
+         - Easy to change
+      
+      3. Test coverage isn't everything
+         - Had 100% coverage
+         - But wrong test values
+         - Quality > quantity
+      
+      **Prevention Checklist:**
+      When implementing size limits:
+      □ Extract to constant
+      □ Test exact boundary
+      □ Test just over boundary
+      □ Document in code comment
+      □ Reference FR in comment
+
+  Step 4.3: Check if Requirements Need Update
+    
+    AI checks: Were requirements unclear?
+    
+    In this case: NO
+      - Requirements were clear (5MB)
+      - Implementation was wrong
+      - No documentation updates needed
+    
+    If requirements WERE unclear:
+      - Update module_requirements.md
+      - Add clarifying examples
+      - Note what was ambiguous
+
+PHASE 5: DEPLOYMENT (varies)
+
+  Step 5.1: Create Hotfix Branch
+    
+    
+git checkout main
+    git pull origin main
+    git checkout -b hotfix/avatar-size-limit
+
+
+  Step 5.2: Commit Fix
+    
+    
+git add .
+    git commit -m "fix(auth): correct avatar upload size limit
+    
+    Bug: Upload was rejecting files over 3MB instead of 5MB
+    Root cause: Hardcoded wrong value in validation
+    
+    Changes:
+    - Fix size limit: 3MB → 5MB (per FR-AUTH-005)
+    - Extract to constant for maintainability
+    - Improve error message with details
+    - Add boundary test cases
+    
+    Tests: 15/15 passing
+    Manual testing: Verified 5MB uploads work
+    
+    Fixes: #123
+    References: FR-AUTH-005"
+    
+    git push origin hotfix/avatar-size-limit
+
+
+  Step 5.3: Deploy Process
+    
+    For P0/P1 bugs:
+      1. Create PR (fast-track review)
+      2. Get approval (expedited)
+      3. Merge to main
+      4. Deploy to staging
+      5. Smoke test
+      6. Deploy to production
+      7. Monitor
+    
+    For P2/P3 bugs:
+      1. Create PR (normal process)
+      2. Include in next release
+      3. Deploy with other changes
+
+  Step 5.4: Verify in Production
+    
+    After deployment:
+      - Test manually
+      - Check logs
+      - Monitor error rates
+      - Confirm fix works
+    
+    AI helps:
+      "✅ VERIFICATION:
+      
+      Staging:
+      - 5MB upload: SUCCESS ✓
+      - 3.5MB upload: SUCCESS ✓
+      - 5.1MB upload: REJECTED (correct) ✓
+      
+      Ready for production deployment"
+
+PHASE 6: COMMUNICATION (5 min)
+
+  Step 6.1: Update Bug Report
+    
+    In issue tracker:
+      "✅ RESOLVED
+      
+      Fix deployed to production [timestamp]
+      
