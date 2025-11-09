@@ -8,13 +8,14 @@ import { BUILTIN_SYSTEMS } from '@/lib/systems';
 import { useUser, useFirestore } from '@/firebase/provider';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useUserCollection } from '@/hooks/use-user-collection';
+import type { ActiveSystem } from '@/lib/types';
 
 export function SystemLibraryDialog() {
   const { user } = useUser();
   const firestore = useFirestore();
   const [open, setOpen] = useState(false);
 
-  const { data: activeSystems } = useUserCollection<any>('activeSystems');
+  const { data: activeSystems } = useUserCollection<ActiveSystem>('activeSystems');
 
   const isActive = (systemId: string) => !!(activeSystems || []).find(s => s.systemId === systemId);
 

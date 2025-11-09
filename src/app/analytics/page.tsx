@@ -36,7 +36,7 @@ export default function AnalyticsPage() {
             program,
             ztl,
             currentWeek: calculateCurrentWeek(program),
-            totalWeeks: program.durationType === 'fixed' ? Math.max(1, Math.ceil(((program as any)?.duration?.weeks || 0))) : 0,
+            totalWeeks: program.durationType === 'fixed' ? Math.max(1, Math.ceil(program.workouts[0]?.schedule?.duration?.value || 0)) : 0,
             scheduledWorkouts,
           };
         })
@@ -44,7 +44,7 @@ export default function AnalyticsPage() {
 
     const markdown = await generateFullAnalysisExport({
       userId: user.uid,
-      userGoal: (user as any)?.goal,
+      userGoal: undefined,
       pastWorkouts: workoutLogs || [],
       activePrograms,
     });

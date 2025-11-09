@@ -14,6 +14,7 @@ import { doc, updateDoc, getDoc, collection, query, where, getDocs } from 'fireb
 import { useFirestore } from '@/firebase/provider';
 import { applyProgressionToWorkout, findExerciseInWorkout } from '@/lib/program-helpers';
 import type { WorkoutExtended } from '@/lib/types';
+import { logger } from '@/lib/logger';
 
 // Extended Program type with optional AI progression fields
 type ProgramWithProgressionData = Program & {
@@ -86,7 +87,7 @@ export function ProgressionSuggestionsPanel({ program }: ProgressionSuggestionsP
       const data = await response.json();
       setSuggestions(data);
     } catch (error: unknown) {
-      console.error('[ProgressionSuggestionsPanel] Error:', error);
+      logger.error('[ProgressionSuggestionsPanel] Error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate suggestions';
       toast({
         title: 'Error',
@@ -156,7 +157,7 @@ export function ProgressionSuggestionsPanel({ program }: ProgressionSuggestionsP
           }
         } catch (err) {
           // Workout might be in a different location, continue searching
-          console.warn(`[ProgressionSuggestionsPanel] Could not fetch workout ${programWorkout.workoutId}:`, err);
+          logger.error(`[ProgressionSuggestionsPanel] Could not fetch workout ${programWorkout.workoutId}`, err);
         }
       }
 
@@ -195,7 +196,7 @@ export function ProgressionSuggestionsPanel({ program }: ProgressionSuggestionsP
         suggestions: prev.suggestions.filter(s => s.exerciseId !== suggestion.exerciseId),
       } : null);
     } catch (error: unknown) {
-      console.error('[ProgressionSuggestionsPanel] Apply error:', error);
+      logger.error('[ProgressionSuggestionsPanel] Apply error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to apply suggestion';
       toast({
         title: 'Error',

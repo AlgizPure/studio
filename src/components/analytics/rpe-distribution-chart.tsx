@@ -34,7 +34,7 @@ export const RPEDistributionChart = React.memo(function RPEDistributionChart({ w
 
   const totalSets = chartData.reduce((sum, d) => sum + d.count, 0);
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: { rpe: number; count: number; percentage: number } }> }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

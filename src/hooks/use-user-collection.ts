@@ -94,13 +94,13 @@ export function useUserCollection<T = unknown>(
  */
 export function useUserCollections<T extends Record<string, unknown>>(
   collections: (keyof T)[]
-): Record<keyof T, { data: T[keyof T][] | undefined; isLoading: boolean; error: Error | null }> {
-  const results: any = {};
+): Record<keyof T, { data: T[keyof T][] | null; isLoading: boolean; error: Error | null }> {
+  const results: Record<string, { data: unknown[] | null; isLoading: boolean; error: Error | null }> = {};
 
   collections.forEach(collectionName => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    results[collectionName] = useUserCollection(collectionName as string);
+    results[collectionName as string] = useUserCollection(collectionName as string);
   });
 
-  return results;
+  return results as Record<keyof T, { data: T[keyof T][] | null; isLoading: boolean; error: Error | null }>;
 }

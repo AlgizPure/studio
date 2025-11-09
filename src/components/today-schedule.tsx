@@ -14,6 +14,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Skeleton } from './ui/skeleton';
 import { buildDailySchedule } from '@/lib/utils/schedule-builder';
+import { logger } from '@/lib/logger';
 
 // Type definitions for schedule items
 type HabitItem = {
@@ -90,7 +91,7 @@ export function TodaySchedule() {
   
   const handleStartWorkout = (workoutId: string, programId?: string) => {
     // TODO: Открыть интерфейс выполнения тренировки
-    console.log('Start workout', workoutId, programId);
+    logger.debug('Start workout', { workoutId, programId });
   };
 
   // Получаем запланированные тренировки на сегодня

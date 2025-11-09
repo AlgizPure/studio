@@ -184,20 +184,26 @@ export default function ProgramsPage() {
           // Type guard for import data
           if (!data || typeof data !== 'object') return;
 
-          const importData = data as { kind?: string; value?: any };
+          type ImportedProgram = {
+            meta?: { id?: string; name?: string; goal?: string; tags?: string[] };
+            id?: string;
+            [key: string]: unknown
+          };
+          const importData = data as { kind?: string; value?: ImportedProgram | Patch };
 
-          if (importData.kind === 'program' && importData.value) {
-            const newId = importData.value.meta?.id ?? importData.value.id;
+          if (importData.kind === 'program' && importData.value && 'meta' in importData.value) {
+            const programValue = importData.value as ImportedProgram;
+            const newId = programValue.meta?.id ?? programValue.id;
             const duplicate = programs.find(p => p.id === newId);
             if (duplicate) {
-              const diff = diffPrograms(duplicate, importData.value);
+              const diff = diffPrograms(duplicate, programValue as unknown as Program);
               const overwrite = window.confirm(`Программа с ID "${newId}" уже существует. Перезаписать?\n\nDiff:\n${diff}`);
               if (!overwrite) return;
               setPrograms(prev => prev.map(p =>
                 p.id === newId
                   ? {
                       ...p,
-                      name: importData.value.meta.name,
+                      name: programValue?.meta?.name || p.name,
                       workouts: [],
                       updatedAt: new Date().toISOString(),
                       // ...other fields if needed from ZTL
@@ -209,15 +215,15 @@ export default function ProgramsPage() {
               setPrograms(prev => [
                 ...prev,
                 {
-                  id: newId,
-                  name: importData.value.meta.name,
+                  id: newId || 'imported-program',
+                  name: programValue?.meta?.name || 'Imported Program',
                   description: undefined,
                   startDate: new Date().toISOString().split('T')[0],
                   endDate: undefined,
-                  durationType: 'fixed',
-                  status: 'active',
-                  goal: importData.value.meta.goal,
-                  tags: Array.isArray(importData.value.meta.tags) ? importData.value.meta.tags : [],
+                  durationType: 'fixed' as const,
+                  status: 'active' as const,
+                  goal: programValue?.meta?.goal,
+                  tags: Array.isArray(programValue?.meta?.tags) ? programValue.meta.tags : [],
                   workouts: [],
                   createdAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
@@ -227,8 +233,8 @@ export default function ProgramsPage() {
               ]);
               alert('Программа успешно импортирована!');
             }
-          } else if (importData.kind === 'patch' && importData.value) {
-            setPrograms(p => applyPatch(p, importData.value));
+          } else if (importData.kind === 'patch' && importData.value && 'patch' in importData.value) {
+            setPrograms(p => applyPatch(p, importData.value as Patch));
             alert('Изменения по патчу применены.');
           }
         }}

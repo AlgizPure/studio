@@ -3,6 +3,8 @@ import { getQuickInsights } from '@/ai/flows/quick-insights';
 import { getRecentWorkouts, getCachedInsights, saveInsightsCache, checkAndUpdateUsage } from '@/lib/ai-helpers';
 import { getFirebaseAdminApp } from '@/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
+import { logger } from '@/lib/logger';
+import type { Program } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -50,7 +52,7 @@ export async function POST(req: NextRequest) {
     const programsSnapshot = await firestore.collection(`users/${userId}/programs`)
       .where('status', '==', 'active')
       .get();
-    const programs = programsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const programs: Program[] = programsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Program));
 
     // Fetch user goal (if stored in user profile)
     const userDoc = await firestore.collection('users').doc(userId).get();
@@ -58,8 +60,8 @@ export async function POST(req: NextRequest) {
 
     // Generate insights
     try {
-      const result = await getQuickInsights(workoutLogs as any, programs as any[], userGoal, timeframe);
-      const tokensUsed = (result as any).tokensUsed || 0;
+      const result = await getQuickInsights(workoutLogs, programs, userGoal, timeframe);
+      const tokensUsed = 0; // TODO: Extract tokensUsed from AI provider metadata
 
       // Update usage with token count
       if (tokensUsed > 0) {
@@ -85,7 +87,7 @@ export async function POST(req: NextRequest) {
         fromCache: false,
       });
     } catch (error) {
-      console.error('[api/ai/insights] Generation error:', error);
+      logger.error('[api/ai/insights] Generation error:', error);
       
       // Try to return cached data even if expired
       const expiredCache = await getCachedInsights(firestore, userId, 'quick_insights', timeframe);
@@ -104,7 +106,7 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
   } catch (error) {
-    console.error('[api/ai/insights] Request error:', error);
+    logger.error('[api/ai/insights] Request error:', error);
     return NextResponse.json({
       error: 'Internal server error',
     }, { status: 500 });

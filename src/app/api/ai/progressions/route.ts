@@ -3,6 +3,8 @@ import { getProgressionSuggestions } from '@/ai/flows/progression-suggestions';
 import { getRecentWorkouts, getExerciseHistory, getCachedInsights, saveInsightsCache, checkAndUpdateUsage } from '@/lib/ai-helpers';
 import { getFirebaseAdminApp } from '@/firebase/admin';
 import { getFirestore } from 'firebase-admin/firestore';
+import { logger } from '@/lib/logger';
+import type { Program } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,14 +39,14 @@ export async function POST(req: NextRequest) {
 
     // Fetch program
     const programDoc = await firestore.collection(`users/${userId}/programs`).doc(programId).get();
-    
+
     if (!programDoc.exists) {
       return NextResponse.json({
         error: 'Program not found',
       }, { status: 404 });
     }
 
-    const program = { id: programDoc.id, ...programDoc.data() };
+    const program: Program = { id: programDoc.id, ...programDoc.data() } as Program;
 
     // Fetch recent workouts (last 30 days)
     const recentWorkouts = await getRecentWorkouts(firestore, userId, 30);
@@ -66,8 +68,8 @@ export async function POST(req: NextRequest) {
 
     // Generate suggestions
     try {
-      const result = await getProgressionSuggestions(program as any, recentWorkouts as any, exerciseHistory);
-      const tokensUsed = (result as any).tokensUsed || 0;
+      const result = await getProgressionSuggestions(program, recentWorkouts, exerciseHistory);
+      const tokensUsed = 0; // TODO: Extract tokensUsed from AI provider metadata
 
       // Update usage with token count
       if (tokensUsed > 0) {
@@ -92,7 +94,7 @@ export async function POST(req: NextRequest) {
         fromCache: false,
       });
     } catch (error) {
-      console.error('[api/ai/progressions] Generation error:', error);
+      logger.error('[api/ai/progressions] Generation error:', error);
       
       // Try to return cached data even if expired
       const expiredCache = await getCachedInsights(firestore, userId, 'progressions', undefined, programId);
@@ -110,7 +112,7 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
   } catch (error) {
-    console.error('[api/ai/progressions] Request error:', error);
+    logger.error('[api/ai/progressions] Request error:', error);
     return NextResponse.json({
       error: 'Internal server error',
     }, { status: 500 });

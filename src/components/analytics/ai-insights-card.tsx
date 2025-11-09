@@ -53,11 +53,11 @@ export function AIInsightsCard() {
 
       const data = await response.json();
       setInsights(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('AI Insights Card: Failed to generate insights', error instanceof Error ? error : new Error(String(error)));
       toast({
         title: 'Error',
-        description: error.message || 'Failed to generate insights',
+        description: error instanceof Error ? error.message : 'Failed to generate insights',
         variant: 'destructive',
       });
     } finally {

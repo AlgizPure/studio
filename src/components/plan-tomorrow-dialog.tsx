@@ -82,7 +82,8 @@ export function PlanTomorrowDialog() {
         // Для legacy привычек обновляем days
         const isLegacy = !('type' in habit);
         if (isLegacy) {
-          const currentDays = (habit as any).days || [];
+          const legacyHabit = habit as Habit & { days?: Day[] };
+          const currentDays = legacyHabit.days || [];
           const isScheduled = currentDays.includes(tomorrowDay);
           
           const updatedDays = isScheduled 

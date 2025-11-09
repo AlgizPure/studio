@@ -9,7 +9,7 @@ export function programToZTL(program: Program) {
       id: program.id,
       name: program.name,
       author: undefined,
-      goal: (program.goal as any) || undefined,
+      goal: program.goal,
       duration: program.durationType === 'fixed' ? { weeks: Math.max(1, Math.ceil((program.workouts?.[0]?.schedule?.duration?.value || 8) / 1)) } : undefined,
       tags: program.tags,
     },

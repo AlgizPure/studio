@@ -36,7 +36,7 @@ export const FrequencyHeatmap = React.memo(function FrequencyHeatmap({ workouts 
 
   const maxCount = Math.max(...chartData.map(d => d.count), 1);
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: { dayOfWeek: string; count: number; avgVolume: number; avgDuration: number } }> }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

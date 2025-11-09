@@ -17,6 +17,7 @@ import {
   type QueryDocumentSnapshot,
   type SnapshotOptions,
   type DocumentData,
+  type Firestore,
 } from 'firebase/firestore';
 import { z } from 'zod';
 import type { Exercise, Habit, WorkoutExtended, Program, HabitLog, HabitCategory, ExerciseCategory } from './types';
@@ -152,12 +153,12 @@ function createConverter<T>(
     toFirestore(data: T): DocumentData {
       try {
         // Validate before writing
-        const validated = schema.parse(data);
+        const validated = schema.parse(data) as T & { id?: string };
 
         // Remove 'id' field as Firestore stores it separately
-        const { id, ...firestoreData } = validated as any;
+        const { id, ...firestoreData } = validated;
 
-        return firestoreData;
+        return firestoreData as DocumentData;
       } catch (error) {
         logger.error(`Firestore converter (${collectionName}): Validation error on write`, error instanceof Error ? error : new Error(String(error)));
         throw error;
@@ -251,7 +252,7 @@ export const workoutConverter = createConverter<WorkoutExtended>(workoutSchema, 
  * ```
  */
 export function getUserCollection<T>(
-  firestore: any,
+  firestore: Firestore,
   userId: string,
   collectionName: string,
   converter: FirestoreDataConverter<T>

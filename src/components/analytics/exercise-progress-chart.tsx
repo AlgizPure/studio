@@ -62,12 +62,12 @@ export const ExerciseProgressChart = React.memo(function ExerciseProgressChart({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; dataKey: string; payload: { date: string } }> }) => {
     if (active && payload && payload.length) {
       return (
         <div className="rounded-lg border bg-background p-2 shadow-md">
           <p className="text-sm font-medium mb-1">{payload[0].payload.date}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index: number) => (
             <p key={index} className="text-sm text-muted-foreground">
               {entry.name}: <span className="font-medium text-foreground">{entry.value}</span>
               {entry.dataKey === 'maxWeight' || entry.dataKey === 'avgWeight' ? ' kg' : ''}

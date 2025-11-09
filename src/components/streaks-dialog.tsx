@@ -11,6 +11,7 @@ import { useUser, useFirestore } from '@/firebase/provider';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { freezeStreak } from '@/lib/habits';
+import { logger } from '@/lib/logger';
 
 interface StreaksDialogProps {
   habits: Habit[];
@@ -51,7 +52,7 @@ export function StreaksDialog({ habits, habitLogs, streaks }: StreaksDialogProps
         description: `Streak frozen until ${new Date(untilDate).toLocaleDateString()}`,
       });
     } catch (error) {
-      console.error('Error freezing streak:', error);
+      logger.error('Error freezing streak:', error);
       throw error;
     }
   };
@@ -86,7 +87,7 @@ export function StreaksDialog({ habits, habitLogs, streaks }: StreaksDialogProps
         description: `${skipTokens - 1} token(s) remaining`,
       });
     } catch (error) {
-      console.error('Error using skip token:', error);
+      logger.error('Error using skip token:', error);
       toast({
         title: 'Error',
         description: 'Failed to use skip token',
