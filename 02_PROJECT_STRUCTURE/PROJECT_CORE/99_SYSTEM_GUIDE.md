@@ -451,6 +451,120 @@ export const userRepository = {
 
 ---
 
+## 🚀 BOOTSTRAP PROCESS
+
+Детальное описание процесса bootstrap и как работает система auto-fill.
+
+### Начальный Промпт
+
+**Все начинается с:** `@01_BOOTSTRAP_CONFIG/BOOTSTRAP_START_PROMPT.md`
+
+Этот файл содержит 4 готовых промпта для разных сценариев:
+- **Сценарий 1:** CLI + Новый проект (только raw data)
+- **Сценарий 2:** CLI + Существующий проект (raw data + код)
+- **Сценарий 3:** Web (GitHub) + Новый проект
+- **Сценарий 4:** Web (GitHub) + Существующий проект
+
+### Последовательность Фаз
+
+**PHASE 1: ANALYSIS (1-2 hours, autonomous)**
+- Reading raw data (`@00_RAW_DATA_TEMPLATE/`)
+- Extracting key information
+- Detecting contradictions
+- Analyzing existing code (if applicable)
+
+**PHASE 2: INTERVIEW (30-60 min, interactive)**
+- Auto-fill metadata.yaml
+- Ask 5-10 clarifying questions
+- Resolve contradictions
+- Fill information gaps
+
+**PHASE 3: TECH STACK VERIFICATION (45-60 min)**
+- Extract tech mentions from raw data
+- Generate verification prompt
+- User runs in Claude.ai (web search)
+- Process analysis and recommend updates (November 2025)
+
+**PHASE 4: SYNTHESIS (15 min, autonomous)**
+- Combine all data sources
+- Create unified project view
+
+**PHASE 5: DOCUMENTATION GENERATION (2-4 hours, autonomous)**
+
+**Строгий порядок заполнения файлов:**
+
+```
+1. @02_PROJECT_STRUCTURE/PROJECT_CORE/ (по номерам):
+   00_PROJECT_ESSENCE.md  → Видение, цели, аудитория
+   01_PRD.md              → Требования, user stories
+   02_ROADMAP.md          → Фазы, timeline
+   03_TECH_STACK.md       → Технологии (верифицированные)
+   04_ARCHITECTURE.md     → Архитектура системы
+   
+2. @02_PROJECT_STRUCTURE/MODULES_REQUIREMENTS/:
+   Создать [module]_requirements.md для каждого модуля
+   
+3. @02_PROJECT_STRUCTURE/CONTEXT_MEMORY/:
+   state.md      → Текущее состояние (Phase: Planning)
+   decisions.md  → Залогировать все принятые решения
+   insights.md   → Ключевые инсайты из анализа
+   
+4. @02_PROJECT_STRUCTURE/PROGRESS_TRACKING/:
+   modules_status.md  → Статус модулей (0% для нового)
+   sprint_current.md  → Планирование первого спринта
+   backlog.md         → Приоритизированный backlog
+   
+5. @02_PROJECT_STRUCTURE/AI_INSTRUCTIONS/ (при необходимости):
+   Корректировка .cursorrules/.clauderules под проект
+```
+
+**PHASE 6: FINAL SETUP INSTRUCTIONS (15 min, autonomous)**
+- Generate `@FINAL_SETUP_INSTRUCTIONS.md`
+- Инструкции по настройке Cursor
+- Инструкции по настройке Claude Code
+- Правила обновления при изменениях
+
+**PHASE 7: VALIDATION & REPORT (15 min, autonomous)**
+- Self-check completeness
+- Generate `BOOTSTRAP_REPORT.md`
+- Create `REVIEW_CHECKLIST.md`
+
+### После Bootstrap
+
+**Обязательно прочитать и выполнить:**
+→ `@FINAL_SETUP_INSTRUCTIONS.md`
+
+Это критически важно для:
+- Настройки Cursor project rules
+- Активации AI ассистентов
+- Правильной работы системы
+
+**Дополнительные ресурсы:**
+- `@BOOTSTRAP_CHECKLIST.md` - Чеклист для самопроверки
+- `@01_BOOTSTRAP_CONFIG/BOOTSTRAP_FLOW_DIAGRAM.md` - Визуальная диаграмма процесса
+- `@WORKFLOW_GUIDE.md` - Ежедневные рабочие процессы
+- `@UPDATE_RULES.md` - Правила обновления документации
+
+### Автоматические Возможности
+
+**AUTO-FILL метаданных:**
+- Claude Code читает все raw data
+- Извлекает информацию автоматически
+- Заполняет metadata.yaml без ручной работы
+
+**Tech Stack Verification:**
+- Проверка актуальности технологий (2025)
+- Рекомендации по обновлению
+- Анализ fit с требованиями проекта
+
+**Existing Code Analysis:**
+- Автоматическое обнаружение кода
+- Анализ реализованных фич
+- Обнаружение устаревших зависимостей
+- Рекомендации по модернизации
+
+---
+
 ## 📁 PROJECT STRUCTURE
 
 ### Backend Structure

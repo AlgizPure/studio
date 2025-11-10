@@ -24,9 +24,9 @@
 # ═══════════════════════════════════════════════════════════════════════
 
 existing_project:
-  enabled: true  # Set to true if existing code
-  github_repo: "https://github.com/AlgizPure/studio.git"  # GitHub repo URL (e.g., https://github.com/user/project)
-  code_location: "src/"  # Relative path to code (for CLI) or repo URL (for Web)
+  enabled: false  # Set to true if existing code
+  github_repo: ""  # GitHub repo URL (e.g., https://github.com/user/project)
+  code_location: "../"  # Relative path to code (for CLI) or repo URL (for Web)
   # Claude Code will analyze existing code automatically:
   # - Detect implemented features
   # - Extract tech stack from package.json

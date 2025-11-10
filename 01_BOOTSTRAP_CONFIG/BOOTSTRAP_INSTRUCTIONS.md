@@ -99,84 +99,38 @@ Record answers to `/interview-responses.md`.
 
 **v1.0.1+: Вам НЕ нужно вручную заполнять metadata.yaml!**
 
-### How it works:
+**Полное описание процесса:** см. **@AUTO_FILL_INSTRUCTIONS.md**
 
-1. **Leave metadata.yaml empty** (or partially filled)
-2. **Add raw data** to 00_RAW_DATA_TEMPLATE/
-3. **Run bootstrap**
-4. **Answer questions** as Claude Code reads data
-5. **metadata.yaml fills automatically**
+### Краткий обзор:
 
-### Interactive Q&A Process:
+**Как работает:**
+1. Claude Code читает все raw data (chats, documents, notes)
+2. Извлекает ключевую информацию автоматически
+3. Задаёт 5-10 уточняющих вопросов для разрешения противоречий
+4. Автоматически заполняет metadata.yaml
 
-Claude Code will:
-- Read all chats and documents
-- Extract key information
-- Ask you to confirm/clarify ambiguous points
-- Fill metadata.yaml automatically
+**Что включено:**
+- Интерактивный Q&A процесс
+- Tech stack verification (November 2025)
+- Existing code analysis (если проект уже существует)
+- Рекомендации по модернизации
 
-**Example questions:**
-```
-Claude: "Обнаружил название проекта: 'TaskFlow'. Подтверждаете?"
-You: "Да"
-
-Claude: "В ранних чатах: MongoDB, в поздних: PostgreSQL. Какой финальный выбор?"
-You: "PostgreSQL"
-
-Claude: "Целевая аудитория: удалённые команды 5-15 человек?"
-You: "Да, верно"
-```
+**Детали см:** `@AUTO_FILL_INSTRUCTIONS.md`
 
 ### Tech Stack Recommendations
 
-**Claude Code analyzes:**
-- Technologies mentioned in raw data
-- Current best practices (November 2025)
-- Your project requirements
-- Existing code (if applicable)
+Claude Code автоматически анализирует и рекомендует технологии.
 
-**Provides:**
-- ✅ Verification of tech choices
-- ⚠️ Warnings about outdated decisions
-- 💡 Recommended alternatives with reasons
-- 📋 Migration paths (if needed)
+**Полный процесс верификации:** см. **@tech-stack-verification.md**
 
-**Example output in TECH_STACK.md:**
+**Краткий обзор:**
+- Извлечение упоминаний из raw data
+- Проверка актуальности (November 2025)
+- Анализ fit с требованиями проекта
+- Рекомендации с обоснованием
+- Migration paths (если нужны обновления)
 
-```markdown
-## Recommendations vs Raw Data
-
-| Component | Raw Data Suggests | Our Recommendation | Reason |
-|-----------|-------------------|--------------------| -------|
-| Database  | MongoDB (2024-09) | PostgreSQL 16      | Relational data fits better, JSON support available |
-| Frontend  | React 17          | React 19           | New compiler, better performance, same API |
-| Hosting   | Heroku            | Railway or Vercel  | Heroku expensive, these alternatives better value |
-```
-
-### Existing Code Analysis
-
-**If `existing_project.enabled: true` in metadata:**
-
-Claude Code will:
-1. Scan code directory (CLI) or GitHub repo (Web)
-2. Detect implemented features
-3. Compare with raw data requirements
-4. Identify:
-   - ✅ What's already done
-   - 📋 What's planned but not done
-   - ⚠️ Outdated dependencies
-   - 💡 Modernization opportunities
-
-**Output in PROGRESS_TRACKING/modules_status.md and state.md.**
-
-### Process Details
-
-See **AUTO_FILL_INSTRUCTIONS.md** for full Claude Code guidance on:
-- Step-by-step extraction process
-- Question formulation rules
-- Tech stack verification methodology
-- Existing code analysis techniques
-- Recommendation generation logic
+**Детали см:** `@tech-stack-verification.md`
 
 ## Phase 3: SYNTHESIS (Quick - 15 min)
 
@@ -338,6 +292,23 @@ Include:
 Generate: `/REVIEW_CHECKLIST.md`
 
 For user to review each document systematically.
+
+### Task 5.4: Generate Final Setup Instructions
+
+Generate: `/FINAL_SETUP_INSTRUCTIONS.md`
+
+**Content:**
+- Cursor project rules setup (copy .cursorrules, configure settings)
+- Claude Code configuration (automatic via .clauderules)
+- Additional Project Rules (for file management during updates/milestones)
+- Daily workflow guide
+- Rules update triggers (when to update .cursorrules/.clauderules)
+- Links to resources (WORKFLOW_GUIDE.md, UPDATE_RULES.md, etc.)
+
+**Purpose:**
+User will follow these instructions to complete setup after bootstrap.
+
+**Critical:** This file guides post-bootstrap configuration!
 
 ## Configuration
 

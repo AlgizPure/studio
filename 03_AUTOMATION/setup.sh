@@ -76,6 +76,33 @@ rm "README.md.bak" 2>/dev/null || true
 echo "✅ Project name updated"
 echo ""
 
+# Validate structure integrity
+echo "🔍 Validating structure integrity..."
+
+CRITICAL_FILES=(
+    "00_START_HERE.md"
+    "FINAL_SETUP_INSTRUCTIONS.md"
+    "01_BOOTSTRAP_CONFIG/BOOTSTRAP_START_PROMPT.md"
+    "01_BOOTSTRAP_CONFIG/BOOTSTRAP_INSTRUCTIONS.md"
+    "01_BOOTSTRAP_CONFIG/AUTO_FILL_INSTRUCTIONS.md"
+)
+
+MISSING_FILES=0
+for file in "${CRITICAL_FILES[@]}"; do
+    if [ ! -f "$file" ]; then
+        echo "⚠️  Warning: Missing critical file: $file"
+        MISSING_FILES=$((MISSING_FILES + 1))
+    fi
+done
+
+if [ $MISSING_FILES -eq 0 ]; then
+    echo "✅ All critical files present"
+else
+    echo "⚠️  $MISSING_FILES critical file(s) missing"
+    echo "   Template may be incomplete or outdated"
+fi
+echo ""
+
 # Success message
 echo "🎉 PROJECT SETUP COMPLETE!"
 echo ""
