@@ -24,24 +24,32 @@
 # ═══════════════════════════════════════════════════════════════════════
 
 existing_project:
-  enabled: false  # Set to true if existing code
-  github_repo: ""  # GitHub repo URL (e.g., https://github.com/user/project)
-  code_location: "../"  # Relative path to code (for CLI) or repo URL (for Web)
-  # Claude Code will analyze existing code automatically:
-  # - Detect implemented features
-  # - Extract tech stack from package.json
-  # - Compare code vs raw data requirements
-  # - Recommend modernization where needed
+  enabled: true  # ✅ EXISTING PROJECT
+  github_repo: "https://github.com/AlgizPure/studio"
+  code_location: "./"  # Root of repository
+  analysis_complete: true
+  code_stats:
+    total_lines: 12000
+    total_files: 100+
+    completion_percentage: 65-70%
+  # Analysis completed:
+  # ✅ Detected implemented features
+  # ✅ Extracted tech stack from package.json (all dependencies current Nov 2025)
+  # ✅ Compared code vs raw data requirements
+  # ✅ No critical modernization needed (stack is modern)
 
 # ═══════════════════════════════════════════════════════════════════════
 # PROJECT INFO (Auto-filled by Claude Code)
 # ═══════════════════════════════════════════════════════════════════════
 
 project:
-  name: "Your Project Name Here"  # Will be filled during bootstrap
-  type: "Web Application / Mobile App / SaaS / etc"  # Will be detected from raw data
-  status: "Pre-development / Planning / In Progress"  # Will be determined
-  target_audience: "Brief description of who will use this"  # Will be extracted
+  name: "Zenith Trainer"
+  type: "Web Application (Fitness & Training Management)"
+  status: "In Progress (65-70% complete)"
+  target_audience: "Fitness enthusiasts of all levels (beginners to advanced athletes) seeking data-driven, AI-powered training management"
+  goal: "AI-powered personalized fitness training with comprehensive analytics and program management"
+  version: "0.1.0"
+  deployment_target: "Firebase Hosting (with Vercel as recommended alternative)"
 
 # ═══════════════════════════════════════════════════════════════════════
 # DATA INFO (Auto-filled by Claude Code)
@@ -49,41 +57,60 @@ project:
 # Claude Code will scan all files and fill this section automatically
 
 data_info:
-  total_chats: 0        # Will be counted automatically
-  total_documents: 0    # Will be counted automatically
-  total_notes: 0        # Will be counted automatically
-  date_range: "YYYY-MM to YYYY-MM"  # Will be detected from file dates
+  total_chats: 15        # Chat exports from Claude
+  total_documents: 3     # Major documentation files
+  total_notes: 2         # Example notes/guides
+  date_range: "2025-10 to 2025-11"  # October-November 2025
 
-  # Sources will be auto-detected from files in chats/, documents/, notes/
-  # You can add manual entries if needed, or leave empty for auto-fill
   sources:
-    - name: "Gemini - Vision Discussion"
+    - name: "DETAILED_WORK_REPORT.md"
       files:
-        - "gemini-vision-2025-01.txt"
+        - "chats/DETAILED_WORK_REPORT.md"
       topics:
-        - "Project vision"
-        - "Target audience"
-        - "Core value proposition"
-      date: "2025-01"
-      word_count: 15000  # Approximate
-      quality: "High"    # High/Medium/Low
-
-    - name: "Claude - Technical Architecture"
-      files:
-        - "claude-architecture-2025-08.md"
-      topics:
-        - "System architecture"
-        - "Technology stack"
-        - "Database design"
-      date: "2025-08"
-      word_count: 12000
+        - "4-day refactoring sprint (30+ commits)"
+        - "TypeScript type safety improvements (95%)"
+        - "Logger system implementation"
+        - "Performance optimizations"
+        - "Modular architecture"
+      date: "2025-11-09"
+      word_count: 10000
       quality: "High"
 
-    # Add more sources as needed
-    # - name: "..."
-    #   files: ["..."]
-    #   topics: ["..."]
-    #   date: "..."
+    - name: "STAGE_4.2.1_FINAL_REPORT.md"
+      files:
+        - "chats/STAGE_4.2.1_FINAL_REPORT.md"
+      topics:
+        - "ZTL (Zenith Training Language) v1.0 specification"
+        - "Export/Import infrastructure"
+        - "Workout feedback system"
+        - "AI analysis integration"
+      date: "2025-10-30"
+      word_count: 8000
+      quality: "High"
+
+    - name: "Workout Constructor Concept"
+      files:
+        - "chats/2025-11-09_21-22-07_Claude Chat_.md"
+      topics:
+        - "Program/Workout/Cycle/Exercise architecture"
+        - "Constructor for training process management"
+        - "Database entities design"
+        - "Analytics collection principles"
+      date: "2025-11-09"
+      word_count: 5000
+      quality: "High"
+
+    - name: "Multiple Claude Chat Exports"
+      files:
+        - "chats/2025-11-09_*.md (8 files)"
+      topics:
+        - "Stage 4.3 discussions"
+        - "Testing strategy"
+        - "Project continuation"
+        - "Various technical discussions"
+      date: "2025-11-09"
+      word_count: 25000
+      quality: "High"
 
 # ═══════════════════════════════════════════════════════════════════════
 # KNOWN DECISIONS (Optional - Claude will extract from raw data)
@@ -92,16 +119,34 @@ data_info:
 # Claude Code will extract most decisions automatically from raw data
 
 known_decisions:
-  - "Project Name: [Your Project Name]"
-  - "Target Audience: [Who is this for?]"
-  - "Core Features: [List must-have features]"
-  - "Timeline: [Any deadlines or target dates?]"
+  - "Project Name: Zenith Trainer"
+  - "Target Audience: Fitness enthusiasts of all levels (beginners to experienced athletes)"
+  - "Tech Stack: Next.js 15 + React 18 + TypeScript 5 + Firebase 11 + Genkit AI"
+  - "Architecture: Next.js App Router with modular type system"
+  - "Timeline: No fixed deadline, iterative development"
+  - "Team Size: Solo developer (1 person)"
+  - "Monetization: To be determined"
+  - "Deployment: Firebase Hosting (Vercel recommended as better alternative)"
+  - "Testing: Target 80%+ coverage (HIGH priority)"
+  - "Accessibility: Not a priority currently"
 
-  # Examples:
-  # - "Project Name: TaskFlow"
-  # - "Target Audience: Remote teams of 5-15 people"
-  # - "Core Features: Task board, comments, team management"
-  # - "Timeline: MVP in 3 months"
+  # MVP SCOPE - ALL REQUIRED:
+  - "✅ Auth & user profiles"
+  - "✅ Exercise library"
+  - "✅ Workout constructor (Programs/Cycles/Exercises)"
+  - "✅ Program management"
+  - "✅ AI insights (5 Genkit flows)"
+  - "⚠️ Export/Import fully functional (partial now)"
+  - "⚠️ Scheduling with accurate date generation (HIGH priority)"
+  - "⚠️ Testing coverage >80% (HIGH priority)"
+  - "⚠️ Mobile-responsive UI (needs verification)"
+
+  # TECH DECISIONS:
+  - "React: Upgrade to React 19 (user confirmed)"
+  - "CI/CD: Setup GitHub Actions (HIGH priority)"
+  - "Storybook: Add for component documentation (HIGH priority)"
+  - "Monitoring: Select best free/cheap option (to be determined)"
+  - "Error Tracking: Not now, later"
 
 # ═══════════════════════════════════════════════════════════════════════
 # KNOWN CONTRADICTIONS (Optional - Claude will detect automatically)
@@ -110,13 +155,12 @@ known_decisions:
 # You can list known contradictions here to speed up the process
 
 known_contradictions:
-  - "Database: MongoDB mentioned in early chats, PostgreSQL in later discussions"
-  - "Feature Priority: Social login was Must Have, then moved to Phase 2"
+  - "✅ RESOLVED: Multiple project mentions (Zenith Trainer vs Ground Control) - Ground Control was accidental inclusion, removed from context"
+  - "✅ RESOLVED: PM Template infrastructure in repo - This is part of project management system used for documentation"
+  - "Stage 4.3 status: Mentioned in chats but analytics already implemented - User confirmed Stage 4.3 is complete"
 
-  # Examples:
-  # - "Tech stack: React vs Vue discussed"
-  # - "Hosting: AWS vs Vercel vs Railway"
-  # - "Timeline: 3 months vs 6 months in different chats"
+  # No major contradictions detected in raw data
+  # Most documentation is consistent and high-quality
 
 # ═══════════════════════════════════════════════════════════════════════
 # QUESTIONS TO RESOLVE (Optional - Claude will generate questions)
@@ -125,61 +169,91 @@ known_contradictions:
 # You can pre-list questions here if you know what needs clarification
 
 questions_to_resolve:
-  - "Final tech stack decisions?"
-  - "Exact MVP scope (which features)?"
-  - "Architecture pattern (MVC / microservices / serverless)?"
-  - "Database choice final decision?"
-  - "Hosting platform preference?"
+  # ALL QUESTIONS RESOLVED VIA INTERVIEW (2025-11-10)
+  # See COMBINED_ANALYSIS_REPORT.md for full details
 
-  # Examples:
-  # - "Use TypeScript or plain JavaScript?"
-  # - "Monorepo or separate repos?"
-  # - "Authentication strategy (JWT / session / OAuth)?"
+  # Remaining technical decisions:
+  - "Performance Monitoring: Select best free/cheap option (Vercel Analytics? Google Analytics? PostHog?)"
+  - "React 19 Upgrade: When to schedule (immediate or after critical features?)"
+  - "Vercel vs Firebase Hosting: Final decision (Vercel recommended)"
+  - "Medications module details: UI/UX design and integration approach"
 
 # Additional context (optional)
 additional_context:
-  team_size: 1-3  # How many developers?
-  timeline_pressure: "Medium"  # High/Medium/Low
-  budget_constraints: "Minimal hosting costs (<$100/month)"
-  technical_constraints: "None" # Any limitations?
-  user_research_done: false  # true/false
+  team_size: 1  # Solo developer
+  timeline_pressure: "Low"  # No fixed deadline, iterative development
+  budget_constraints: "Prefer free/cheap options for monitoring and hosting"
+  technical_constraints: "None"
+  user_research_done: false
   competitor_analysis_done: false
+
+  # Project maturity:
+  code_quality: "High (95% type safety, modern architecture)"
+  refactoring_status: "Recently completed (4-day sprint, 30+ commits)"
+  test_coverage_current: "~30% (setup done, needs expansion to 80%+)"
+  production_ready: "60-70% (MVP features mostly complete)"
+
+  # Priority features for MVP completion:
+  high_priority:
+    - "Complete scheduling logic (accurate date generation)"
+    - "Wire import persistence to Firestore"
+    - "Testing coverage to 80%+"
+    - "Mobile-responsive UI verification"
+    - "Medications/supplements module in habits"
+
+  medium_priority:
+    - "Setup CI/CD (GitHub Actions)"
+    - "Add Storybook"
+    - "React 19 upgrade"
+    - "Performance monitoring"
+
+  low_priority:
+    - "Social features"
+    - "Advanced export formats"
+    - "Third-party integrations"
 
 # Bootstrap preferences (optional)
 bootstrap_preferences:
-  # How much detail do you want in generated docs?
-  detail_level: "high"  # high/medium/low
+  detail_level: "high"
+  allow_inference: true
+  question_style: "batches"
 
-  # Should Claude Code infer missing information?
-  allow_inference: true  # true/false
-
-  # Should Claude Code ask questions in batches or one by one?
-  question_style: "batches"  # batches/individual
-
-  # Which areas are most important to get right?
   focus_areas:
-    - "Tech stack selection"
-    - "Architecture design"
-    - "Feature prioritization"
+    - "Feature completion (scheduling, import, testing)"
+    - "Code quality maintenance (already at 95% type safety)"
+    - "MVP readiness (mobile-responsive, testing coverage)"
+    - "Development tooling (CI/CD, Storybook)"
+    - "Medications/supplements module design"
 
-  # Any specific concerns?
   concerns:
-    - "Timeline is aggressive, need realistic estimates"
-    - "Tech stack must be modern and verified"
+    - "⚠️ HIGH: Scheduling logic needs real date generation (currently simplified)"
+    - "⚠️ HIGH: Import persistence not wired to Firestore"
+    - "⚠️ HIGH: Testing coverage needs to reach 80%+ (currently ~30%)"
+    - "⚠️ MEDIUM: Mobile responsiveness not fully verified"
+    - "💡 React 19 upgrade: Balance benefits vs stability"
+    - "💡 Monitoring: Need free/cheap option recommendation"
 
 # Notes for Claude Code (optional)
 notes_for_claude:
-  - "Pay special attention to contradictions - some chats are outdated"
-  - "Timeline estimates in early chats were too optimistic"
-  - "User mentioned they're familiar with React but not Vue"
-  - "Budget is limited, prefer free/cheap hosting options"
+  - "✅ Ground Control reference removed from context (accidental inclusion)"
+  - "✅ All 20 interview questions answered (2025-11-10)"
+  - "✅ Tech stack verified as modern (Nov 2025) - no critical updates needed"
+  - "✅ Code quality is HIGH (95% type safety, modular architecture)"
+  - "🎯 Focus on completing HIGH priority features (scheduling, import, testing)"
+  - "🎯 Solo developer - prioritize tools that improve productivity (CI/CD, Storybook)"
+  - "🎯 Budget-conscious - recommend free/cheap monitoring options"
+  - "🎯 New feature requested: Medications/supplements module in habits (detailed requirements)"
+  - "📊 Project is 65-70% complete - MVP features mostly implemented"
+  - "📊 Recent refactoring (4 days, 30+ commits) improved code quality significantly"
 
 # ═══════════════════════════════════════════════════════════════════════
 # Version tracking (Auto-filled by Claude Code)
 # ═══════════════════════════════════════════════════════════════════════
 metadata_version: "1.0"
-last_updated: "YYYY-MM-DD"  # Will be filled with current date
-updated_by: "Your Name"  # Will be filled during bootstrap
+last_updated: "2025-11-10"
+updated_by: "Claude (Anthropic) - Bootstrap Analysis"
+bootstrap_session_id: "011CUyHHnF3wqqDtNfHk3xE9"
+analysis_report: "COMBINED_ANALYSIS_REPORT.md"
 
 # ═══════════════════════════════════════════════════════════════════════
 # SUMMARY: How to Use AUTO-FILL Mode
