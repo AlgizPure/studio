@@ -4,9 +4,352 @@
 
 ---
 
-## v1.0.2 (2025-11-09) - Structure Optimization
+## v2.0.0 (2025-11-10) - Complete System Overhaul
 
 **Статус:** Current  
+**Тип:** MAJOR RELEASE - Breaking Changes
+
+### 🎯 Цели Релиза
+
+- **НИЧЕГО НЕ ПОТЕРЯТЬ:** Гарантировать извлечение и учёт ВСЕХ функций (100% полнота)
+- **ПОЛНОЕ ЗАПОЛНЕНИЕ:** Устранить все "escape clauses", обязательное заполнение файлов
+- **ВАЛИДАЦИЯ:** Автоматическая проверка полноты bootstrap (PHASE 7.5)
+- **ПРОЕКТНЫЕ ПРАВИЛА:** Система автоматического обновления файлов с триггерами
+- **АВТОМАТИЗАЦИЯ:** .cursorrules template с AUTO-GENERATED секцией
+
+### ⚠️ BREAKING CHANGES
+
+**Для пользователей предыдущих версий:**
+- Bootstrap промпты полностью переработаны (v1.0.2 → v2.0.0)
+- Обязательное прохождение PHASE 7.5 COMPLETENESS VALIDATION
+- .cursorrules теперь использует template с AUTO-GENERATED секцией
+- Все "можешь оставить template" → "ОБЯЗАТЕЛЬНО заполни"
+
+**Migration:**
+- Перезапусти bootstrap с новыми промптами (v2.0)
+- Используй SYSTEM_TESTING_GUIDE.md для проверки
+
+### ✨ Новые Файлы (5 критичных)
+
+**1. All_Project_rules.md** (~1500 строк) - **КЛЮЧЕВОЙ ФАЙЛ v2.0**
+- Путь: `02_PROJECT_STRUCTURE/AI_INSTRUCTIONS/All_Project_rules.md`
+- **16 проектных правил** для автоматического обновления файлов
+- Каждое правило:
+  - Активация в начале: "👀 ACTIVE: RULE_XX"
+  - Триггеры (когда срабатывает)
+  - Проверки перед обновлением
+  - Детальные действия
+  - Зависимые файлы
+  - Уведомление в конце: "✅ RULE_XX: обновлены [файлы]"
+- RULE_01: metadata.yaml
+- RULE_02: PROJECT_ESSENCE.md
+- RULE_03: PRD.md
+- RULE_04: ROADMAP.md
+- RULE_05: TECH_STACK.md
+- RULE_06: ARCHITECTURE.md
+- RULE_07: module_requirements
+- RULE_08: state.md
+- RULE_09: decisions.md
+- RULE_10: insights.md
+- RULE_11: changes_log.md
+- RULE_12: modules_status.md
+- RULE_13: sprint_current.md
+- RULE_14: backlog.md
+- RULE_15: .cursorrules
+- RULE_16: VERSION_HISTORY.md
+
+**2. .cursorrules.template** (~150 строк)
+- Путь: `02_PROJECT_STRUCTURE/AI_INSTRUCTIONS/.cursorrules.template`
+- Содержит AUTO-GENERATED секцию (заполняется при bootstrap)
+- Содержит CUSTOM RULES секцию (пользовательские правила)
+- Копируется в КОРЕНЬ проекта при bootstrap (PHASE 6)
+- Автоматически обновляется через RULE_15
+
+**3. UPMT.md** (~500 строк) - **MASTER REFERENCE**
+- Путь: `.cursor/plans/UPMT.md`
+- Справочник ВСЕХ файлов UPMT
+- Граф зависимостей между файлами
+- Матрица дублирования информации
+- Чек-лист валидации полноты (17 пунктов)
+- Критерии успеха bootstrap (100%)
+- Примеры для ключевых файлов
+- Частые ошибки и решения
+
+**4. INVENTORY.md** (~1000 строк)
+- Путь: `.cursor/plans/INVENTORY.md`
+- Полная инвентаризация 60+ файлов
+- Назначение каждого файла
+- Зависимости между файлами
+- Триггеры для обновления
+- Частота изменений
+- Правила (RULE_XX) для критичных файлов
+
+**5. SYSTEM_TESTING_GUIDE.md** (~800 строк)
+- Путь: `01_BOOTSTRAP_CONFIG/SYSTEM_TESTING_GUIDE.md`
+- 5 тестовых сценариев для проверки v2.0
+- Критерии успеха тестирования
+- Частые проблемы и решения
+- Template отчёта о тестировании
+- Continuous testing guidelines
+
+**Итого:** 5 новых файлов (~3800 строк)
+
+### 🔄 Обновленные Файлы (2 критичных)
+
+**1. BOOTSTRAP_START_PROMPT.md** (v1.0.2 → v2.0.0)
+- **УДАЛЕНЫ все "escape clauses":**
+  - ❌ "можешь оставить как template" → ✅ "ОБЯЗАТЕЛЬНО заполни полностью"
+  - ❌ "при необходимости" → ✅ "ВСЕГДА"
+  - ❌ "если нужно" → ✅ "ОБЯЗАТЕЛЬНО"
+  - ❌ "можно заполнить позже" → ✅ "заполни СЕЙЧАС"
+
+- **ДОБАВЛЕН механизм полного извлечения функций (PHASE 1):**
+  - Обязательное извлечение КАЖДОЙ функции
+  - Формат extracted_features (группировка по модулям)
+  - Проверка полноты: "Если 150+ в чатах → 150+ в extracted_features"
+  - ЕСЛИ неполный список → ERROR, переделай
+
+- **УСИЛЕНЫ требования PHASE 5:**
+  - Все файлы PROJECT_CORE: "ОБЯЗАТЕЛЬНО заполни полностью"
+  - module_requirements: "ВСЕ функции должны быть учтены"
+  - Проверка: количество функций в requirements = extracted_features
+  - .cursorrules: "ОБЯЗАТЕЛЬНО создай в КОРНЕ проекта"
+
+- **ДОБАВЛЕНА PHASE 7.5: COMPLETENESS VALIDATION:**
+  - Критический чек-лист (17 пунктов)
+  - Проверка документации (5 пунктов)
+  - Проверка извлечения функций (5 пунктов)
+  - Проверка файлов (5 пунктов)
+  - Проверка прогресса (3 пункта)
+  - ЕСЛИ хотя бы один пункт НЕ выполнен → VALIDATION FAILED
+  - ЕСЛИ failed → возврат к PHASE для исправления
+  - ЕСЛИ passed → переход к PHASE 8 (Final Report)
+
+- **ДОБАВЛЕНА система уведомлений правил:**
+  - В начале PHASE: "👀 АКТИВНЫ ПРАВИЛА: [список RULE_XX]"
+  - В конце PHASE: "✅ ПРАВИЛА СРАБОТАЛИ: [детали]"
+
+**2. README.md**
+- Обновлена версия: 2.0.0
+- Обновлены ссылки на новые файлы
+
+**Итого:** 2 обновленных файла (1 major, 1 minor)
+
+### 🎯 Ключевые Улучшения
+
+**1. 100% Полнота Функций**
+```
+ПРОБЛЕМА (v1.0):
+- Claude пропускал функции
+- В чате 150 функций → в requirements только 50
+- НИЧЕГО не терялось? НЕТ, терялось много
+
+РЕШЕНИЕ (v2.0):
+- PHASE 1: Обязательное извлечение ВСЕХ функций
+- extracted_features как source of truth
+- Проверка: чаты повторно → убедись что ВСЕ извлечены
+- PHASE 7.5: Валидация количества функций
+
+РЕЗУЛЬТАТ:
+✅ Гарантия 100% полноты
+✅ Если 150+ в чатах → 150+ в requirements
+✅ НИЧЕГО НЕ ПОТЕРЯНО
+```
+
+**2. Обязательное Полное Заполнение**
+```
+ПРОБЛЕМА (v1.0):
+- "можешь оставить как template" → Claude оставлял
+- state.md содержал "[Last Updated]"
+- PROJECT_ESSENCE содержал "Your Project Name"
+
+РЕШЕНИЕ (v2.0):
+- Удалены ВСЕ "escape clauses"
+- Все "ОБЯЗАТЕЛЬНО заполни полностью"
+- PHASE 7.5: Проверка что НЕТ templates
+
+РЕЗУЛЬТАТ:
+✅ Все файлы заполнены реальными данными
+✅ Нет placeholders
+✅ 100% готовность к разработке
+```
+
+**3. Автоматическая Валидация**
+```
+ПРОБЛЕМА (v1.0):
+- Нет автоматической проверки полноты
+- Пользователь сам проверял вручную
+- Легко пропустить недостатки
+
+РЕШЕНИЕ (v2.0):
+- PHASE 7.5 COMPLETENESS VALIDATION
+- 17 пунктов автоматической проверки
+- Если failed → автоматический возврат к PHASE
+
+РЕЗУЛЬТАТ:
+✅ Автоматическая гарантия полноты
+✅ "✅ VALIDATION PASSED" → 100% готово
+✅ "❌ VALIDATION FAILED" → Claude исправляет
+```
+
+**4. Проектные Правила с Триггерами**
+```
+ПРОБЛЕМА (v1.0):
+- .cursorrules статичный, не обновлялся
+- При изменении PRD → нужно вручную обновлять backlog
+- При добавлении фичи → нужно вручную sync файлы
+
+РЕШЕНИЕ (v2.0):
+- All_Project_rules.md с 16 правилами
+- Каждое правило знает свои триггеры
+- Автоматическое обновление зависимых файлов
+- Уведомления: 👀 ACTIVE, ✅ COMPLETE
+
+РЕЗУЛЬТАТ:
+✅ Автоматическая синхронизация файлов
+✅ Нет забытых обновлений
+✅ Консистентность документации
+```
+
+**5. .cursorrules AUTO-GENERATED**
+```
+ПРОБЛЕМА (v1.0):
+- .cursorrules статичный
+- При изменении tech stack → устаревает
+- Нужно вручную обновлять
+
+РЕШЕНИЕ (v2.0):
+- .cursorrules.template с AUTO-GENERATED секцией
+- RULE_15 автоматически обновляет при триггерах
+- Копируется в КОРЕНЬ при bootstrap
+
+РЕЗУЛЬТАТ:
+✅ Всегда актуальный .cursorrules
+✅ Tech stack → авто-обновление
+✅ Модули → авто-обновление
+```
+
+### 📊 Статистика Изменений
+
+**Создано:**
+- Файлов: 5
+- Строк кода/документации: ~3800
+- Проектных правил: 16
+- Фаз validation: 1 (PHASE 7.5)
+
+**Обновлено:**
+- Файлов: 2
+- Промптов: 4 сценария (все обновлены)
+- Требований: все усилены ("ОБЯЗАТЕЛЬНО")
+
+**Удалено:**
+- "Escape clauses": ~20 упоминаний
+- Ambiguities: ~30 фраз ("можешь", "при необходимости", etc.)
+
+### 🚀 Миграция с v1.x на v2.0
+
+**Для новых проектов:**
+```bash
+1. Используй новые промпты из BOOTSTRAP_START_PROMPT.md (v2.0)
+2. Следуй PHASE 1-8 (включая PHASE 7.5 VALIDATION)
+3. Проверь что VALIDATION PASSED
+4. Готов!
+```
+
+**Для существующих проектов (созданных v1.x):**
+```bash
+1. Backup существующей документации
+2. Перезапусти bootstrap с v2.0 промптами
+3. Claude заполнит всё заново (100% полнота)
+4. Сравни с backup, перенеси custom изменения
+5. Проверь VALIDATION PASSED
+6. Готов!
+```
+
+**Для template contributors:**
+```bash
+1. Прочитай UPMT.md (master reference)
+2. Прочитай All_Project_rules.md (система правил)
+3. При добавлении файла → обнови INVENTORY.md
+4. Если файл критичный → добавь RULE в All_Project_rules.md
+5. Обнови UPMT.md (граф зависимостей)
+6. Протестируй через SYSTEM_TESTING_GUIDE.md
+```
+
+### ⚠️ Известные Ограничения
+
+**1. Требует больше времени**
+- v1.x: ~2-3 часа bootstrap
+- v2.0: ~3-4 часа (из-за PHASE 7.5 + полное заполнение)
+- **Но результат: 100% полнота vs частичная**
+
+**2. Требует больше токенов**
+- extracted_features полный → больше tokens в PHASE 1
+- Все файлы заполнены → больше tokens в PHASE 5
+- PHASE 7.5 validation → дополнительные tokens
+- **Но результат: ничего не потеряно**
+
+**3. Нужно перезапускать для v1.x проектов**
+- v1.x проекты не совместимы с v2.0 автоматически
+- Нужен ре-bootstrap
+- **Но результат: чистая, полная документация**
+
+### 🎓 Обучающие Материалы
+
+**Новые руководства:**
+- `SYSTEM_TESTING_GUIDE.md` - как тестировать v2.0
+- `UPMT.md` - master reference всей системы
+- `INVENTORY.md` - детальная инвентаризация файлов
+- `All_Project_rules.md` - система правил (с примерами)
+
+**Обновлённые руководства:**
+- `BOOTSTRAP_START_PROMPT.md` - v2.0 промпты (4 сценария)
+
+### 🔮 Планы на Будущее
+
+**v2.1 (планируется):**
+- Автоматическая sync с GitHub (через webhooks)
+- Real-time validation во время bootstrap
+- AI-powered conflict resolution
+
+**v3.0 (планируется):**
+- Multi-project support (monorepo)
+- Team collaboration features
+- Advanced AI insights
+
+### 🙏 Благодарности
+
+**Feedback from:**
+- Testing на проектах Zenith Trainer и Ground Control
+- Выявленные проблемы (неполное извлечение функций, template файлы)
+- Requests на систему правил и валидацию
+
+### 📝 Checklist для Использования v2.0
+
+**Перед bootstrap:**
+- [ ] Прочитал UPMT.md (понимаю структуру)
+- [ ] Прочитал All_Project_rules.md (понимаю правила)
+- [ ] Подготовил raw data (чаты, документы)
+- [ ] Проверил metadata.yaml (заполнил что могу)
+
+**Во время bootstrap:**
+- [ ] Используй BOOTSTRAP_START_PROMPT.md v2.0
+- [ ] Следи за уведомлениями правил (👀, ✅)
+- [ ] Проверяй extracted_features в PHASE 1
+- [ ] Не прерывай PHASE 7.5 VALIDATION
+
+**После bootstrap:**
+- [ ] Проверь "✅ VALIDATION PASSED"
+- [ ] Проверь .cursorrules в КОРНЕ
+- [ ] Прочитай BOOTSTRAP_REPORT.md
+- [ ] Запусти тесты из SYSTEM_TESTING_GUIDE.md (опционально)
+- [ ] Начинай разработку!
+
+---
+
+## v1.0.2 (2025-11-09) - Structure Optimization
+
+**Статус:** Deprecated (use v2.0.0)  
 **Тип:** Major restructuring
 
 ### 🎯 Цели Релиза
@@ -128,6 +471,7 @@
 10. **Incomplete PHASE 2-7 in Scenario 2** - Replaced reference to Scenario 1 with full self-contained instructions for all phases
 11. **Missing "ВАЖНЫЕ ПРАВИЛА" in Scenarios 2-4** - Added consistent rules section to all scenarios for unified structure
 12. **Duplication of TECH STACK VERIFICATION section in Scenario 3** - Removed duplicate section (already covered in PHASE 3)
+13. **Cross-scenario references in Scenarios 2 and 4** - Replaced all "(как в Сценарии X)" references with full explicit instructions for complete self-containment
 
 ### ⬆️ Migration Guide (from v1.0.1)
 

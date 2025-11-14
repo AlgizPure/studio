@@ -1,0 +1,165 @@
+# Project Cursor Rules Template
+# Этот файл копируется в корень проекта как .cursorrules при bootstrap
+
+# ============================================
+# ИНСТРУКЦИИ ПО ИСПОЛЬЗОВАНИЮ
+# ============================================
+# 
+# ЭТО TEMPLATE ФАЙЛ - НЕ РЕДАКТИРУЙ ЕГО НАПРЯМУЮ
+# 
+# При bootstrap:
+# 1. Claude Code прочитает этот template
+# 2. Заполнит секцию AUTO-GENERATED данными проекта
+# 3. Скопирует в КОРЕНЬ проекта как .cursorrules
+# 
+# При обновлении проекта:
+# - AUTO-GENERATED секция обновляется автоматически (RULE_15)
+# - CUSTOM RULES секция - твои правила (не трогаются)
+#
+# ============================================
+
+# ============================================
+# AUTO-GENERATED PROJECT RULES
+# ============================================
+# Generated: [YYYY-MM-DD]
+# Bootstrap Session: [session_id]
+# Version: [X.Y.Z]
+# 
+# ⚠️ НЕ РЕДАКТИРУЙ ЭТУ СЕКЦИЮ ВРУЧНУЮ
+# Эта секция автоматически обновляется при:
+# - Bootstrap (PHASE 6)
+# - Изменении tech stack (RULE_15 trigger 2)
+# - Добавлении модулей (RULE_15 trigger 3)
+# - Изменении архитектуры (RULE_15 trigger 4)
+# ============================================
+
+## Project Information
+- **Name:** [Project Name]
+- **Type:** [Web App/Mobile/SaaS/Desktop/etc]
+- **Status:** [Phase] ([X]% complete)
+- **Version:** [X.Y.Z]
+- **Team:** [Solo/2-3/4-10/10+ people]
+
+## Tech Stack (Brief)
+
+### Frontend
+- [Framework]: [version] (e.g., Next.js 16.0)
+- [UI Library]: [version] (e.g., React 19.2)
+- [Styling]: [version] (e.g., Tailwind v4)
+- [State Management]: [if applicable]
+
+### Backend
+- [Runtime/Framework]: [version] (e.g., Node.js 20, Next.js API Routes)
+- [ORM/Database Client]: [version] (e.g., Prisma, Supabase Client)
+- [Authentication]: [version] (e.g., Auth.js v5)
+
+### Database
+- **Primary:** [Database] ([version]) (e.g., PostgreSQL 16, Supabase)
+- **Caching:** [if applicable]
+- **Real-time:** [if applicable]
+
+### AI/ML (if applicable)
+- [Service]: [version] (e.g., Claude API Sonnet, OpenAI GPT-4)
+- [Integration]: [how it's used]
+
+### DevOps & Tools
+- **Hosting:** [Platform] (e.g., Vercel, AWS, Firebase)
+- **Testing:** [Framework] (e.g., Playwright, Jest)
+- **CI/CD:** [Tool] (e.g., GitHub Actions)
+- **Monitoring:** [Tool] (e.g., Vercel Analytics, Sentry)
+
+## Key Modules
+[list of modules from PRD, e.g.:]
+- Module 1: [Name] (Priority: P0/P1/P2)
+- Module 2: [Name] (Priority: P0/P1/P2)
+- Module 3: [Name] (Priority: P0/P1/P2)
+[... all modules]
+
+## Important Architectural Patterns
+[from ARCHITECTURE.md, e.g.:]
+- **Pattern:** [Name] (e.g., Server Components + Client Components)
+- **Data Flow:** [Brief description]
+- **API Pattern:** [REST/GraphQL/tRPC/etc]
+- **State Management:** [Approach]
+
+## Code Organization
+[file structure conventions, e.g.:]
+```
+src/
+├── app/          - Next.js App Router pages
+├── components/   - React components (shared)
+├── lib/          - Utilities, helpers
+├── types/        - TypeScript type definitions
+└── api/          - API logic (if separate)
+```
+
+## Naming Conventions
+- **Files:** [convention] (e.g., kebab-case for components, PascalCase for types)
+- **Components:** [convention] (e.g., PascalCase, descriptive names)
+- **Functions:** [convention] (e.g., camelCase, verb-first)
+- **Types/Interfaces:** [convention] (e.g., PascalCase, suffix with Type/Interface)
+
+## Testing Strategy
+- **Unit Tests:** [coverage target] (e.g., 80%+ for utils/hooks)
+- **Integration Tests:** [what to test] (e.g., API routes, critical user flows)
+- **E2E Tests:** [what to test] (e.g., main user journeys)
+
+## For Detailed Rules & Triggers
+See: `02_PROJECT_STRUCTURE/AI_INSTRUCTIONS/All_Project_rules.md`
+
+---
+# ============================================
+# END AUTO-GENERATED
+# ============================================
+
+# ============================================
+# CUSTOM RULES (User-defined)
+# ============================================
+# 
+# Добавь свои правила ниже.
+# Эта секция НЕ будет перезаписана при автоматических обновлениях.
+# 
+# Примеры:
+# - Специфичные conventions для проекта
+# - Предпочтения по стилю кода
+# - Правила для AI ассистентов
+# - Shortcuts и aliases
+# 
+# ============================================
+
+## Code Style Preferences
+# [твои предпочтения]
+
+## AI Assistant Guidelines
+# [как AI должен помогать]
+
+## Project-Specific Conventions
+# [уникальные правила проекта]
+
+# ============================================
+# USAGE NOTES
+# ============================================
+# 
+# Как Cursor использует этот файл:
+# 1. Cursor читает .cursorrules при открытии проекта
+# 2. AI ассистент следует этим правилам в conversations
+# 3. Правила применяются ко всем AI операциям в проекте
+# 
+# Обновление:
+# - AUTO-GENERATED обновляется через RULE_15 (см. All_Project_rules.md)
+# - CUSTOM RULES редактируешь вручную по необходимости
+# 
+# Актуализация:
+# - При major изменениях tech stack → AUTO-GENERATED обновится автоматически
+# - При добавлении модулей → обновится Key Modules секция
+# - При изменении архитектуры → обновится Patterns секция
+# 
+# Проверка работы:
+# - После bootstrap проверь что файл скопирован в КОРЕНЬ
+# - Путь должен быть: /path/to/project/.cursorrules (рядом с README.md)
+# - Если в папке template → это template, не рабочий файл!
+# 
+# ============================================
+# END OF CURSORRULES TEMPLATE
+# ============================================
+
