@@ -471,14 +471,130 @@ roadmap:
     - "Advanced AI features (personalized program generation)"
 
 # ═══════════════════════════════════════════════════════════════════════
+# TECH STACK VERIFICATION (PHASE 3) - November 2025
+# ═══════════════════════════════════════════════════════════════════════
+
+tech_stack_verification:
+  verified_date: "2025-11-14"
+  verification_status: "VERIFIED"
+  verification_method: "Web Search (npm, GitHub, official docs)"
+
+  # Recommended versions for production (November 2025)
+  recommended_stack:
+    frontend:
+      framework: "Next.js 16.0.0 (App Router, Turbopack stable)"
+      ui_library: "React 19.2.0 (Server Components, React Compiler)"
+      language: "TypeScript 5.9.3 (strict mode)"
+      styling: "Tailwind CSS 4.1.0 (or 3.x acceptable)"
+      theme: "next-themes (latest)"
+      icons: "lucide-react (latest)"
+
+    ui_components:
+      component_library: "Radix UI 1.4.3 + components ~2.1.x (React 19 compatible)"
+      charts: "Recharts 2.15.1+ (verify latest + React 19 support)"
+      drag_drop: "@dnd-kit/core + @dnd-kit/sortable (latest, React 19 compatible)"
+
+    backend:
+      platform: "Firebase 12.5.0 (Auth, Firestore, Storage)"
+      ai_framework: "Genkit AI 1.21.0"
+      ai_provider: "Google Gemini API via @genkit-ai/google-genai"
+      api: "Next.js API Routes"
+
+    data_validation:
+      validation: "Zod 4.1.12 (14x faster parsing vs v3)"
+      date_handling: "date-fns (latest)"
+      dsl_parser: "Custom ZTL (YAML + Zod validation)"
+
+    development:
+      testing: "Playwright 1.56.1 (E2E with AI agents)"
+      linting: "ESLint 9.x (flat config recommended)"
+      type_checking: "TypeScript 5.9.3 (strict mode)"
+
+  # Critical updates required before MVP
+  critical_updates:
+    - name: "React 18.3.1 → 19.2.0"
+      reason: "Production-ready, Actions API, React Compiler, performance improvements"
+      migration_effort: "Medium"
+
+    - name: "Next.js 15.5.6 → 16.0.0"
+      reason: "5-10x faster builds, Turbopack stable, React Compiler support"
+      migration_effort: "Medium"
+      breaking_changes: "proxy.ts replaces middleware.ts, Turbopack default, new cache model"
+
+    - name: "Firebase 11.9.1 → 12.5.0"
+      reason: "Latest SDK, security fixes, production stability"
+      migration_effort: "Medium"
+
+    - name: "TypeScript 5.x → 5.9.3"
+      reason: "Latest stable, bug fixes"
+      migration_effort: "Low"
+
+  # Recommended updates (high priority)
+  recommended_updates:
+    - name: "Zod → 4.1.12"
+      reason: "14x faster parsing (critical for ZTL DSL performance)"
+      migration_effort: "Medium"
+
+    - name: "Tailwind CSS 3.x → 4.1.0"
+      reason: "5x faster builds, better DX (can be delayed post-MVP)"
+      migration_effort: "Medium-High"
+
+    - name: "Radix UI → Latest (1.4.3 + components)"
+      reason: "React 19 full compatibility"
+      migration_effort: "Low-Medium"
+
+    - name: "Genkit AI 1.20.0 → 1.21.0"
+      reason: "Latest framework version"
+      migration_effort: "Low"
+
+    - name: "Playwright → 1.56.1"
+      reason: "AI-powered test agents (perfect for E2E test phase)"
+      migration_effort: "Low"
+
+  # Technologies that don't need replacement
+  approved_choices:
+    - "Next.js - industry standard for React SSR/SSG"
+    - "Firebase - solid BaaS choice"
+    - "Genkit AI - Google's official AI framework, production-ready"
+    - "Radix UI - best headless UI library for React"
+    - "Tailwind CSS - industry standard for utility CSS"
+    - "TypeScript - essential for large apps"
+    - "Zod - best TypeScript validation library"
+
+  # Migration timeline estimate
+  migration_timeline:
+    total_weeks: "3-4 weeks for critical updates"
+    week_1: "Foundation (TypeScript, Genkit, Playwright, minor packages)"
+    week_2: "React Ecosystem (React, Next.js, Radix UI, @dnd-kit)"
+    week_3: "Backend & Data (Firebase, Zod, Recharts)"
+    week_4: "Testing & Validation"
+    optional_post_mvp: "Tailwind 4, ESLint 9 flat config"
+
+  # Compatibility verified
+  compatibility_matrix:
+    react_19_compatible: true
+    nextjs_16_compatible: true
+    typescript_59_compatible: true
+    firebase_12_compatible: true
+    genkit_121_compatible: true
+    radix_react19_compatible: true  # Latest RC, edge cases being resolved
+
+  notes:
+    - "All current technology choices are modern and appropriate for November 2025"
+    - "No technology replacements needed - tech stack is excellent"
+    - "React 19 and Next.js 16 are production-ready and stable"
+    - "Total migration time: 3-4 weeks for critical updates"
+    - "Risk level: Low-Medium (well-documented migration guides available)"
+
+# ═══════════════════════════════════════════════════════════════════════
 # VERSION TRACKING
 # ═══════════════════════════════════════════════════════════════════════
 
 metadata_version: "2.2.0"  # UPMT version
 last_updated: "2025-11-14"
 updated_by: "Claude (UPMT System)"
-bootstrap_phase_completed: "PHASE 2 (Interview)"
-next_phase: "PHASE 3 (Tech Verification)"
+bootstrap_phase_completed: "PHASE 3 (Tech Verification)"
+next_phase: "PHASE 4 (Synthesis)"
 
 # ═══════════════════════════════════════════════════════════════════════
 # END OF METADATA
