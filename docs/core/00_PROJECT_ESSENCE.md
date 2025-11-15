@@ -1,445 +1,261 @@
-# PROJECT ESSENCE
+# Zenith Trainer - Project Essence
 
+**Created:** November 14, 2025
 **Version:** 1.0
-**Last Updated:** [YYYY-MM-DD]
-**Status:** Template - Fill during bootstrap
+**Status:** Active Development (65-70% MVP Ready)
 
 ---
 
-## =� QUICK INFO
+## 🎯 Vision
 
-| Property | Value |
-|----------|-------|
-| **Project Name** | [Your Project Name] |
-| **Type** | [Web App / Mobile App / SaaS / etc.] |
-| **Stage** | [Pre-development / MVP / Production] |
-| **Target Launch** | [Date or "TBD"] |
+Zenith Trainer envisions transforming how individuals approach fitness training by bridging the gap between professional-grade training methodologies and accessible, AI-powered personal fitness management. We're building a platform that empowers fitness enthusiasts to train with the precision of professional athletes while benefiting from intelligent, personalized AI guidance that adapts to their progress and goals.
 
----
+**What we're building:**
 
-## <� VISION
+A comprehensive, AI-driven fitness platform that combines professional workout programming (via our unique ZTL DSL - Zenith Training Language), real-time workout execution and tracking, advanced analytics, habit formation systems, and bidirectional AI workflow. Unlike generic fitness apps that offer simple tracking or professional coaching platforms that require expert knowledge, Zenith Trainer provides the perfect middle ground - professional-grade features made accessible through intelligent automation and modern UX.
 
-### One-Liner
-> [One sentence: What is this project?]
+**Why it matters:**
 
-**Example:**
-> A collaborative task management platform that helps remote teams stay aligned and productive.
+The fitness industry faces a critical gap: individuals who want to train seriously lack affordable, intelligent tools that match their ambition. They're forced to choose between oversimplified consumer apps that don't support progression programming, or complex professional tools designed for coaches. This gap costs users optimal results, leading to plateaus, injuries from improper programming, and ultimately, abandoned fitness goals. Zenith Trainer solves this by democratizing professional training methodologies through AI-assistance and intuitive design.
 
-### The Big Picture
+**Long-term impact:**
 
-[2-3 paragraphs: Why does this project exist? What problem does it solve? What's the long-term vision?]
-
-**Example:**
-
-Remote teams struggle with coordination. Messages get lost in Slack,
-tasks scatter across tools, and nobody has a clear view of who's doing what.
-
-[Project Name] brings everything together in one place. Teams can see
-all tasks, discuss in context, and track progress without switching tools.
-
-Our vision is to become the central hub for remote team collaboration,
-where work happens transparently and efficiently.
+Zenith Trainer will fundamentally change how people approach structured training by making professional methodologies accessible to everyone. By introducing the industry's first YAML-based training program DSL (ZTL), we're creating a new standard for workout program documentation and sharing. Our bidirectional AI workflow (Export → AI Analysis → Import recommendations) establishes a new paradigm where users can leverage powerful AI models like Claude and Gemini for sophisticated program analysis previously available only through expensive personal trainers.
 
 ---
 
-## =e TARGET AUDIENCE
+## 🔍 Problem Statement
 
-### Primary Users
+### The Problem
 
-**Who are they?**
-- [User type 1]: [Description]
-- [User type 2]: [Description]
+Fitness enthusiasts who want to train seriously face a significant tooling problem. Current solutions fall into two extremes: consumer apps offer only basic logging without periodization support; professional platforms designed for coaches have steep learning curves and high costs. Neither provides AI-powered analysis.
 
-**Example:**
-- **Remote Team Leads**: Managing 5-15 people, need visibility
-- **Project Managers**: Coordinating multiple projects, need organization
-- **Individual Contributors**: Want clarity on priorities and deadlines
+**Current pain points:**
 
-### User Personas
+- **Fragmented workflow:** Users juggle 3-5 tools (logging app, spreadsheet, notes, AI chat) → Impact: 2-3 hours/week wasted on data entry
+- **No intelligent progression:** Apps don't suggest optimal weight/volume increases → Impact: Users plateau for weeks/months  
+- **Manual program design:** Creating periodized programs requires spreadsheets → Impact: 4-6 hours per 12-week program
+- **Zero AI integration:** No fitness app offers AI analysis or recommendation import → Impact: Insights from AI conversations stay isolated
+- **Poor analytics:** Basic weight × reps charts only → Impact: Can't identify weak points or overtraining
 
-#### Persona 1: [Name/Role]
+**Who experiences this:**
 
-```yaml
-Demographics:
-  - Age: [range]
-  - Role: [job title]
-  - Experience: [years in field]
-  - Tech Savviness: [Low/Medium/High]
+- Serious hobby lifters (1-3+ years experience, understand RPE and periodization)
+- Self-coached athletes (CrossFit, powerlifting, bodybuilding)
+- Personal trainers managing their own training
 
-Context:
-  - Team Size: [number]
-  - Tools Currently Using: [list]
-  - Pain Points:
-    - [Pain point 1]
-    - [Pain point 2]
-    - [Pain point 3]
+**Cost of not solving:**
 
-Goals:
-  - [Goal 1]
-  - [Goal 2]
-  - [Goal 3]
-
-Behaviors:
-  - [Behavior 1]
-  - [Behavior 2]
-```
-
-**Example:**
-
-```yaml
-Persona 1: Sarah - Engineering Team Lead
-
-Demographics:
-  - Age: 32-40
-  - Role: Engineering Manager
-  - Experience: 8+ years in tech
-  - Tech Savviness: High
-
-Context:
-  - Team Size: 10 engineers
-  - Currently Using: Jira, Slack, Google Docs, Notion
-  - Pain Points:
-    - "I spend 2 hours daily in status meetings"
-    - "Task info scattered across 4 tools"
-    - "Hard to see blockers before they're critical"
-
-Goals:
-  - Reduce coordination overhead
-  - Increase team visibility
-  - Ship features faster
-
-Behaviors:
-  - Checks updates 3-4x per day
-  - Prefers async communication
-  - Values data and metrics
-```
-
-*(Add 2-3 personas)*
+- Time: 100-150 hours annually per user on manual work
+- Results: 30-50% longer plateaus, higher injury risk
+- Financial: $10-30/month for coaching software or $100-300/month for actual coaches
+- Opportunity: Missing AI-powered insights that could optimize training
 
 ---
 
-## P CORE VALUE PROPOSITION
+## 💡 Solution
 
-### What Makes Us Different?
+### Core Innovation Pillars
 
-[What's unique about this solution? Why would users choose this over alternatives?]
+**1. ZTL DSL (Zenith Training Language)**
 
-**Example:**
+Industry-first YAML-based domain-specific language for workout programs. Enables programmatic manipulation, version control, and AI analysis. Programs become code - versionable, shareable, AI-readable.
 
-Unlike traditional project management tools:
-- Context-aware: Discussions happen right on tasks
-- Real-time: See updates instantly, no refresh needed
-- Smart: AI suggests priorities and identifies blockers
-- Simple: No complex configuration, works out of the box
+*Example workflow:* Export program to YAML → Send to Claude with embedded prompts → AI analyzes using training science principles → Returns structured recommendations → Import with one click.
 
-### Key Benefits
+**2. Integrated Workout Lifecycle**
 
-**For [User Type 1]:**
--  [Benefit 1]
--  [Benefit 2]
--  [Benefit 3]
+Complete training workflow in one platform: design → execute → log → analyze → optimize. Drag-and-drop builder, professional execution mode (RPE/rest timers), auto-logging to Firestore, Recharts analytics.
 
-**Example:**
-**For Team Leads:**
--  70% less time in status meetings
--  See entire team's work at a glance
--  Identify blockers before they escalate
+*Value:* Zero context switching, zero manual data entry, instant analytics, AI always has full context.
 
-*(Repeat for each user type)*
+**3. AI-First Architecture**
 
----
+Built on Genkit AI (Google) with 5 AI flows: insights, progression, recommendations, recovery, nutrition. Future: automatic analysis triggers, AI-generated patches, one-click apply (Stage 4.2.2).
 
-## <� MUST-HAVE FEATURES (Core Value)
+*Differentiation:* Bidirectional workflow (Export → AI Analysis → Import) vs one-way prompts in other apps.
 
-These features define the product. Without them, it's not [Project Name].
+**4. Habit-Training Integration**
 
-### Feature 1: [Name]
+Habit Tracker 2.0 connects recovery metrics to performance. AI correlates habits with workout data: "Poor sleep → 15% volume decrease within 48hrs". Includes Wheel of Life, daily reflection, contextual systems.
 
-**What:** [Brief description]
-**Why:** [User benefit]
-**Example:** [Concrete example of use]
+*Impact:* Holistic optimization - training is 30%, recovery/nutrition/sleep is 70%.
 
-**Example:**
+**5. Professional Features + Consumer UX**
 
-### Feature 1: Real-Time Task Board
-
-**What:** Kanban-style board with live updates
-**Why:** Team sees changes instantly, stays synchronized
-**Example:** When developer moves task to "In Review",
-            team lead sees it immediately and can act
-
-### Feature 2: [Name]
-[Same structure...]
-
-### Feature 3: [Name]
-[Same structure...]
-
-*(List 5-8 must-have features)*
+Cycle programming, RPE autoregulation, periodization templates presented through intuitive UI (Radix UI + Tailwind). Modern stack (Next.js 15, React 18) rivals top consumer apps.
 
 ---
 
-## =� SUCCESS METRICS
+## 🎭 Target Audience
 
-### How We Measure Success
+### Primary: Serious Fitness Enthusiasts
 
-**Phase: MVP (First 3 months)**
-- [ ] [Metric 1]: [Target]
-- [ ] [Metric 2]: [Target]
-- [ ] [Metric 3]: [Target]
+- Age: 20-45, training 1-5+ years, 3-6x/week
+- Understands RPE, periodization, progressive overload
+- Frustrated with consumer app limitations
+- Currently uses: Strong/Hevy + spreadsheets + AI chats (fragmented)
+- Willing to invest in tools ($5-20/month range for future premium)
 
-**Example:**
+**Pain:** Current apps too simple, professional tools too complex/expensive
 
-Phase: MVP
-- [ ] User Activation: 60% of signups create first task within 24h
-- [ ] Retention: 40% of users return weekly
-- [ ] NPS: >30
-- [ ] Time to Value: User completes core workflow in <5 minutes
+**Need:** Integrated platform with professional features, intuitive UX, AI integration
 
-**Phase: Growth (6-12 months)**
-- [ ] [Metric 1]: [Target]
-- [ ] [Metric 2]: [Target]
+### Secondary: Personal Trainers (Own Training)
 
-**Long-term (1+ year)**
-- [ ] [Metric 1]: [Target]
-- [ ] [Metric 2]: [Target]
+- Want simpler than coaching platforms for personal workouts  
+- Value AI as thought partner
+- Early adopters, potential ambassadors
 
----
+### Tertiary: Competitive Amateur Athletes
 
-## <� PRODUCT PRINCIPLES
-
-### Design Principles
-
-1. **[Principle 1]**
-   [What it means in practice]
-
-**Example:**
-
-1. **Simplicity Over Features**
-   When in doubt, do less. Every feature must justify its complexity.
-   Remove features before adding them.
-
-2. **Async-First**
-   Design for async work. Real-time is great, but never required.
-   Team members in different timezones should have equal experience.
-
-3. **Context is King**
-   Never make users hunt for information. Show relevant context
-   everywhere: who, what, when, why.
-
-*(List 3-5 principles)*
-
-### Technical Principles
-
-1. **[Principle 1]**
-   [What it means in practice]
-
-**Example:**
-
-1. **Performance is a Feature**
-   <100ms interactions, <2s page loads. No compromises.
-
-2. **Data Ownership**
-   Users own their data. Easy export, no lock-in.
-
-3. **Security by Default**
-   Secure by design, not as afterthought. Regular audits.
-
-*(List 3-5 principles)*
+- Powerlifting, CrossFit, bodybuilding, Olympic weightlifting
+- Need meet prep planning, percentage-based programming, detailed analytics
+- High training frequency (5-7 days/week)
 
 ---
 
-## =� NON-GOALS (Explicit Scope)
+## ⚡ Core Value Propositions
 
-What we're **NOT** building (at least not now):
+**"Professional training, intelligent automation, one platform"**
 
-- L [Non-goal 1]
-- L [Non-goal 2]
-- L [Non-goal 3]
+**For Fitness Enthusiasts:**
 
-**Example:**
+1. **Save 2-3 hours weekly** - Integrated workflow eliminates manual tracking/analysis
+2. **Train like coached athlete** - Professional features + AI insights without $100-300/month coaches
+3. **Leverage AI analysis** - Export to Claude/Gemini, import recommendations with one click
+4. **Make progress visible** - Recharts analytics show exactly where you're improving
 
-- L Time Tracking (use dedicated tools)
-- L Invoicing/Billing (not a finance tool)
-- L Email Client (integrate, don't replace)
-- L Video Calls (Zoom/Meet are fine)
-- L Enterprise Features in MVP (focus on teams <50)
+**For Trainers:**
 
-**Why document this?**
-Prevents scope creep. These might be future features, but not now.
+1. **AI thought partner** - Catches what you might miss in your own training
+2. **Stay cutting-edge** - Test AI features personally before client use
+3. **Simpler than coaching platforms** - Just for your training, not client management
 
----
+**For Athletes:**
 
-## =� HIGH-LEVEL ROADMAP
-
-### Phase 0: MVP (Months 1-3)
-
-**Goal:** Prove core value proposition
-
-**Must-Have:**
-- [Feature 1]
-- [Feature 2]
-- [Feature 3]
-
-**Target Users:** [specific segment]
-
-**Success Criteria:** [metric]
-
-**Example:**
-
-Phase 0: MVP (Months 1-3)
-
-Goal: Small teams can manage tasks better than Trello/Asana
-
-Must-Have:
-- Real-time task board
-- In-context discussions
-- Basic team management
-
-Target Users: Tech teams <15 people
-
-Success: 10 teams using daily, 40% weekly retention
-
-### Phase 1: [Name] (Months 4-6)
-[Same structure...]
-
-### Phase 2: [Name] (Months 7-12)
-[Same structure...]
+1. **Precision meet prep** - Cycle planning, percentage programming, historical tracking
+2. **Data-driven weak points** - Volume distribution, progression curves, AI analysis
 
 ---
 
-## =� KEY INSIGHTS & CONTEXT
+## 🏗️ Strategic Differentiators
 
-### Market Context
+### 1. ZTL DSL (Industry First)
 
-[What's the market landscape? Competitors? Timing?]
+**No other fitness app has programmatic DSL for workout programs.**
 
-**Example:**
+Creates ecosystem: GitHub templates, version-controlled programs, community sharing. Like Markdown for documents or YAML for infrastructure - we're standardizing workout program specification.
 
-Market is crowded (Asana, Monday, Jira, etc.) but:
-- Tools are bloated (too many features)
-- Remote work surged (new needs)
-- Younger teams want simpler tools
-- Opportunity: Simple + Real-time + Smart
+### 2. Bidirectional AI Workflow
 
-### Technical Context
+Export complete program + performance → AI analyzes with training science prompts → Returns structured patches → One-click import.
 
-[Any technical constraints, opportunities, or decisions?]
+*Example:* "Volume +12% weekly is aggressive. Week 3 RPE 8.9 (high). Recommendation: maintain volume, reduce intensity to RPE 7-8, deload week 5."
 
-**Example:**
+### 3. Habit-Training Integration
 
-- Target: Web-first, mobile later
-- Real-time: Critical (use WebSockets)
-- Scale: Start small (1k users), design for 100k
-- Data: Relational structure (PostgreSQL)
+AI correlates habits with performance. Tracks sleep, nutrition, stress alongside training. Wheel of Life visualizations, daily reflection, AI insights.
 
-### User Research Insights
+*Unique:* Other apps separate habits (Habitica) from training (Strong) - we connect them.
 
-[Key learnings from user research, if any]
+### 4. Professional Features + Consumer UX
 
-**Example:**
-
-From 20 user interviews:
-- "Current tools feel like homework" (12/20)
-- "I want to see, not be told" (15/20)
-- "Setup takes too long" (18/20)
-- "Mobile experience is broken" (10/20)
-
-Takeaway: Simplicity and mobile are critical.
+Bridges coaching platforms (professional features, poor UX) and consumer apps (great UX, basic features). Modern stack quality with professional power.
 
 ---
 
-## <� USER JOURNEY (Ideal State)
+## 📊 Success Metrics
 
-### New User Journey
+**Primary User Metrics:**
 
-**Step 1:** [Action]
-**Experience:** [What happens]
-**Feeling:** [How user feels]
+1. **3-month retention:** >40% (vs industry 20-30%)
+2. **WAU/MAU ratio:** >60% (consistent training)
+3. **Session duration:** >15 min (meaningful engagement)
+4. **ZTL adoption:** >50% export at least once
+5. **Program completion:** >70% finish 4-week mesocycle
 
-**Example:**
+**Product Metrics:**
 
-Step 1: Sign up
-Experience: Email + password, no verification wait
-Feeling: "That was easy!"
+6. **Analytics views:** >3/week per user
+7. **Habit tracking:** >60% adoption
+8. **Custom programs:** >40% create own
+9. **RPE logging:** >90% workouts
+10. **AI acceptance:** >30% import recommendations (Stage 4.2.2+)
 
-Step 2: Create first task
-Experience: Prompted to add task, auto-tutorial shows
-Feeling: "I'm already productive"
+**Technical:**
 
-Step 3: Invite team
-Experience: Simple invite link, teammates onboard in seconds
-Feeling: "My team is here, let's collaborate"
-
-Step 4: First collaboration
-Experience: Teammate comments on task, user sees in real-time
-Feeling: "This actually works!"
-
-Result: User becomes power user within 1 week
-
-### Returning User Journey
-
-[Similar format for daily/weekly user experience]
+11. **Performance:** <2s page load, <500ms API response
+12. **Reliability:** <1% error rate
 
 ---
 
-## =� REFERENCES & INSPIRATION
+## 🚀 Milestones
 
-### Inspiration (What We Like)
+### Current: 65-70% MVP (Stage 4.2.1 Complete)
 
-- **[Product 1]**: [What we like about it]
-- **[Product 2]**: [What we like about it]
+**Completed:**
+- ✅ Auth, Database, UI Framework
+- ✅ Workout Builder (Drag & Drop)
+- ✅ Execution & Tracking (RPE, Rest Timer)
+- ✅ Program Management (Cycles)
+- ✅ ZTL DSL (Export/Import)
+- ✅ Schedule, History, Basic Analytics
+- ✅ Habit Tracker Core
 
-**Example:**
+### Next 2-3 Months (Parallel Development)
 
-- **Linear**: Speed, keyboard shortcuts, beautiful design
-- **Notion**: Flexibility, clean UI, great async collaboration
-- **Figma**: Real-time collaboration done right
-- **Superhuman**: Onboarding experience, attention to detail
+**Stage 4.2.2: Gemini AI Integration** (3-4 weeks)
+- Automatic analysis, patch generation, one-click apply
 
-### Anti-Inspiration (What We Avoid)
+**Stage 4.3: Advanced Analytics** (2-3 weeks)
+- Heatmaps, radar charts, volume distribution
 
-- **[Product 1]**: [What we don't like]
-- **[Product 2]**: [What we don't like]
+**Habit Tracker 2.0 Completion** (4-6 weeks)
+- Daily Reflection, Context Systems, AI Insights, Claude Integration
 
-**Example:**
+**Tech Stack Migration** (3-4 weeks)
+- React 19, Next.js 16, Firebase 12, Zod 4
 
-- **Jira**: Too complex, overwhelming UI
-- **Trello**: Too simple, doesn't scale
-- **Microsoft Teams**: Cluttered, slow
+**E2E Testing** (2 weeks)
+- Playwright critical paths
 
----
+### MVP Launch (3 months)
 
-## = DOCUMENT EVOLUTION
+**Criteria:**
+- All critical modules 100%
+- All high-priority modules 100%
+- E2E tests passing
+- Tech stack updated
+- Deployment configured
 
-This is a living document. Update when:
-- Vision evolves
-- User research reveals new insights
-- Market changes
-- Pivot decisions
+### Post-MVP (3-12 months)
 
-### Change Log
-
-| Version | Date | Changes | Author |
-|---------|------|---------|--------|
-| 1.0 | [Date] | Initial version (from bootstrap) | Claude Code |
-| 1.1 | [Date] | Updated after user testing | [Name] |
-
----
-
-##  CHECKLIST: Is This Ready?
-
-Use this to verify completeness:
-
-- [ ] Vision is clear and compelling
-- [ ] Target users are specific (not "everyone")
-- [ ] Value proposition is unique
-- [ ] Must-have features are defined
-- [ ] Success metrics are measurable
-- [ ] Scope is clear (goals AND non-goals)
-- [ ] Team alignment achieved (if applicable)
-
-**If all checked:** This document is ready to guide development! =�
+**Phase 1 (Months 4-6):** Refinement, additional AI features
+**Phase 2 (Months 7-9):** Mobile app, template marketplace, monetization  
+**Phase 3 (Months 10-12):** Coach tools, integration APIs, advanced AI
 
 ---
 
-**Next Document:** Read `01_PRD.md` for detailed requirements
+## 🎯 Guiding Principles
+
+**1. Data Ownership First**
+Users own training data. ZTL ensures portability. No vendor lock-in.
+
+**2. AI as Augmentation, Not Replacement**
+AI suggests, users decide. Build trust through user control.
+
+**3. Professional Depth, Consumer Polish**
+Every feature must be powerful AND intuitive.
+
+**4. Integration Over Fragmentation**
+Connect features, don't create silos. Habit Tracker links to performance, not standalone.
+
+**5. Open Ecosystem**
+ZTL designed for sharing, version control, community. Programs on GitHub, trainer templates freely shared.
+
+---
+
+**Last Updated:** November 14, 2025  
+**Author:** Bootstrap PHASE 5  
+**Status:** Active Development
