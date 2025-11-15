@@ -21,6 +21,7 @@ out/
 .next/
 .nuxt/
 .cache/
+*.tsbuildinfo
 
 # IDE
 .vscode/
