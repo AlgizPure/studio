@@ -1,353 +1,340 @@
-# Zenith Trainer - Cursor AI Rules
-# Fitness tracking application with AI-powered insights
-# Stack: Next.js 15 + TypeScript + Firebase + Genkit AI + Radix UI + Tailwind CSS
+# CURSOR PROJECT RULES - ZENITH TRAINER
 
-## Project Overview
-You are working on Zenith Trainer, a comprehensive fitness and habit tracking application with AI-powered insights, workout progression, and program management.
-
-## Core Technologies
-- **Framework**: Next.js 15.5.6 (App Router, React Server Components)
-- **Language**: TypeScript 5 (strict mode enabled)
-- **Styling**: Tailwind CSS 3.4 + tailwind-merge + class-variance-authority
-- **UI Components**: Radix UI primitives + custom shadcn/ui components
-- **Backend**: Firebase 11.9 (Auth, Firestore, Storage, Admin SDK)
-- **AI**: Google Genkit 1.20 with Google Generative AI
-- **Forms**: React Hook Form 7.54 + Zod 3.24 validation
-- **State**: React hooks, Firebase real-time subscriptions
-- **Testing**: Playwright (E2E), TypeScript type checking
-- **Package Manager**: npm
-
-## Code Style & Patterns
-
-### TypeScript
-- **ALWAYS use strict TypeScript** - no `any` types unless absolutely necessary
-- Use explicit return types for functions
-- Prefer `type` over `interface` for consistency
-- Use Zod schemas for runtime validation
-- Example:
-  ```typescript
-  type User = {
-    id: string;
-    name: string;
-  };
-
-  const getUser = (id: string): Promise<User> => {...}
-  ```
-
-### React & Next.js
-- **Prefer React Server Components (RSC)** by default
-- Use `'use client'` directive ONLY when:
-  - Using React hooks (useState, useEffect, etc.)
-  - Handling browser events
-  - Using context providers
-- Follow Next.js App Router conventions:
-  - `page.tsx` for routes
-  - `layout.tsx` for shared layouts
-  - `route.ts` for API routes
-  - `loading.tsx` for loading states
-- Use Next.js built-in features:
-  - `next/link` for navigation
-  - `next/image` for images
-  - Dynamic imports for code splitting
-- Minimize `useEffect` usage - prefer RSC data fetching
-- Use async/await in Server Components for data fetching
-
-### Component Patterns
-- **Functional components only** - no class components
-- Use composition over prop drilling
-- Keep components small and focused (< 200 lines)
-- Extract reusable logic into custom hooks
-- Props interface should be defined inline or as type above component
-- Example structure:
-  ```typescript
-  'use client';
-
-  import { useState } from 'react';
-  import { Button } from '@/components/ui/button';
-
-  interface MyComponentProps {
-    title: string;
-    onAction: () => void;
-  }
-
-  export function MyComponent({ title, onAction }: MyComponentProps) {
-    const [isLoading, setIsLoading] = useState(false);
-
-    return (
-      <div>
-        <h2>{title}</h2>
-        <Button onClick={onAction}>Action</Button>
-      </div>
-    );
-  }
-  ```
-
-### Firebase
-- **ALWAYS use Firebase hooks** from `/src/firebase/provider.tsx`:
-  - `useUser()` for authentication
-  - `useFirestore()` for Firestore instance
-  - `useCollection()` for real-time collections
-  - `useDoc()` for real-time documents
-- Handle Firebase errors properly using error emitter
-- Use `WithId<T>` type for documents with Firestore IDs
-- Structure Firestore paths: `users/{userId}/{collection}`
-- Use Firebase Admin SDK only in API routes (server-side)
-- Example:
-  ```typescript
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  const workoutsQuery = useMemoFirebase(
-    () => user ? collection(firestore, `users/${user.uid}/workouts`) : null,
-    [user, firestore]
-  );
-
-  const { data: workouts } = useCollection<Workout>(workoutsQuery);
-  ```
-
-### AI & Genkit
-- Use Genkit flows for AI operations (in `/src/ai/flows/`)
-- Always handle AI errors gracefully with try-catch
-- Use `@ts-expect-error - Genkit type wrapper issue` for known Genkit type issues
-- Structure AI prompts with clear input/output schemas
-- Log AI operations with descriptive messages
-- Example:
-  ```typescript
-  try {
-    const result = await aiFlow({ input: data });
-    // @ts-expect-error - Genkit type wrapper issue
-    return result.output ?? result;
-  } catch (error) {
-    console.error('[ai-operation] Error:', error);
-    throw error;
-  }
-  ```
-
-### Styling with Tailwind
-- Use Tailwind utility classes for styling
-- Use `cn()` helper from `@/lib/utils` to merge classes
-- Follow mobile-first responsive design
-- Use CSS variables for theme colors (defined in globals.css)
-- Prefer Tailwind over inline styles or CSS modules
-- Use `class-variance-authority` for component variants
-- Example:
-  ```typescript
-  import { cn } from '@/lib/utils';
-
-  <div className={cn(
-    "flex items-center gap-4",
-    isActive && "bg-primary text-primary-foreground",
-    className
-  )}>
-  ```
-
-### UI Components (Radix UI + shadcn/ui)
-- Use existing UI components from `/src/components/ui/`
-- Don't recreate components that already exist
-- Follow Radix UI patterns for accessibility
-- Use compound components pattern
-- Available components:
-  - Button, Input, Textarea, Select, Checkbox, Switch
-  - Dialog, Alert Dialog, Popover, Tooltip, Toast
-  - Card, Tabs, Accordion, Separator, Skeleton
-  - Form components with React Hook Form integration
-
-### Forms & Validation
-- Use React Hook Form for form state management
-- Define Zod schemas for validation
-- Use `@hookform/resolvers/zod` for integration
-- Show validation errors inline
-- Example:
-  ```typescript
-  const schema = z.object({
-    name: z.string().min(1, 'Name is required'),
-    email: z.string().email('Invalid email'),
-  });
-
-  type FormValues = z.infer<typeof schema>;
-
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-  });
-  ```
-
-### Error Handling
-- Use try-catch for async operations
-- **NEVER use empty catch blocks** - always log errors
-- Use custom error types from `/src/firebase/errors.ts`
-- Use error emitter for Firebase permission errors
-- Show user-friendly error messages with Toast
-- Example:
-  ```typescript
-  try {
-    await operation();
-  } catch (error) {
-    console.error('Operation failed:', error);
-    toast({
-      title: 'Error',
-      description: 'Something went wrong. Please try again.',
-      variant: 'destructive',
-    });
-  }
-  ```
-
-### File Organization
-- Group related components in folders
-- Use barrel exports (index.ts) sparingly
-- Keep utilities in `/src/lib/`
-- Keep types in `/src/lib/types.ts` or colocated with components
-- Keep AI flows in `/src/ai/flows/`
-- Keep Firebase hooks in `/src/firebase/`
-- Structure:
-  ```
-  src/
-  ├── app/                 # Next.js App Router pages
-  ├── components/          # React components
-  │   ├── ui/             # Base UI components (shadcn)
-  │   └── [feature]/      # Feature-specific components
-  ├── lib/                # Utilities and helpers
-  ├── firebase/           # Firebase configuration and hooks
-  ├── ai/                 # Genkit AI flows and prompts
-  └── hooks/              # Custom React hooks
-  ```
-
-## Naming Conventions
-- **Files**: kebab-case (e.g., `workout-builder.tsx`)
-- **Components**: PascalCase (e.g., `WorkoutBuilder`)
-- **Functions/Variables**: camelCase (e.g., `getUserWorkouts`)
-- **Types/Interfaces**: PascalCase (e.g., `WorkoutExtended`)
-- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_WORKOUTS`)
-- **Hooks**: camelCase with 'use' prefix (e.g., `useWorkouts`)
-
-## Import Order
-1. React and Next.js imports
-2. External library imports (alphabetically)
-3. Internal components (`@/components`)
-4. Internal utilities (`@/lib`)
-5. Types
-6. Styles
-
-Example:
-```typescript
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
-import { Button } from '@/components/ui/button';
-import { Dialog } from '@/components/ui/dialog';
-
-import { cn } from '@/lib/utils';
-import type { Workout } from '@/lib/types';
-```
-
-## Testing
-- Write E2E tests with Playwright in `/e2e/`
-- Use descriptive test names
-- Test user flows, not implementation details
-- Use `playwright.config.ts` configuration
-- Run tests with `npm run test:e2e`
-
-## Performance
-- Use `React.memo()` for expensive components
-- Use `useMemo()` and `useCallback()` appropriately
-- Lazy load heavy components with `next/dynamic`
-- Optimize images with `next/image`
-- Minimize client-side JavaScript
-- Use RSC for data fetching when possible
-
-## Security
-- **NEVER commit sensitive data** (API keys, credentials)
-- Store secrets in environment variables
-- Use Firebase Security Rules for access control
-- Validate all user inputs with Zod
-- Sanitize data before rendering
-- Use Firebase Admin SDK only in API routes
-
-## Environment Variables
-- Store in `.env.local` (never commit this file)
-- Use `NEXT_PUBLIC_` prefix for client-side variables
-- Reference `.env.example` for required variables
-- Required variables:
-  - Firebase config (NEXT_PUBLIC_FIREBASE_*)
-  - Google AI API key (GOOGLE_GENAI_API_KEY)
-
-## Git Practices
-- Write clear, descriptive commit messages
-- Use conventional commits format:
-  - `feat:` for new features
-  - `fix:` for bug fixes
-  - `docs:` for documentation
-  - `refactor:` for code refactoring
-  - `test:` for tests
-  - `chore:` for maintenance
-- Keep commits focused and atomic
-- Example: `feat: add workout progression suggestions with AI`
-
-## Documentation
-- Add JSDoc comments for complex functions
-- Keep README.md up to date
-- Document non-obvious code decisions
-- Use TODO comments sparingly and track them
-- Format:
-  ```typescript
-  /**
-   * Calculates workout progression based on history
-   * @param workoutId - The workout to analyze
-   * @param days - Number of days to look back
-   * @returns Progression suggestions
-   */
-  ```
-
-## Debugging
-- Use proper logging system (see `/src/lib/logger.ts` - TODO)
-- Use descriptive log messages
-- Include context in error logs
-- Use browser DevTools for client debugging
-- Use Next.js built-in error handling
-
-## Common Pitfalls to Avoid
-- ❌ Don't use `any` type - use `unknown` or proper types
-- ❌ Don't use `console.log` in production - use logger utility
-- ❌ Don't fetch data in `useEffect` - use RSC or React Query
-- ❌ Don't mutate state directly - use setState or reducer
-- ❌ Don't forget error boundaries for error handling
-- ❌ Don't use `var` - always use `const` or `let`
-- ❌ Don't ignore TypeScript errors - fix them properly
-- ❌ Don't use deprecated APIs - check documentation
-
-## AI Assistance Guidelines
-When I ask you to:
-- **"Create a component"** → Follow component patterns above
-- **"Add a feature"** → Update related tests and types
-- **"Fix a bug"** → Identify root cause, add tests, fix properly
-- **"Refactor code"** → Maintain functionality, improve structure
-- **"Add AI feature"** → Use Genkit flows, handle errors
-- **"Add Firebase feature"** → Use hooks, handle permissions
-
-## When in Doubt
-1. Check existing similar code in the project
-2. Refer to official documentation (Next.js, React, Firebase)
-3. Follow TypeScript strict mode guidelines
-4. Ask clarifying questions before making assumptions
-5. Prefer simplicity over cleverness
-
-## Project-Specific Notes
-- This is a fitness tracking app with workouts, habits, and programs
-- AI features use Google Gemini via Genkit
-- Real-time updates via Firebase subscriptions
-- Focus on user experience and performance
-- Accessibility is important (use Radix UI patterns)
-
-## References
-- Next.js Docs: https://nextjs.org/docs
-- React Docs: https://react.dev
-- TypeScript Handbook: https://www.typescriptlang.org/docs/
-- Firebase Docs: https://firebase.google.com/docs
-- Genkit Docs: https://firebase.google.com/docs/genkit
-- Radix UI: https://www.radix-ui.com
-- Tailwind CSS: https://tailwindcss.com
+**Version:** 1.0.0  
+**Project:** Zenith Trainer - AI-Driven Fitness Platform  
+**Last Updated:** November 15, 2025
+**Current Stage:** 4.2.1 Complete (65-70% MVP Ready)
 
 ---
-Last updated: 2025-01-03
-Project: Zenith Trainer v0.1.0
+
+## 🎯 PROJECT OVERVIEW
+
+**Zenith Trainer** is an AI-powered fitness tracking platform with unique features:
+- **ZTL DSL** (Zenith Training Language) - YAML-based program description
+- **Bidirectional AI Workflow** - Export → Claude/Gemini Analysis → Import recommendations
+- **Comprehensive Analytics** - Recharts visualizations, RPE tracking, volume analysis
+- **Habit Tracker 2.0** - Multi-dimensional life tracking (in progress)
+
+**Tech Stack:**
+- Frontend: Next.js 15 (App Router), React 18, TypeScript strict mode
+- Backend: Firebase 11 (Auth, Firestore, Storage)
+- AI: Genkit AI 1.20 + Google Gemini API
+- UI: Radix UI (17 components) + Tailwind CSS
+- Charts: Recharts, DnD: @dnd-kit
+
+---
+
+## 📁 DOCUMENTATION STRUCTURE
+
+### Core Documentation (`docs/core/`)
+1. `00_PROJECT_ESSENCE.md` - Vision and key innovations
+2. `01_PRD.md` - Product requirements (all 15 modules)
+3. `02_ROADMAP.md` - Development timeline and milestones
+4. `03_TECH_STACK.md` - Full technology stack
+5. `04_ARCHITECTURE.md` - System architecture
+6. `99_SYSTEM_GUIDE.md` - System philosophy
+
+### Module Requirements (`docs/requirements/`)
+- `01_authentication_requirements.md` - Firebase Auth (100% complete)
+- `02_exercise_library_requirements.md` - Exercise database (100% complete)
+- `03_workout_builder_requirements.md` - Drag-drop builder (100% complete)
+- `04_program_management_requirements.md` - Multi-week programs (100% complete)
+- `05_workout_execution_requirements.md` - Real-time tracking (100% complete)
+- `06_workout_history_requirements.md` - Historical data (100% complete)
+- `07_schedule_planning_requirements.md` - Weekly schedule (100% complete)
+- `08_ztl_requirements.md` - Zenith Training Language DSL (100% complete)
+- `09_analytics_requirements.md` - Analytics & reports (95% complete)
+- `10_user_interface_requirements.md` - UI/UX (95% complete)
+- `11_data_management_requirements.md` - Firestore & validation (100% complete)
+- `12_ai_integration_requirements.md` - Gemini AI integration (60% complete)
+- `13_habit_tracker_requirements.md` - Habit Tracker 2.0 (40% complete)
+- `14_performance_requirements.md` - Performance & optimization (60% complete)
+- `15_testing_quality_requirements.md` - Testing strategy (20% complete)
+
+### Progress Tracking (`docs/progress/`)
+- `modules_status.md` - Current implementation status
+- `sprint_current.md` - Current sprint planning
+- `backlog.md` - Prioritized product backlog
+
+---
+
+## 🎯 CORE PRINCIPLES
+
+### 1. Requirements-Driven Development
+
+**ALWAYS work in this order:**
+1. **Read requirements FIRST** - Check corresponding requirements file
+2. **Understand acceptance criteria** - Know what "done" means
+3. **Implement with traceability** - Reference requirements in code
+4. **Update documentation** - Keep docs in sync with code
+
+### 2. Traceability
+
+**Code Comments Format:**
+```typescript
+// Module: [Module Name] (Module XX)
+// Function: [Function XX.Y]
+// Reference: docs/requirements/XX_[module]_requirements.md
+export function myFunction() {
+  // Implementation
+}
+```
+
+**Example:**
+```typescript
+// Module: Workout Builder (Module 3)
+// Function: 3.1 Exercise Selection
+// Reference: docs/requirements/03_workout_builder_requirements.md
+export function selectExercise(exerciseId: string) {
+  // Implements exercise selection from library with search/filter
+}
+```
+
+### 3. Architecture Adherence
+
+Follow Next.js App Router patterns:
+```
+/app                 # Routes & pages (React Server Components)
+  /(auth)            # Auth routes (login, signup)
+  /dashboard         # Main dashboard
+  /programs          # Program management
+  /execute           # Workout execution
+  /history           # Workout history
+  /analytics         # Analytics & charts
+  /habits            # Habit Tracker
+
+/components          # React components
+  /ui                # Radix UI wrapper components
+  /workout-*         # Workout-specific components
+  /program-*         # Program-specific components
+  /habit-*           # Habit-specific components
+
+/lib                 # Utilities & helpers
+  /types             # TypeScript types & Zod schemas
+  /ztl               # ZTL DSL parser/converter
+  /calculations      # Volume, 1RM, RPE calculations
+
+/firebase            # Firebase config & helpers
+  /auth.ts           # Authentication
+  /firestore.ts      # Firestore setup
+
+/ai                  # AI integration (Genkit)
+  /genkit.config.ts  # Genkit setup
+  /flows             # AI flows (5 flows)
+
+/app/api             # Next.js API Routes
+  /ai                # AI endpoints
+```
+
+---
+
+## 💻 CODE STANDARDS
+
+### TypeScript Strict Mode
+- ✅ All files must pass TypeScript strict mode
+- ❌ NO `any` types allowed (use `unknown` and type guards)
+- ✅ All functions must have explicit return types
+- ✅ All Firestore documents validated with Zod schemas
+
+### Firestore Data Access
+```typescript
+// ALWAYS validate Firestore documents with Zod
+import { WorkoutSchema } from '@/lib/types/schemas';
+
+const workoutDoc = await getDoc(doc(db, 'workouts', workoutId));
+const data = WorkoutSchema.parse(workoutDoc.data());
+```
+
+### ZTL DSL Usage
+```typescript
+// When working with ZTL (Module 8)
+import { parseZTL, convertToZTL } from '@/lib/ztl';
+
+// Parse ZTL YAML → UI objects
+const program = parseZTL(yamlString);
+
+// Convert UI objects → ZTL YAML
+const yaml = convertToZTL(program);
+```
+
+### AI Integration (Genkit)
+```typescript
+// When using AI flows (Module 12)
+import { ai } from '@/ai/genkit.config';
+import { progressionFlow } from '@/ai/flows/progression';
+
+const result = await ai.runFlow(progressionFlow, { history });
+```
+
+---
+
+## 🔄 WORKFLOWS
+
+### Before Starting Work
+1. **Check Progress:**
+   - Read `docs/progress/modules_status.md` (current module status)
+   - Read `docs/progress/sprint_current.md` (current sprint goals)
+   - Read `docs/progress/backlog.md` (prioritized tasks)
+
+2. **Check Requirements:**
+   - Identify which module(s) you'll work on
+   - Read corresponding `docs/requirements/XX_[module]_requirements.md`
+   - Understand acceptance criteria for the function
+
+### During Development
+1. **Reference Requirements:**
+   - Add traceability comments (Module XX, Function XX.Y)
+   - Implement to meet acceptance criteria
+   - Follow architecture patterns (see `docs/core/04_ARCHITECTURE.md`)
+
+2. **Type Safety:**
+   - Use Zod schemas for all Firestore documents
+   - Use TypeScript strict mode (no `any`)
+   - Validate all external inputs (API requests, user input)
+
+3. **Testing:**
+   - Write tests for critical paths (auth, workout execution, program management)
+   - Use Playwright for E2E tests (configured, tests pending - see Module 15)
+   - Follow testing patterns in `docs/requirements/15_testing_quality_requirements.md`
+
+### After Completing Work
+1. **Update Progress:**
+   - Update `docs/progress/modules_status.md` if module % changed
+   - Update `docs/progress/sprint_current.md` if sprint task completed
+
+2. **Commit with Traceability:**
+   ```
+   <type>(module): <short description>
+   
+   <Detailed description>
+   
+   Module: [Module Name] (Module XX)
+   Function: XX.Y
+   Reference: docs/requirements/XX_[module]_requirements.md
+   
+   Tests: X/X passing (if applicable)
+   ```
+
+---
+
+## 📋 MODULE STATUS (Quick Reference)
+
+### ✅ Complete (8 modules - 100%)
+- Authentication, Exercise Library, Workout Builder, Program Management
+- Workout Execution, Workout History, Schedule, ZTL DSL, Data Management
+
+### 🟡 In Progress (5 modules - 20-95%)
+- Analytics (95%) - Need Stage 4.3 (heatmaps, radar charts)
+- AI Integration (60%) - Need Stage 4.2.2 (one-click apply)
+- UI (95%) - Need error boundaries improvement
+- Habit Tracker (40%) - Need Stages 3-6
+- Performance (60%) - Need Firebase Performance monitoring
+- Testing (20%) - Need E2E/unit/integration tests
+
+### Priority Order
+1. **Critical:** UI error boundaries (5 SP)
+2. **High:** AI Stage 4.2.2 (8 SP), Analytics Stage 4.3 (6 SP)
+3. **Medium:** Habit Tracker Stages 3-6 (34 SP), Performance monitoring (5 SP), Testing (36 SP)
+
+---
+
+## ⚠️ CRITICAL RULES
+
+### NEVER
+- ❌ Write code without reading requirements first
+- ❌ Use `any` type (TypeScript strict mode enforced)
+- ❌ Write to Firestore without Zod validation
+- ❌ Commit without traceability comments
+- ❌ Skip tests for critical paths (auth, execution, data persistence)
+
+### ALWAYS
+- ✅ Read requirements FIRST (`docs/requirements/XX_[module]_requirements.md`)
+- ✅ Add traceability comments (Module XX, Function XX.Y)
+- ✅ Validate Firestore data with Zod schemas
+- ✅ Update progress files after completing tasks
+- ✅ Test critical user flows (E2E recommended - see Module 15)
+
+---
+
+## 🔍 QUICK COMMANDS (For Cursor Chat)
+
+```bash
+# Check current status
+"What's the current project status?"
+→ AI reads modules_status.md and summarizes
+
+# Check module requirements
+"Show me Module 12 (AI Integration) requirements"
+→ AI loads docs/requirements/12_ai_integration_requirements.md
+
+# Implement function
+"Implement Function 12.6 (One-Click Apply Recommendations)"
+→ AI loads requirements and generates code with traceability
+
+# Check architecture
+"Where should I implement [feature]?"
+→ AI checks docs/core/04_ARCHITECTURE.md
+
+# Update progress
+"Update progress: completed Function XX.Y"
+→ AI updates modules_status.md
+```
+
+---
+
+## 📚 KEY FILES TO REFERENCE
+
+### Always Read First:
+1. `docs/progress/modules_status.md` - Current implementation status
+2. `docs/core/99_SYSTEM_GUIDE.md` - System philosophy and overview
+3. `docs/requirements/XX_[module]_requirements.md` - Module-specific requirements
+
+### Architecture & Design:
+- `docs/core/04_ARCHITECTURE.md` - Next.js App Router architecture
+- `docs/core/03_TECH_STACK.md` - Full technology stack
+- `docs/core/01_PRD.md` - Product requirements (all modules)
+
+### Development:
+- `docs/progress/backlog.md` - Prioritized tasks (118 story points)
+- `docs/requirements/15_testing_quality_requirements.md` - Testing strategy
+
+---
+
+## 🚀 CURRENT PRIORITIES (Sprint)
+
+Based on `docs/progress/sprint_current.md`:
+
+1. **Complete bootstrap** (current):
+   - ✅ All 15 module requirements documented
+   - ✅ Progress tracking files created
+   - ⏳ README update
+
+2. **Next Sprint** (Development Sprint 1):
+   - UI Error Boundaries (5 SP)
+   - AI Integration Stage 4.2.2 (8 SP)
+   - Analytics Stage 4.3 (6 SP)
+   - Performance Monitoring (5 SP)
+
+---
+
+## 🎯 PROJECT GOALS
+
+**MVP Readiness:** 65-70% (8/9 critical modules complete)
+
+**Key Innovations:**
+1. **ZTL DSL** - Industry-first YAML-based training program language (100% complete)
+2. **Bidirectional AI** - Export → Claude/Gemini → Import (export complete, import pending)
+3. **Comprehensive Analytics** - Recharts visualizations (95% complete)
+4. **Habit Tracker 2.0** - Multi-dimensional life tracking (40% complete)
+
+**Current Focus:**
+- Complete remaining high-priority modules (AI, Analytics)
+- Implement comprehensive testing (E2E, unit, integration)
+- Prepare for MVP launch
+
+---
+
+**For detailed workflows, examples, and change scenarios, see:**
+- `docs/core/99_SYSTEM_GUIDE.md` - Complete system guide
+- `docs/requirements/` - All module requirements
+- `docs/progress/` - Current status and backlog
