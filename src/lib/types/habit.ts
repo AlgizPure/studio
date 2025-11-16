@@ -159,3 +159,26 @@ export type DailyReflection = {
   createdAt: string; // ISO timestamp
   updatedAt: string; // ISO timestamp
 };
+
+/**
+ * Weekly Context Assessment (Stage 4) - Wheel of Life tracking
+ * Function 13.6: Context Systems
+ */
+export type WeeklyContext = {
+  id: string;
+  userId: string;
+  weekStart: string; // ISO date (Monday of the week)
+  contexts: {
+    fitness: number; // 1-10
+    career: number; // 1-10
+    relationships: number; // 1-10
+    growth: number; // 1-10
+    environment: number; // 1-10
+    fun: number; // 1-10
+    contribution: number; // 1-10
+    spirituality: number; // 1-10
+  };
+  notes?: Record<string, string>; // Optional notes per dimension
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
+};
