@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { ErrorFallback } from '@/components/error-fallback'
+import { logRouteError } from '@/lib/error-logger'
 
 /**
  * Error Handler for Dashboard Route
@@ -12,6 +13,10 @@ import { ErrorFallback } from '@/components/error-fallback'
  * - Quick stats
  * - Recent workouts
  * - Upcoming schedule
+ *
+ * Module: User Interface (Module 10)
+ * Function: 10.10 - Error Boundaries
+ * Reference: docs/requirements/10_user_interface_requirements.md
  */
 export default function DashboardError({
   error,
@@ -21,11 +26,9 @@ export default function DashboardError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('[Dashboard Error]:', {
-      message: error.message,
-      digest: error.digest,
-      stack: error.stack,
-      url: window.location.href,
+    logRouteError(error, '/dashboard', {
+      context: 'Dashboard',
+      features: ['widgets', 'quick stats', 'recent workouts'],
     })
   }, [error])
 

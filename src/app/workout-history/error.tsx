@@ -5,20 +5,20 @@ import { ErrorFallback } from '@/components/error-fallback'
 import { logRouteError } from '@/lib/error-logger'
 
 /**
- * Error Handler for Program Management Route
+ * Error Handler for Workout History Route
  *
  * Catches errors in:
- * - /programs/* (all program management pages)
- * - Program builder
- * - Cycle management
- * - Workout assignment
- * - ZTL export/import
+ * - /workout-history (historical workout logs)
+ * - Calendar view of past workouts
+ * - Workout log details
+ * - Performance comparisons
+ * - Filter by date/exercise/program
  *
  * Module: User Interface (Module 10)
  * Function: 10.10 - Error Boundaries
  * Reference: docs/requirements/10_user_interface_requirements.md
  */
-export default function ProgramsError({
+export default function WorkoutHistoryError({
   error,
   reset,
 }: {
@@ -26,9 +26,9 @@ export default function ProgramsError({
   reset: () => void
 }) {
   useEffect(() => {
-    logRouteError(error, '/programs', {
-      context: 'Program Management',
-      features: ['program builder', 'cycles', 'ZTL export/import'],
+    logRouteError(error, '/workout-history', {
+      context: 'Workout History',
+      features: ['calendar view', 'workout logs', 'performance comparison'],
     })
   }, [error])
 

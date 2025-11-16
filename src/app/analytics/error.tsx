@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { ErrorFallback } from '@/components/error-fallback'
+import { logRouteError } from '@/lib/error-logger'
 
 /**
  * Error Handler for Analytics Route
@@ -12,6 +13,10 @@ import { ErrorFallback } from '@/components/error-fallback'
  * - Volume calculations
  * - RPE analytics
  * - Progress visualizations
+ *
+ * Module: User Interface (Module 10)
+ * Function: 10.10 - Error Boundaries
+ * Reference: docs/requirements/10_user_interface_requirements.md
  */
 export default function AnalyticsError({
   error,
@@ -21,15 +26,12 @@ export default function AnalyticsError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('[Analytics Error]:', {
-      message: error.message,
-      digest: error.digest,
-      stack: error.stack,
-      url: window.location.href,
-    })
-
     // Analytics errors are often due to invalid/missing data
-    // Log this for debugging
+    logRouteError(error, '/analytics', {
+      context: 'Analytics',
+      features: ['Recharts', 'volume calculations', 'RPE analytics'],
+      note: 'Often caused by invalid/missing data',
+    })
   }, [error])
 
   return <ErrorFallback error={error} reset={reset} showDetails={process.env.NODE_ENV === 'development'} />
