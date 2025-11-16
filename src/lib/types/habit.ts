@@ -142,26 +142,20 @@ export type HabitStreak = {
   }[];
 };
 
+/**
+ * Daily Reflection (Stage 3) - End-of-day holistic tracking
+ * Function 13.5: Daily Reflection System
+ */
 export type DailyReflection = {
+  id: string;
+  userId: string;
   date: string; // YYYY-MM-DD
-  rawText: string;
-  parsedEntries: {
-    habitId: string;
-    habitName?: string;
-    extractedValue?: number;
-    extractedDuration?: number;
-    extractedNote?: string;
-    mood?: 'low' | 'neutral' | 'high';
-    energy?: 'low' | 'neutral' | 'high';
-    confidence: number; // 0..1
-    suggestedStatus: HabitLogStatus;
-  }[];
-  manualCorrections: boolean;
-  correctedEntries?: {
-    habitId: string;
-    originalParsed: unknown;
-    userCorrected: unknown;
-  }[];
-  createdAt: string;
-  updatedAt: string;
+  mood: number; // 1-10 scale
+  energy: number; // 1-10 scale
+  stress: number; // 1-10 scale
+  sleepQuality: number; // 1-10 scale
+  gratitude?: string[]; // Optional: 3 things you're grateful for
+  notes?: string; // Free-form daily journal
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
 };
