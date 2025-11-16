@@ -5,20 +5,21 @@ import { ErrorFallback } from '@/components/error-fallback'
 import { logRouteError } from '@/lib/error-logger'
 
 /**
- * Error Handler for Program Management Route
+ * Error Handler for Workout Builder Route
  *
  * Catches errors in:
- * - /programs/* (all program management pages)
- * - Program builder
- * - Cycle management
- * - Workout assignment
- * - ZTL export/import
+ * - /workouts/* (all workout management pages)
+ * - Workout builder (drag & drop)
+ * - Exercise selection
+ * - Set/rep/weight configuration
+ * - Supersets/circuits
+ * - Workout templates
  *
  * Module: User Interface (Module 10)
  * Function: 10.10 - Error Boundaries
  * Reference: docs/requirements/10_user_interface_requirements.md
  */
-export default function ProgramsError({
+export default function WorkoutsError({
   error,
   reset,
 }: {
@@ -26,9 +27,9 @@ export default function ProgramsError({
   reset: () => void
 }) {
   useEffect(() => {
-    logRouteError(error, '/programs', {
-      context: 'Program Management',
-      features: ['program builder', 'cycles', 'ZTL export/import'],
+    logRouteError(error, '/workouts', {
+      context: 'Workout Builder',
+      features: ['drag-drop', 'exercise selection', 'supersets'],
     })
   }, [error])
 

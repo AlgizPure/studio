@@ -5,20 +5,20 @@ import { ErrorFallback } from '@/components/error-fallback'
 import { logRouteError } from '@/lib/error-logger'
 
 /**
- * Error Handler for Program Management Route
+ * Error Handler for Exercise Library Route
  *
  * Catches errors in:
- * - /programs/* (all program management pages)
- * - Program builder
- * - Cycle management
- * - Workout assignment
- * - ZTL export/import
+ * - /library (exercise library)
+ * - Exercise search & filtering
+ * - Custom exercise creation
+ * - Exercise details
+ * - Category/muscle group filtering
  *
  * Module: User Interface (Module 10)
  * Function: 10.10 - Error Boundaries
  * Reference: docs/requirements/10_user_interface_requirements.md
  */
-export default function ProgramsError({
+export default function LibraryError({
   error,
   reset,
 }: {
@@ -26,9 +26,9 @@ export default function ProgramsError({
   reset: () => void
 }) {
   useEffect(() => {
-    logRouteError(error, '/programs', {
-      context: 'Program Management',
-      features: ['program builder', 'cycles', 'ZTL export/import'],
+    logRouteError(error, '/library', {
+      context: 'Exercise Library',
+      features: ['search', 'filtering', 'custom exercises'],
     })
   }, [error])
 

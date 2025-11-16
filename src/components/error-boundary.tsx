@@ -51,8 +51,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Log error to console (in future: send to Sentry/logging service)
-    console.error('ErrorBoundary caught an error:', error, errorInfo)
+    // Log error with structured logging
+    const { logBoundaryError } = require('@/lib/error-logger')
+    logBoundaryError(error, errorInfo)
 
     // Call optional onError callback
     if (this.props.onError) {

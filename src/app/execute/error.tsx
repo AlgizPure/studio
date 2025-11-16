@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { ErrorFallback } from '@/components/error-fallback'
+import { logRouteError } from '@/lib/error-logger'
 
 /**
  * Error Handler for Workout Execution Route
@@ -15,6 +16,10 @@ import { ErrorFallback } from '@/components/error-fallback'
  * - Rest timer
  * - RPE slider
  * - Set logging
+ *
+ * Module: User Interface (Module 10)
+ * Function: 10.10 - Error Boundaries
+ * Reference: docs/requirements/10_user_interface_requirements.md
  */
 export default function ExecuteError({
   error,
@@ -24,12 +29,11 @@ export default function ExecuteError({
   reset: () => void
 }) {
   useEffect(() => {
-    // Log error with context
-    console.error('[Workout Execution Error]:', {
-      message: error.message,
-      digest: error.digest,
-      stack: error.stack,
-      url: window.location.href,
+    // CRITICAL: Workout execution errors are high priority!
+    logRouteError(error, '/execute', {
+      context: 'Workout Execution (CRITICAL)',
+      features: ['exercise tracking', 'rest timer', 'RPE slider', 'set logging'],
+      priority: 'HIGH',
     })
 
     // TODO: Send to error tracking service with high priority
