@@ -1,8 +1,9 @@
 # AI Recommendations Feature
 
-**Status:** ✅ UI Complete | 🟡 Gemini Integration Pending
+**Status:** ✅ COMPLETE (UI + Gemini AI Integration)
 **Stage:** 4.2.2
 **Story Points:** 8 SP
+**Completion Date:** 2025-11-15
 
 ---
 
@@ -18,11 +19,14 @@ AI Recommendations system allows users to receive AI-generated program modificat
 - Diff viewer for change preview
 - Rollback support
 - Mock recommendations for testing
+- **Gemini AI integration** (complete flow + API endpoint)
+- **Firestore integration** (program/logs fetching, caching, usage limits)
+- **Production-ready UI component** (AIRecommendationsComponent)
 
-🟡 **Pending:**
-- Gemini AI integration for auto-generation
-- Firestore persistence
+🟡 **Optional Enhancements:**
 - Rollback UI (undo button)
+- Recommendation history tracking
+- A/B testing for recommendations
 
 ---
 
@@ -160,132 +164,149 @@ export default function ProgramPage({ params }: { params: { programId: string } 
 
 ### Production Implementation
 
+**File:** `src/app/programs/[programId]/page.tsx`
+
 ```typescript
-async function handleApply(programId: string, updatedProgram: ZTLProgram, rollback: ZTLProgram) {
-  // 1. Save to Firestore
-  await updateDoc(doc(db, 'programs', programId), {
-    ...convertProgramToFirestore(updatedProgram),
-    rollback: convertProgramToFirestore(rollback), // Store for undo
-    lastModified: serverTimestamp(),
-    modifiedBy: 'ai-recommendations',
-  })
+import { AIRecommendationsComponent } from '@/components/ai-recommendations-example'
+import { updateDoc, doc, serverTimestamp } from 'firebase/firestore'
+import type { ZTLProgram } from '@/lib/ztl/types'
 
-  // 2. Update local state
-  setProgramData(updatedProgram)
+export default function ProgramPage({ params }: { params: { programId: string } }) {
+  const { user } = useUser()
+  const firestore = useFirestore()
+  const program = useProgramData(params.programId) // Assumes ZTL format
 
-  // 3. Show success toast
-  toast.success('AI recommendations applied!')
+  // Check if program has ZTL structure
+  const isZTLProgram = program?.meta && program?.workouts?.some(w => w.cycles)
+
+  const handleProgramUpdate = async (updatedProgram: ZTLProgram) => {
+    if (!user || !firestore) throw new Error('Not authenticated')
+
+    // Save to Firestore
+    await updateDoc(doc(firestore, `users/${user.uid}/programs/${params.programId}`), {
+      ...updatedProgram,
+      // Store rollback for undo (optional)
+      updatedAt: serverTimestamp(),
+      modifiedBy: 'ai-recommendations',
+    })
+
+    // Update local state
+    setProgramData(updatedProgram)
+  }
+
+  return (
+    <div>
+      <h1>{program.meta.name}</h1>
+
+      {/* Show AI Recommendations only for ZTL programs */}
+      {isZTLProgram && user && (
+        <AIRecommendationsComponent
+          program={program}
+          userId={user.uid}
+          onProgramUpdate={handleProgramUpdate}
+        />
+      )}
+    </div>
+  )
 }
 ```
+
+**Important Notes:**
+- AI Recommendations **only work with ZTL-formatted programs** (programs with `meta`, `workouts[].cycles[].exercises[]` structure)
+- Regular app programs need to be converted to ZTL format first
+- Check for ZTL structure before showing the recommendations button
 
 ---
 
-## 🤖 Gemini AI Integration (TODO)
+## 🤖 Gemini AI Integration (✅ IMPLEMENTED)
 
-### Step 1: Create AI Flow
+### Step 1: ✅ AI Flow Created
 
-**File:** `src/ai/flows/ai-program-recommendations.ts`
+**File:** `src/ai/flows/ai-program-recommendations.ts` (IMPLEMENTED)
+
+Key features:
+- **Input:** ZTL program + workout logs (last 30-90 days)
+- **Output:** 2-5 recommendations with ZTL patches
+- **Prompt:** Analyzes progressive overload, RPE patterns, completion rates, recovery indicators
+- **Fallback:** Mock generator if API key missing or `NEXT_PUBLIC_AI_MOCK=1`
+- **Retry logic:** 3 attempts with exponential backoff
 
 ```typescript
-import { defineFlow, runFlow } from 'genkit'
-import { gemini15Flash } from '@genkit-ai/google-genai'
+import { getAIProgramRecommendations } from '@/ai/flows/ai-program-recommendations'
 
-export const aiProgramRecommendations = defineFlow(
-  {
-    name: 'aiProgramRecommendations',
-    inputSchema: z.object({
-      program: ZTLProgramSchema,
-      logs: z.array(WorkoutLogSchema),
-    }),
-    outputSchema: z.object({
-      recommendations: z.array(AIRecommendationSchema),
-    }),
-  },
-  async (input) => {
-    const prompt = `
-      You are an elite strength & conditioning coach. Analyze this training program and recent workout logs.
-
-      PROGRAM (ZTL):
-      ${toYAML(input.program)}
-
-      RECENT LOGS (JSON):
-      ${JSON.stringify(input.logs, null, 2)}
-
-      INSTRUCTIONS:
-      1. Analyze volume trends, RPE patterns, progressive overload
-      2. Identify opportunities for improvement
-      3. Generate 2-3 specific recommendations as ZTL patches
-
-      OUTPUT FORMAT (JSON):
-      {
-        "recommendations": [
-          {
-            "title": "Increase Upper Body Volume",
-            "description": "Based on your progression, you can handle 10% more volume",
-            "rationale": "Your RPE has been consistently 6-7 for 3 weeks...",
-            "confidence": "high",
-            "patch": {
-              "patch": [
-                {
-                  "op": "update-exercise",
-                  "program_id": "${input.program.meta.id}",
-                  "workout_id": "...",
-                  "exercise_id": "...",
-                  "set_target": { "sets": 4, "target_rpe": 7.5 }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    `
-
-    const response = await runFlow(gemini15Flash, prompt)
-    const parsed = JSON.parse(response.text)
-
-    return { recommendations: parsed.recommendations }
-  }
-)
+const result = await getAIProgramRecommendations(program, recentLogs)
+// result.recommendations: AIRecommendation[]
+// result.summary: string (program health overview)
 ```
 
-### Step 2: Call from UI
+### Step 2: ✅ API Endpoint Created
 
-```typescript
-import { aiProgramRecommendations } from '@/ai/flows/ai-program-recommendations'
+**File:** `src/app/api/ai/recommendations/route.ts` (IMPLEMENTED)
 
-async function generateRecommendations(program: ZTLProgram, logs: WorkoutLog[]) {
-  const result = await aiProgramRecommendations({ program, logs })
-  return result.recommendations.map((rec) => ({
-    id: generateId(),
-    ...rec,
-  }))
+**Endpoint:** `POST /api/ai/recommendations`
+
+**Request:**
+```json
+{
+  "userId": "user-123",
+  "programId": "program-456",
+  "daysBack": 90
 }
 ```
 
-### Step 3: Add to Programs Page
+**Response:**
+```json
+{
+  "recommendations": [
+    {
+      "id": "rec-1",
+      "title": "Increase Upper Body Volume",
+      "description": "...",
+      "rationale": "...",
+      "confidence": "high",
+      "patch": { "patch": [...] }
+    }
+  ],
+  "summary": "Program is progressing well...",
+  "generatedAt": "2025-01-15T12:00:00Z",
+  "cacheUntil": "2025-01-16T12:00:00Z",
+  "fromCache": false
+}
+```
+
+**Features:**
+- ✅ Firestore integration (fetches program + logs)
+- ✅ 24h caching
+- ✅ Usage limits (daily quotas)
+- ✅ Error handling with fallback to expired cache
+
+### Step 3: ✅ UI Component Created
+
+**File:** `src/components/ai-recommendations-example.tsx` (IMPLEMENTED)
+
+**Component:** `AIRecommendationsComponent`
 
 ```typescript
-const [recommendations, setRecommendations] = useState<AIRecommendation[]>([])
-const [loading, setLoading] = useState(false)
+import { AIRecommendationsComponent } from '@/components/ai-recommendations-example'
 
-const handleGetRecommendations = async () => {
-  setLoading(true)
-  try {
-    const logs = await fetchRecentLogs(userId, 90) // Last 90 days
-    const recs = await generateRecommendations(program, logs)
-    setRecommendations(recs)
-    setShowDialog(true)
-  } catch (error) {
-    toast.error('Failed to generate recommendations')
-  } finally {
-    setLoading(false)
-  }
-}
-
-<Button onClick={handleGetRecommendations} disabled={loading}>
-  {loading ? 'Generating...' : 'Get AI Recommendations'}
-</Button>
+<AIRecommendationsComponent
+  program={ztlProgram}
+  userId={user.uid}
+  onProgramUpdate={handleProgramUpdate}
+/>
 ```
+
+**Features:**
+- ✅ Fetches recommendations from API
+- ✅ Loading states ("Generating...")
+- ✅ Error handling with toast notifications
+- ✅ Integrates with AIRecommendationsDialog
+- ✅ One-click apply with Firestore persistence
+
+**Props:**
+- `program: ZTLProgram` - Program to analyze
+- `userId: string` - User ID for Firestore queries
+- `onProgramUpdate?: (updatedProgram: ZTLProgram) => Promise<void>` - Callback to save updated program
 
 ---
 
