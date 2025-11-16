@@ -1,11 +1,13 @@
 'use client'
 
-import { Activity, Dumbbell, HeartPulse, Target } from 'lucide-react';
+import { Activity, Dumbbell, HeartPulse, Target, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TodaySchedule } from '@/components/today-schedule';
 import { HabitTracker } from '@/components/habit-tracker';
 import { AiOptimizerDialog } from '@/components/ai-optimizer-dialog';
 import { PlanTomorrowDialog } from '@/components/plan-tomorrow-dialog';
+import { DailyReflectionDialog } from '@/components/daily-reflection-dialog';
+import { ReflectionTrendsChart } from '@/components/reflection-trends-chart';
 import { useUser } from '@/firebase/auth/use-user';
 import { useUserCollection } from '@/hooks/use-user-collection';
 import { useFirestore } from '@/firebase/provider';
@@ -13,11 +15,12 @@ import type { AppUser } from '@/firebase/auth/use-user';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { startOfWeek, isWithinInterval, isToday, isYesterday, formatISO } from 'date-fns';
-import type { Exercise, Habit, WorkoutExtended } from '@/lib/types';
-import { useMemo, useEffect } from 'react';
+import type { Exercise, Habit, WorkoutExtended, DailyReflection } from '@/lib/types';
+import { useMemo, useEffect, useState } from 'react';
 import { doc, updateDoc, type Firestore } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { hasReflectedToday } from '@/lib/reflections';
 
 function updateStreak(user: AppUser, firestore: Firestore, anyActivityCompletedToday: boolean) {
     if (!user || !firestore) return;
@@ -71,6 +74,9 @@ export default function DashboardPage() {
   const { data: exercises } = useUserCollection<Exercise>('exercises');
   const { data: habits } = useUserCollection<Habit>('habits');
   const { data: workouts } = useUserCollection<WorkoutExtended>('workouts');
+  const { data: reflections } = useUserCollection<DailyReflection>('dailyReflections');
+
+  const [reflectionDialogOpen, setReflectionDialogOpen] = useState(false);
 
   const weeklyStats = useMemo(() => {
     const now = new Date();
@@ -161,6 +167,14 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
+          <Button
+            variant={hasReflectedToday(reflections || []) ? "outline" : "default"}
+            size="sm"
+            onClick={() => setReflectionDialogOpen(true)}
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            {hasReflectedToday(reflections || []) ? 'View Reflection' : 'Daily Reflection'}
+          </Button>
           <PlanTomorrowDialog />
           <AiOptimizerDialog />
         </div>
@@ -224,6 +238,19 @@ export default function DashboardPage() {
           <HabitTracker />
         </div>
       </div>
+
+      {/* Daily Reflection Trends - Stage 3 */}
+      {reflections && reflections.length > 0 && (
+        <div className="mt-4">
+          <ReflectionTrendsChart reflections={reflections} daysToShow={30} />
+        </div>
+      )}
+
+      {/* Daily Reflection Dialog */}
+      <DailyReflectionDialog
+        open={reflectionDialogOpen}
+        onOpenChange={setReflectionDialogOpen}
+      />
     </div>
   );
 }
