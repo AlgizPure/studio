@@ -22,6 +22,9 @@ import { FrequencyHeatmap } from '@/components/analytics/frequency-heatmap';
 import { PRTracker } from '@/components/analytics/pr-tracker';
 import { RPEDistributionChart } from '@/components/analytics/rpe-distribution-chart';
 import { PeriodComparison } from '@/components/analytics/period-comparison';
+import { MuscleGroupVolumeHeatmap } from '@/components/analytics/muscle-group-volume-heatmap';
+import { TrainingBalanceRadar } from '@/components/analytics/training-balance-radar';
+import { VolumeDistributionChart } from '@/components/analytics/volume-distribution-chart';
 
 export function AnalyticsCharts() {
   const { user } = useUser();
@@ -103,13 +106,27 @@ export function AnalyticsCharts() {
       </TabsContent>
 
       <TabsContent value="advanced" className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-2">
-          <FrequencyHeatmap workouts={workoutLogs} />
-          <RPEDistributionChart workouts={workoutLogs} />
+        {/* Muscle Group Analytics */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold">Muscle Group Analytics</h3>
+          <MuscleGroupVolumeHeatmap workouts={workoutLogs} weeksToShow={8} />
+          <div className="grid gap-6 md:grid-cols-2">
+            <TrainingBalanceRadar workouts={workoutLogs} />
+            <VolumeDistributionChart workouts={workoutLogs} />
+          </div>
         </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          <PRTracker workouts={workoutLogs} />
-          <PeriodComparison workouts={workoutLogs} />
+
+        {/* Training Patterns */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold">Training Patterns</h3>
+          <div className="grid gap-6 md:grid-cols-2">
+            <FrequencyHeatmap workouts={workoutLogs} />
+            <RPEDistributionChart workouts={workoutLogs} />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <PRTracker workouts={workoutLogs} />
+            <PeriodComparison workouts={workoutLogs} />
+          </div>
         </div>
       </TabsContent>
     </div>

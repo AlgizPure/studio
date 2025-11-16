@@ -14,6 +14,14 @@ export type {
   ComparisonData,
 } from './types';
 
+export type {
+  MuscleGroup,
+  MovementCategory,
+  MuscleGroupVolumeData,
+  TrainingBalanceData,
+  VolumeDistributionData,
+} from './muscle-groups';
+
 // Export volume functions
 export {
   calculateWorkoutVolume,
@@ -53,3 +61,14 @@ export {
   formatVolume,
   formatDuration,
 } from './formatters';
+
+// Export muscle group analytics functions
+export {
+  MUSCLE_GROUPS,
+  MOVEMENT_CATEGORIES,
+  getExerciseMuscleGroup,
+  getMuscleGroupMovementCategory,
+  calculateMuscleGroupVolumeByWeek,
+  calculateTrainingBalance,
+  calculateVolumeDistribution,
+} from './muscle-groups';
