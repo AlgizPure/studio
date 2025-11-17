@@ -5,6 +5,7 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { initializePerformance } from '@/firebase/performance';
 import { logger } from '@/lib/logger';
 import { initializePerformance } from '@/firebase/performance';
 
@@ -24,7 +25,7 @@ export function initializeFirebase() {
       firebaseApp = initializeApp(firebaseConfig);
     }
 
-    // Initialize Performance Monitoring (client-side only, non-blocking)
+    // Initialize Performance Monitoring (client-side only)
     initializePerformance(firebaseApp);
 
     return getSdks(firebaseApp);

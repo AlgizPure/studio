@@ -1,212 +1,206 @@
-// src/firebase/performance.ts
-// Module 14 - Function 14.5: Firebase Performance Monitoring
-// Performance tracking for page loads, API calls, and user interactions
-
-import type { FirebaseApp } from 'firebase/app';
-import { getPerformance, type Performance, trace, type Trace } from 'firebase/performance';
-import { logger } from '@/lib/logger';
-
 /**
- * Firebase Performance instance (singleton)
+ * Firebase Performance Monitoring Integration
+ *
+ * Tracks and analyzes app performance in production:
+ * - Page load times (FCP, TTI)
+ * - API response times (Firestore, AI API)
+ * - User interactions (button clicks, form submissions)
+ * - Custom traces for critical paths
+ *
+ * Module: Performance & Optimization (Module 14)
+ * Function: 14.5 - Performance Monitoring
+ * Reference: docs/requirements/14_performance_requirements.md
  */
-let perfInstance: Performance | null = null;
+
+import { getPerformance, trace as fbTrace, type Performance, type Trace } from 'firebase/performance';
+import { getApp } from 'firebase/app';
+
+let performance: Performance | null = null;
 
 /**
  * Initialize Firebase Performance Monitoring
- * Called from Firebase initialization (src/firebase/init.ts)
- *
- * Note: Performance SDK is client-side only
+ * Called automatically in client-side Firebase config
  */
-export function initializePerformance(app: FirebaseApp): void {
-  // Performance SDK only works in browser
+export function initializePerformance(): Performance | null {
   if (typeof window === 'undefined') {
-    logger.info('[Performance] Skipping initialization (server-side)');
-    return;
+    // Server-side: Performance monitoring not available
+    return null;
+  }
+
+  if (performance) {
+    return performance;
   }
 
   try {
-    // Delay initialization slightly to avoid blocking app startup
-    setTimeout(() => {
-      try {
-        perfInstance = getPerformance(app);
-        logger.info('[Performance] Firebase Performance Monitoring initialized');
-      } catch (error) {
-        logger.error('[Performance] Initialization failed:', error);
-      }
-    }, 100); // 100ms delay
+    const app = getApp();
+    performance = getPerformance(app);
+    console.log('[Performance] Firebase Performance Monitoring initialized');
+    return performance;
   } catch (error) {
-    logger.error('[Performance] Setup error:', error);
+    console.error('[Performance] Failed to initialize:', error);
+    return null;
   }
 }
 
 /**
- * Get Performance instance
- * Returns null if not initialized or on server-side
+ * Get Performance instance (lazy initialization)
  */
 export function getPerf(): Performance | null {
-  return perfInstance;
+  if (!performance) {
+    performance = initializePerformance();
+  }
+  return performance;
 }
 
 /**
- * Predefined trace names for consistency
- */
-export const TraceNames = {
-  // Page loads
-  PAGE_DASHBOARD: 'page_dashboard',
-  PAGE_WORKOUTS: 'page_workouts',
-  PAGE_PROGRAMS: 'page_programs',
-  PAGE_EXERCISES: 'page_exercises',
-  PAGE_ANALYTICS: 'page_analytics',
-  PAGE_HABITS: 'page_habits',
-
-  // Workout execution
-  WORKOUT_EXECUTION: 'workout_execution',
-  EXERCISE_COMPLETION: 'exercise_completion',
-  WORKOUT_SAVE: 'workout_save',
-
-  // Firestore queries
-  FIRESTORE_QUERY: 'firestore_query',
-  FIRESTORE_WRITE: 'firestore_write',
-  FIRESTORE_BATCH: 'firestore_batch',
-
-  // AI API calls
-  AI_API_CALL: 'ai_api_call',
-  AI_PROGRESSIONS: 'ai_progressions',
-  AI_INSIGHTS: 'ai_insights',
-  AI_RECOMMENDATIONS: 'ai_recommendations',
-  AI_HABIT_INSIGHTS: 'ai_habit_insights',
-
-  // Habit tracking
-  HABIT_LOG_SAVE: 'habit_log_save',
-  DAILY_REFLECTION_SAVE: 'daily_reflection_save',
-  WEEKLY_CONTEXT_SAVE: 'weekly_context_save',
-} as const;
-
-export type TraceName = typeof TraceNames[keyof typeof TraceNames];
-
-/**
- * Create a custom performance trace
- * Returns null if Performance not initialized
+ * Create a custom trace for measuring performance
  *
- * Usage:
- * ```ts
- * const myTrace = createTrace(TraceNames.WORKOUT_EXECUTION);
- * if (myTrace) {
- *   myTrace.start();
- *   // ... do work
- *   myTrace.putMetric('exercise_count', 5);
- *   myTrace.stop();
- * }
- * ```
+ * @example
+ * const trace = createTrace('workout_execution');
+ * trace.start();
+ * // ... perform workout
+ * trace.putMetric('exercise_count', 10);
+ * trace.stop();
  */
 export function createTrace(traceName: string): Trace | null {
   const perf = getPerf();
-  if (!perf) {
-    logger.debug('[Performance] Trace skipped (not initialized):', traceName);
-    return null;
-  }
+  if (!perf) return null;
 
   try {
-    return trace(perf, traceName);
+    return fbTrace(perf, traceName);
   } catch (error) {
-    logger.error('[Performance] Failed to create trace:', traceName, error);
+    console.error(`[Performance] Failed to create trace "${traceName}":`, error);
     return null;
   }
 }
 
 /**
- * Measure performance of an async function
- * Automatically starts/stops trace and handles errors
+ * Measure a function's execution time with automatic tracing
  *
- * Usage:
- * ```ts
- * const result = await measurePerformance(
- *   TraceNames.WORKOUT_SAVE,
- *   async () => saveWorkout(data),
- *   { exercise_count: 5, duration_min: 45 }
- * );
- * ```
+ * @example
+ * const result = await measurePerformance('load_workouts', async () => {
+ *   return await fetchWorkouts();
+ * });
  */
 export async function measurePerformance<T>(
   traceName: string,
   fn: () => Promise<T>,
   metrics?: Record<string, number>
 ): Promise<T> {
-  const performanceTrace = createTrace(traceName);
+  const trace = createTrace(traceName);
 
-  if (performanceTrace) {
-    performanceTrace.start();
+  if (trace) {
+    trace.start();
   }
 
   try {
     const result = await fn();
 
-    if (performanceTrace) {
-      // Add custom metrics
-      if (metrics) {
-        Object.entries(metrics).forEach(([key, value]) => {
-          performanceTrace.putMetric(key, value);
-        });
-      }
-      performanceTrace.stop();
+    if (trace && metrics) {
+      Object.entries(metrics).forEach(([key, value]) => {
+        trace.putMetric(key, value);
+      });
+    }
+
+    if (trace) {
+      trace.stop();
     }
 
     return result;
   } catch (error) {
-    // Stop trace even on error
-    if (performanceTrace) {
-      performanceTrace.stop();
+    if (trace) {
+      trace.stop();
     }
     throw error;
   }
 }
 
 /**
- * Measure performance of a synchronous function
- * For sync operations, wraps in Promise.resolve
+ * Trace helper for synchronous operations
  *
- * Usage:
- * ```ts
- * const result = traceSync(
- *   TraceNames.HABIT_LOG_SAVE,
- *   () => processHabitLog(log),
- *   { habit_count: 10 }
- * );
- * ```
+ * @example
+ * const result = traceSync('calculate_volume', () => {
+ *   return calculateTotalVolume(exercises);
+ * });
  */
 export function traceSync<T>(
   traceName: string,
   fn: () => T,
   metrics?: Record<string, number>
 ): T {
-  const performanceTrace = createTrace(traceName);
+  const trace = createTrace(traceName);
 
-  if (performanceTrace) {
-    performanceTrace.start();
+  if (trace) {
+    trace.start();
   }
 
   try {
     const result = fn();
 
-    if (performanceTrace) {
-      if (metrics) {
-        Object.entries(metrics).forEach(([key, value]) => {
-          performanceTrace.putMetric(key, value);
-        });
-      }
-      performanceTrace.stop();
+    if (trace && metrics) {
+      Object.entries(metrics).forEach(([key, value]) => {
+        trace.putMetric(key, value);
+      });
+    }
+
+    if (trace) {
+      trace.stop();
     }
 
     return result;
   } catch (error) {
-    if (performanceTrace) {
-      performanceTrace.stop();
+    if (trace) {
+      trace.stop();
     }
     throw error;
   }
 }
 
 /**
- * Export Trace type for component usage
+ * Common trace names for consistency
  */
-export type { Trace };
+export const TraceNames = {
+  // Page loads
+  PAGE_LOAD_DASHBOARD: 'page_load_dashboard',
+  PAGE_LOAD_WORKOUTS: 'page_load_workouts',
+  PAGE_LOAD_PROGRAMS: 'page_load_programs',
+  PAGE_LOAD_ANALYTICS: 'page_load_analytics',
+  PAGE_LOAD_LIBRARY: 'page_load_library',
+
+  // Workout execution
+  WORKOUT_START: 'workout_start',
+  WORKOUT_COMPLETE: 'workout_complete',
+  EXERCISE_LOG: 'exercise_log_save',
+
+  // AI operations
+  AI_INSIGHTS_GENERATE: 'ai_insights_generate',
+  AI_PROGRESSIONS: 'ai_progressions_generate',
+  AI_HABIT_INSIGHTS: 'ai_habit_insights_generate',
+  AI_RECOMMENDATIONS: 'ai_recommendations_generate',
+
+  // Firestore operations
+  FIRESTORE_LOAD_WORKOUTS: 'firestore_load_workouts',
+  FIRESTORE_LOAD_EXERCISES: 'firestore_load_exercises',
+  FIRESTORE_SAVE_WORKOUT: 'firestore_save_workout',
+
+  // Analytics
+  ANALYTICS_CALCULATE: 'analytics_calculate_stats',
+  ANALYTICS_CHART_RENDER: 'analytics_chart_render',
+
+  // Habits
+  HABIT_LOAD: 'habit_load_data',
+  HABIT_LOG: 'habit_log_save',
+  HABIT_REFLECTION_SAVE: 'habit_reflection_save',
+  HABIT_WHEEL_OF_LIFE: 'habit_wheel_of_life_assess',
+} as const;
+
+/**
+ * Auto-initialize performance monitoring when module is imported
+ * Only runs on client-side
+ */
+if (typeof window !== 'undefined') {
+  // Delay initialization to avoid blocking app startup
+  setTimeout(() => {
+    initializePerformance();
+  }, 100);
+}

@@ -67,7 +67,7 @@ export function WorkoutExecutionMode({
     setStatus('in_progress');
     setStartTime(new Date().toISOString());
 
-    // Start performance trace for workout execution
+    // Start performance trace
     workoutTrace.current = createTrace(TraceNames.WORKOUT_EXECUTION);
     if (workoutTrace.current) {
       workoutTrace.current.start();

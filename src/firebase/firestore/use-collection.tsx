@@ -72,10 +72,10 @@ export function useCollection<T = any>(
 
     setIsLoading(true);
 
-    // Create performance trace for Firestore query
-    const queryTrace = createTrace(TraceNames.FIRESTORE_QUERY);
-    if (queryTrace) {
-      queryTrace.start();
+    // Start performance trace for Firestore query
+    const trace = createTrace(TraceNames.FIRESTORE_QUERY);
+    if (trace) {
+      trace.start();
     }
 
     const unsubscribe = onSnapshot(
@@ -86,10 +86,10 @@ export function useCollection<T = any>(
         setError(null);
         setIsLoading(false);
 
-        // Stop trace on success with document count metric
-        if (queryTrace) {
-          queryTrace.putMetric('document_count', snapshot.docs.length);
-          queryTrace.stop();
+        // Stop trace on success
+        if (trace) {
+          trace.putMetric('document_count', snapshot.docs.length);
+          trace.stop();
         }
       },
       (err: FirestoreError) => {
@@ -108,8 +108,8 @@ export function useCollection<T = any>(
         setIsLoading(false);
 
         // Stop trace on error
-        if (queryTrace) {
-          queryTrace.stop();
+        if (trace) {
+          trace.stop();
         }
 
         errorEmitter.emit('permission-error', contextualError);

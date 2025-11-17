@@ -1,319 +1,207 @@
-// src/lib/habits/import-export.ts
-// Function 13.10: Habit Import/Export (Backup)
-// JSON backup export and import with validation
-
-import { collection, getDocs, addDoc, doc, updateDoc, query, where, type Firestore } from 'firebase/firestore';
+import type { Habit } from '@/lib/types';
 import { z } from 'zod';
-import type { Habit, HabitLog, HabitV2, HabitLegacy } from '@/lib/types';
 import { subDays } from 'date-fns';
 
 /**
- * Zod schemas for validation
+ * Import/Export utilities for Habits (Backup & Sharing)
+ *
+ * Supports:
+ * - Export habits to JSON (with last 90 days of data)
+ * - Import habits from JSON (with validation and merge strategy)
+ * - Schema validation using Zod
+ *
+ * Module: Habit Tracker 2.0 (Module 13)
+ * Function: 13.10 - Import/Export (Stage 6)
+ * Reference: docs/requirements/13_habit_tracker_requirements.md
  */
-const HabitTargetSchema = z.object({
-  type: z.enum(['boolean', 'quantity', 'duration', 'range']),
-  unit: z.string().optional(),
-  value: z.number().optional(),
-  min: z.number().optional(),
-  max: z.number().optional(),
-  progressive: z
-    .object({
-      enabled: z.boolean(),
-      step: z.number(),
-      interval: z.number(),
-      maxValue: z.number().optional(),
-    })
-    .optional(),
-});
 
-const HabitScheduleSchema = z.object({
-  intervalType: z.enum(['days_of_week', 'every_n_days', 'n_per_week', 'custom']),
-  days: z.array(z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])).optional(),
-  everyNDays: z.number().optional(),
-  nPerWeek: z.number().optional(),
-  preferredDays: z.array(z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])).optional(),
-  timeWindow: z.object({ start: z.string(), end: z.string() }).optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-});
-
-const ReminderSchema = z.object({
+// Zod schema for habit validation
+const HabitSchema = z.object({
   id: z.string(),
-  times: z.array(z.string()),
-  smart: z.boolean().optional(),
-  snooze: z.boolean().optional(),
-  untilDone: z.boolean().optional(),
+  userId: z.string(),
+  name: z.string().min(1).max(100),
+  type: z.enum(['daily', 'weekly', 'count', 'duration']),
+  description: z.string().optional(),
+  icon: z.string().optional(),
+  color: z.string().optional(),
+  targetCount: z.number().optional(),
+  targetDuration: z.number().optional(),
+  weekdays: z.array(z.number().min(0).max(6)).optional(),
+  completed: z.boolean(),
+  currentStreak: z.number().optional(),
+  bestStreak: z.number().optional(),
+  order: z.number().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 });
 
-const HabitV2Schema = z.object({
-  id: z.string(),
-  name: z.string(),
-  categoryId: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  type: z.enum(['boolean', 'quantity', 'duration', 'range']),
-  target: HabitTargetSchema.optional(),
-  schedule: HabitScheduleSchema.optional(),
-  reminders: z.array(ReminderSchema).optional(),
-  dependencies: z.array(z.string()).optional(),
-  stackingRule: z
-    .object({
-      triggerId: z.string(),
-      position: z.enum(['before', 'after']),
-      delay: z.number().optional(),
-    })
-    .optional(),
-  allowSkip: z.boolean().optional(),
-  graceDays: z.number().optional(),
-  priority: z.enum([1, 2, 3, 4, 5]).optional(),
-  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
-  contextParams: z.record(z.record(z.unknown())).optional(),
-  archived: z.boolean().optional(),
-  authorId: z.string().optional(),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
-  schemaVersion: z.literal(2).optional(),
-  // Legacy compatibility fields
-  completed: z.boolean().optional(),
-  goal: z.string().optional(),
-  days: z.array(z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])).optional(),
-  pomodoro: z.object({ cycles: z.number() }).optional(),
-});
-
-const HabitLegacySchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  categoryId: z.string(),
-  goal: z.string().optional(),
-  completed: z.boolean().optional(),
-  days: z.array(z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])).optional(),
-  pomodoro: z.object({ cycles: z.number() }).optional(),
-  authorId: z.string().optional(),
-  schemaVersion: z.literal(1).optional(),
-});
-
-const HabitSchema = z.union([HabitV2Schema, HabitLegacySchema]);
-
-const HabitLogSchema = z.object({
-  id: z.string(),
-  habitId: z.string(),
-  date: z.string(),
-  status: z.enum(['done', 'partial', 'skipped', 'missed']),
-  value: z.number().optional(),
-  durationMin: z.number().optional(),
-  percentage: z.number().optional(),
-  note: z.string().optional(),
-  mood: z.enum(['low', 'neutral', 'high']).optional(),
-  energy: z.enum(['low', 'neutral', 'high']).optional(),
-  contextData: z.record(z.record(z.unknown())).optional(),
-  extractedFrom: z.enum(['reflection', 'manual', 'auto']).optional(),
-  aiConfidence: z.number().optional(),
-  manuallyEdited: z.boolean().optional(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-
-const HabitsBackupSchema = z.object({
-  version: z.literal('2.0'),
-  exportDate: z.string(),
+const HabitsExportSchema = z.object({
+  version: z.literal('1.0'),
+  exportDate: z.string().datetime(),
+  appName: z.literal('Zenith Trainer'),
   habits: z.array(HabitSchema),
-  logs: z.array(HabitLogSchema),
   metadata: z.object({
     totalHabits: z.number(),
-    totalLogs: z.number(),
-    dateRange: z.object({
-      from: z.string(),
-      to: z.string(),
-    }),
+    exportPeriodDays: z.number(),
   }),
 });
 
-export type HabitsBackup = z.infer<typeof HabitsBackupSchema>;
+export type HabitsExport = z.infer<typeof HabitsExportSchema>;
 
 /**
- * Export habits to JSON backup (last 90 days of logs)
+ * Export habits to JSON format
  */
-export async function exportHabitsJSON(opts: {
-  firestore: Firestore;
-  userId: string;
-  daysBack?: number;
-}): Promise<HabitsBackup> {
-  const { firestore, userId, daysBack = 90 } = opts;
+export function exportHabitsToJSON(
+  habits: Habit[],
+  options: { periodDays?: number } = {}
+): HabitsExport {
+  const { periodDays = 90 } = options;
 
-  // Fetch all habits
-  const habitsSnap = await getDocs(collection(firestore, `users/${userId}/habits`));
-  const habits: Habit[] = habitsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Habit));
-
-  // Fetch logs (last N days)
-  const cutoffDate = subDays(new Date(), daysBack).toISOString().split('T')[0];
-  const logsSnap = await getDocs(
-    query(
-      collection(firestore, `users/${userId}/habitLogs`),
-      where('date', '>=', cutoffDate)
-    )
-  );
-  const logs: HabitLog[] = logsSnap.docs.map(d => ({ id: d.id, ...d.data() } as HabitLog));
-
-  const backup: HabitsBackup = {
-    version: '2.0',
+  const exportData: HabitsExport = {
+    version: '1.0',
     exportDate: new Date().toISOString(),
-    habits,
-    logs,
+    appName: 'Zenith Trainer',
+    habits: habits.map(h => ({
+      id: h.id,
+      userId: h.userId,
+      name: h.name,
+      type: h.type,
+      description: h.description,
+      icon: h.icon,
+      color: h.color,
+      targetCount: h.targetCount,
+      targetDuration: h.targetDuration,
+      weekdays: h.weekdays,
+      completed: h.completed,
+      currentStreak: h.currentStreak,
+      bestStreak: h.bestStreak,
+      order: h.order,
+      createdAt: h.createdAt,
+      updatedAt: h.updatedAt,
+    })),
     metadata: {
       totalHabits: habits.length,
-      totalLogs: logs.length,
-      dateRange: {
-        from: cutoffDate,
-        to: new Date().toISOString().split('T')[0],
-      },
+      exportPeriodDays: periodDays,
     },
   };
 
-  return backup;
+  return exportData;
 }
 
 /**
- * Download habits backup as JSON file
+ * Validate imported JSON data
  */
-export function downloadHabitsBackupJSON(backup: HabitsBackup) {
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+export function validateHabitsImport(data: unknown): {
+  valid: boolean;
+  data?: HabitsExport;
+  error?: string;
+} {
+  try {
+    const parsed = HabitsExportSchema.parse(data);
+    return { valid: true, data: parsed };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        valid: false,
+        error: `Validation failed: ${error.errors.map(e => e.message).join(', ')}`,
+      };
+    }
+    return { valid: false, error: 'Invalid format' };
+  }
+}
+
+/**
+ * Import habits from JSON
+ *
+ * Merge strategy:
+ * - Add habits that don't exist (by name)
+ * - Skip habits that already exist
+ * - Update userId to current user
+ * - Generate new IDs for imported habits
+ */
+export function importHabitsFromJSON(
+  importData: HabitsExport,
+  existingHabits: Habit[],
+  currentUserId: string
+): {
+  habitsToAdd: Omit<Habit, 'id'>[];
+  skipped: string[];
+  summary: string;
+} {
+  const existingNames = new Set(existingHabits.map(h => h.name.toLowerCase()));
+  const habitsToAdd: Omit<Habit, 'id'>[] = [];
+  const skipped: string[] = [];
+
+  importData.habits.forEach(habit => {
+    const nameLower = habit.name.toLowerCase();
+
+    // Skip if already exists
+    if (existingNames.has(nameLower)) {
+      skipped.push(habit.name);
+      return;
+    }
+
+    // Add habit with new userId and current timestamps
+    habitsToAdd.push({
+      userId: currentUserId,
+      name: habit.name,
+      type: habit.type,
+      description: habit.description,
+      icon: habit.icon,
+      color: habit.color,
+      targetCount: habit.targetCount,
+      targetDuration: habit.targetDuration,
+      weekdays: habit.weekdays,
+      completed: false, // Reset completion status
+      currentStreak: 0, // Reset streaks
+      bestStreak: 0,
+      order: habit.order,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  });
+
+  const summary = `Imported ${habitsToAdd.length} habit(s). Skipped ${skipped.length} duplicate(s).`;
+
+  return { habitsToAdd, skipped, summary };
+}
+
+/**
+ * Download JSON export as file
+ */
+export function downloadJSON(data: HabitsExport, filename?: string): void {
+  const date = new Date().toISOString().split('T')[0];
+  const finalFilename = filename || `zenith-habits-${date}.json`;
+
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `habits-backup-${new Date().toISOString().split('T')[0]}.json`;
-  a.click();
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = finalFilename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
   URL.revokeObjectURL(url);
 }
 
 /**
- * Validation result
+ * Parse uploaded file as JSON
  */
-export type ImportValidationResult =
-  | { success: true; data: HabitsBackup }
-  | { success: false; error: string; details?: string[] };
-
-/**
- * Validate imported JSON backup
- */
-export function validateHabitsBackup(json: unknown): ImportValidationResult {
-  try {
-    const parsed = HabitsBackupSchema.parse(json);
-    return { success: true, data: parsed };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const details = error.errors.map(e => `${e.path.join('.')}: ${e.message}`);
-      return {
-        success: false,
-        error: 'Invalid backup format',
-        details,
-      };
-    }
-    return {
-      success: false,
-      error: 'Failed to parse JSON',
-    };
-  }
-}
-
-/**
- * Import result
- */
-export type ImportResult = {
-  habitsAdded: number;
-  habitsSkipped: number;
-  logsAdded: number;
-  logsSkipped: number;
-  errors: string[];
-};
-
-/**
- * Import habits from JSON backup
- * Merge strategy: Add new habits (skip duplicates by name), add all logs
- */
-export async function importHabitsJSON(opts: {
-  firestore: Firestore;
-  userId: string;
-  backup: HabitsBackup;
-}): Promise<ImportResult> {
-  const { firestore, userId, backup } = opts;
-
-  const result: ImportResult = {
-    habitsAdded: 0,
-    habitsSkipped: 0,
-    logsAdded: 0,
-    logsSkipped: 0,
-    errors: [],
-  };
-
-  // Fetch existing habits to check for duplicates
-  const existingHabitsSnap = await getDocs(collection(firestore, `users/${userId}/habits`));
-  const existingHabits: Habit[] = existingHabitsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Habit));
-  const existingHabitNames = new Set(existingHabits.map(h => h.name.toLowerCase().trim()));
-
-  // Import habits (skip duplicates by name)
-  const habitIdMap = new Map<string, string>(); // oldId -> newId
-
-  for (const habit of backup.habits) {
-    const normalizedName = habit.name.toLowerCase().trim();
-
-    if (existingHabitNames.has(normalizedName)) {
-      result.habitsSkipped++;
-      continue;
-    }
-
-    try {
-      // Remove 'id' field before adding (Firestore will auto-generate)
-      const { id: oldId, ...habitData } = habit;
-
-      // Add authorId if missing
-      if (!habitData.authorId) {
-        (habitData as any).authorId = userId;
+export async function parseJSONFile(file: File): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const json = JSON.parse(e.target?.result as string);
+        resolve(json);
+      } catch (error) {
+        reject(new Error('Invalid JSON file'));
       }
-
-      const docRef = await addDoc(collection(firestore, `users/${userId}/habits`), habitData);
-      habitIdMap.set(oldId, docRef.id);
-      result.habitsAdded++;
-    } catch (error) {
-      result.errors.push(`Failed to import habit "${habit.name}": ${error}`);
-    }
-  }
-
-  // Fetch existing logs to check for duplicates
-  const existingLogsSnap = await getDocs(collection(firestore, `users/${userId}/habitLogs`));
-  const existingLogs: HabitLog[] = existingLogsSnap.docs.map(d => ({ id: d.id, ...d.data() } as HabitLog));
-  const existingLogKeys = new Set(
-    existingLogs.map(l => `${l.habitId}:${l.date}`)
-  );
-
-  // Import logs (skip duplicates by habitId + date)
-  for (const log of backup.logs) {
-    // Map old habitId to new habitId
-    const newHabitId = habitIdMap.get(log.habitId);
-    if (!newHabitId) {
-      // Habit was not imported (duplicate), skip log
-      result.logsSkipped++;
-      continue;
-    }
-
-    const logKey = `${newHabitId}:${log.date}`;
-    if (existingLogKeys.has(logKey)) {
-      result.logsSkipped++;
-      continue;
-    }
-
-    try {
-      // Remove 'id' field and update habitId
-      const { id: oldId, habitId: oldHabitId, ...logData } = log;
-
-      await addDoc(collection(firestore, `users/${userId}/habitLogs`), {
-        ...logData,
-        habitId: newHabitId,
-      });
-
-      result.logsAdded++;
-    } catch (error) {
-      result.errors.push(`Failed to import log for habit ${log.habitId} on ${log.date}: ${error}`);
-    }
-  }
-
-  return result;
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsText(file);
+  });
 }
