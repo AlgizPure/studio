@@ -3,7 +3,7 @@
 **Module ID:** Module 13
 **Total Functions:** 10 (4 core + 6 advanced stages)
 **Priority:** HIGH
-**Status:** 🟡 Implemented 80% (Core + Stages 3-5 complete, Stage 6 pending)
+**Status:** ✅ Implemented 100% (All stages complete: Core, Stages 3-6)
 **Dependencies:** Data Management, UI Module, Analytics
 
 ---
@@ -370,82 +370,180 @@ interface WeeklyContext {
 
 ---
 
-### Function 13.9: Claude Integration for Habit Analysis - ❌ Not Started (Stage 6, 0%)
+### Function 13.9: Claude Integration for Habit Analysis - ✅ Complete (Stage 6, 100%)
 
 **Purpose:** Export habits + context to Claude for life coaching analysis.
 
 **Workflow:**
-1. User clicks "Export for Claude Analysis"
+1. User clicks "Export / Import" button → Claude Analysis tab
 2. Generate YAML with:
-   - All habits + completion rates
-   - Daily reflections (last 30 days)
-   - Weekly context scores (last 8 weeks)
-   - Embedded prompt for Claude (life coach persona)
-3. User sends to Claude → Claude provides personalized advice
-4. Optional: Import Claude's recommendations as new habits/goals
+   - All habits + completion rates (30d, 90d) + streaks
+   - Daily reflections summary (last 30 days) + top gratitudes + recent entries
+   - Weekly context scores (last 8 weeks) + balance score + trends
+   - Embedded Claude life coach prompt
+3. User downloads YAML and uploads to Claude → Claude provides personalized coaching
+4. Claude analyzes data against 6-section framework (see claudePrompt below)
 
 **YAML Structure:**
 ```yaml
-habits_export:
-  user_id: "abc123"
-  export_date: "2025-11-15"
+meta:
+  exportDate: "2025-11-17T12:00:00Z"
+  purpose: "Claude Life Coach - Habit Analysis"
+  period:
+    habits: "All time"
+    reflections: "Last 30 days"
+    weeklyContext: "Last 8 weeks"
 
-  habits:
-    - name: "Morning Meditation"
-      type: "daily"
-      completion_rate: 0.85
-      current_streak: 12
-      best_streak: 28
+habits:
+  - id: "habit1"
+    name: "Morning Meditation"
+    type: "duration"
+    target: "15 min"
+    completionRate30d: 85
+    completionRate90d: 78
+    currentStreak: 12
+    longestStreak: 28
+    tags: ["mindfulness", "morning"]
+    priority: 1
+    difficulty: "medium"
 
-  daily_reflections_summary:
-    avg_mood: 7.2
-    avg_energy: 6.8
-    avg_stress: 5.5
-    avg_sleep: 7.0
+dailyReflections:
+  summary:
+    totalReflections: 25
+    averageMood: 7.2
+    averageEnergy: 6.8
+    averageStress: 5.5
+    averageSleepQuality: 7.0
+    currentStreak: 8
+    completionRate: 83
+  topGratitudes:
+    - "health"
+    - "family"
+    - "work progress"
+  recentEntries:
+    - date: "2025-11-16"
+      mood: 8
+      energy: 7
+      stress: 4
+      sleepQuality: 8
+      gratitude: ["Good workout", "Quality time with family"]
+      notes: "Felt productive today"
 
-  weekly_contexts_latest:
-    fitness: 8
-    career: 6
-    relationships: 7
-    # ... other dimensions
+weeklyContext:
+  latestWeek:
+    weekStart: "2025-11-11"
+    scores:
+      fitness: 8
+      career: 6
+      relationships: 7
+      growth: 5
+      environment: 7
+      fun: 4
+      contribution: 6
+      spirituality: 5
+    balanceScore:
+      overall: 72
+      rating: "Good"
+      weakestDimension: "fun"
+      strongestDimension: "fitness"
+      averageScore: 6.0
+    notes:
+      fun: "Need more leisure time"
+      growth: "Started new online course"
+  recentWeeks:
+    - weekStart: "2025-11-11"
+      fitness: 8
+      career: 6
+      # ... all dimensions
 
-  claude_prompt: |
-    You are a certified life coach analyzing this user's habits and life balance.
+claudePrompt: |
+  # Claude Life Coach - Habit Analysis Instructions
 
-    ANALYSIS CHECKLIST:
-    1. Which life dimensions are thriving? Which need attention?
-    2. Are there correlations between habits and mood/energy?
-    3. Suggest 2-3 new habits to improve weak dimensions
-    4. Recommend timing or frequency adjustments
+  You are an expert life coach and holistic wellness advisor. Analyze the provided habit tracking data and deliver a comprehensive, actionable coaching report.
 
-    Provide specific, actionable advice.
+  ## Your Analysis Should Include:
+
+  1. Executive Summary (2-3 sentences)
+  2. Habit Performance Analysis
+  3. Wheel of Life Balance Assessment
+  4. Daily Reflection Insights
+  5. Holistic Recommendations (Prioritized)
+  6. 4-Week Action Plan
+
+  Be specific, data-driven, and actionable. Avoid generic advice.
 ```
 
-**Technical:**
-- Function: `exportHabitsForClaude()` (`src/lib/habits/export-claude.ts`)
-- Button: Habits page header
-- Estimated effort: 4-6 hours / 5 story points
+**Implementation:**
+- File: `src/lib/habits/export-claude.ts` (245 lines)
+- Functions:
+  - `exportHabitsForClaude(firestore, userId)`: Generates YAML export
+  - `downloadClaudeAnalysisYAML(yamlContent)`: Triggers download
+- UI: ExportDialog component, "Claude Analysis" tab
+- Dependencies: `yaml` package for YAML serialization
+- Data sources: habits, habitLogs, dailyReflections, weeklyContexts collections
+- Completion: November 17, 2025
+- Estimated: 4-6 hours / 5 story points | Actual: ~3 hours
 
 ---
 
-### Function 13.10: Habit Import/Export (Backup) - ❌ Not Started (Stage 6, 0%)
+### Function 13.10: Habit Import/Export (Backup) - ✅ Complete (Stage 6, 100%)
 
 **Purpose:** Export/import habits for backup or sharing.
 
 **Export:**
-- Format: JSON (all habits + last 90 days of logs)
-- Trigger: Settings → Export Habits
-- Download: `zenith-habits-{date}.json`
+- Format: JSON (all habits + last N days of logs, configurable, default 90)
+- Trigger: "Export / Import" button → "Backup Export" tab
+- Download: `habits-backup-{date}.json`
+- Schema: HabitsBackup v2.0 with metadata
 
 **Import:**
-- Upload JSON file
-- Validation: Check schema, prevent duplicates
-- Merge: Add new habits, skip existing (by name)
+- Upload JSON file (drag & drop or file picker)
+- Real-time validation with Zod schema
+- Shows validation errors with details if file is invalid
+- Merge strategy:
+  - **Habits:** Add new habits (skip duplicates by name, case-insensitive)
+  - **Logs:** Add logs for imported habits (skip duplicates by habitId + date)
+- Displays import results: habits added/skipped, logs added/skipped, errors
 
-**Technical:**
-- Functions: `exportHabitsJSON()`, `importHabitsJSON()`
-- Validation: Zod schema
-- Estimated effort: 3-4 hours / 3 story points
+**HabitsBackup Schema:**
+```typescript
+{
+  version: "2.0",
+  exportDate: "2025-11-17T12:00:00Z",
+  habits: [...], // All habits (HabitV2 or HabitLegacy)
+  logs: [...],   // HabitLog[] for specified date range
+  metadata: {
+    totalHabits: 15,
+    totalLogs: 1234,
+    dateRange: {
+      from: "2025-08-19",
+      to: "2025-11-17"
+    }
+  }
+}
+```
+
+**Validation:**
+- Comprehensive Zod schemas for HabitV2, HabitLegacy, HabitLog
+- Validates all fields, types, enums
+- Returns detailed error messages with field paths
+- Example errors: "habits.0.type: Invalid enum value", "logs.5.date: Required"
+
+**Implementation:**
+- File: `src/lib/habits/import-export.ts` (365 lines)
+- Functions:
+  - `exportHabitsJSON(firestore, userId, daysBack)`: Export to JSON
+  - `downloadHabitsBackupJSON(backup)`: Trigger download
+  - `validateHabitsBackup(json)`: Zod validation
+  - `importHabitsJSON(firestore, userId, backup)`: Import with merge strategy
+- UI: ExportDialog component with 3 tabs:
+  - Tab 1: Claude Analysis (YAML export)
+  - Tab 2: Backup Export (JSON export with configurable days)
+  - Tab 3: Import Backup (file upload, validation, import)
+- Dependencies: `zod` for validation, `date-fns` for date filtering
+- Error handling: Try-catch with detailed error reporting
+- Completion: November 17, 2025
+- Estimated: 3-4 hours / 3 story points | Actual: ~2 hours
 
 ---
 
