@@ -1,6 +1,6 @@
 'use client'
 
-import { Activity, Dumbbell, HeartPulse, Target, Sparkles } from 'lucide-react';
+import { Activity, Dumbbell, HeartPulse, Target, Sparkles, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TodaySchedule } from '@/components/today-schedule';
 import { HabitTracker } from '@/components/habit-tracker';
@@ -11,6 +11,7 @@ import { ReflectionTrendsChart } from '@/components/reflection-trends-chart';
 import { WheelOfLifeAssessment } from '@/components/wheel-of-life-assessment';
 import { WheelOfLifeChart } from '@/components/wheel-of-life-chart';
 import { HabitInsightsPanel } from '@/components/habit-insights-panel';
+import { HabitsExportDialog } from '@/components/habits-export-dialog';
 import { useUser } from '@/firebase/auth/use-user';
 import { useUserCollection } from '@/hooks/use-user-collection';
 import { useFirestore } from '@/firebase/provider';
@@ -83,6 +84,7 @@ export default function DashboardPage() {
 
   const [reflectionDialogOpen, setReflectionDialogOpen] = useState(false);
   const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   const weeklyStats = useMemo(() => {
     const now = new Date();
@@ -208,6 +210,15 @@ export default function DashboardPage() {
             <Target className="mr-2 h-4 w-4" />
             {wheelOfLifeData.hasAssessedThisWeek ? 'View Wheel' : 'Life Balance'}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setExportDialogOpen(true)}
+            disabled={!habits || habits.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export/Import
+          </Button>
           <PlanTomorrowDialog />
           <AiOptimizerDialog />
         </div>
@@ -306,6 +317,19 @@ export default function DashboardPage() {
       <WheelOfLifeAssessment
         open={assessmentDialogOpen}
         onOpenChange={setAssessmentDialogOpen}
+      />
+
+      {/* Habits Export/Import Dialog - Stage 6 */}
+      <HabitsExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        habits={habits || []}
+        reflections={reflections || []}
+        weeklyContexts={weeklyContexts || []}
+        onImportComplete={() => {
+          // Trigger refresh of habits (useUserCollection will auto-update)
+          setExportDialogOpen(false);
+        }}
       />
     </div>
   );

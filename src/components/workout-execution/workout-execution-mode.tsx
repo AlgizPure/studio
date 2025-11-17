@@ -11,6 +11,7 @@ import { SetTracker } from './set-tracker';
 import { RestTimer } from './rest-timer';
 import { WorkoutFeedbackDialog } from '@/components/workout-feedback-dialog';
 import { useUserCollection } from '@/hooks/use-user-collection';
+import { createTrace, TraceNames, type Trace } from '@/firebase/performance';
 
 interface WorkoutExecutionModeProps {
   workout: WorkoutExtended;
@@ -49,6 +50,9 @@ export function WorkoutExecutionMode({
   // Трекинг времени для упражнений
   const exerciseStartTimes = useRef<Map<string, number>>(new Map());
 
+  // Performance trace для workout execution
+  const workoutTrace = useRef<Trace | null>(null);
+
   // Timer
   useEffect(() => {
     if (status === 'in_progress' && !isResting) {
@@ -62,6 +66,12 @@ export function WorkoutExecutionMode({
   const handleStart = () => {
     setStatus('in_progress');
     setStartTime(new Date().toISOString());
+
+    // Start performance trace
+    workoutTrace.current = createTrace(TraceNames.WORKOUT_EXECUTION);
+    if (workoutTrace.current) {
+      workoutTrace.current.start();
+    }
   };
 
   const handlePause = () => {
@@ -310,9 +320,28 @@ export function WorkoutExecutionMode({
 
   const handleFeedbackSubmit = (feedback: string, tags: string[]) => {
     if (!pendingLog) return;
+
+    // Stop performance trace with metrics
+    if (workoutTrace.current) {
+      workoutTrace.current.putMetric('duration_minutes', pendingLog.duration || 0);
+      workoutTrace.current.putMetric('total_volume', pendingLog.totalVolume || 0);
+      workoutTrace.current.putMetric('cycles_completed', cycleLogs.length);
+      workoutTrace.current.stop();
+      workoutTrace.current = null;
+    }
+
     onComplete({ ...pendingLog, userFeedback: feedback || undefined, feedbackTags: tags && tags.length ? tags : undefined } as any);
     setPendingLog(null);
     setShowFeedback(false);
+  };
+
+  const handleCancel = () => {
+    // Stop trace if workout is cancelled
+    if (workoutTrace.current) {
+      workoutTrace.current.stop();
+      workoutTrace.current = null;
+    }
+    onCancel();
   };
 
   return (
@@ -397,7 +426,7 @@ export function WorkoutExecutionMode({
           </>
         )}
 
-        <Button onClick={onCancel} variant="ghost" size="icon">
+        <Button onClick={handleCancel} variant="ghost" size="icon">
           <X className="h-4 w-4" />
         </Button>
       </div>
