@@ -50,7 +50,7 @@ export function WorkoutExecutionMode({
   // Трекинг времени для упражнений
   const exerciseStartTimes = useRef<Map<string, number>>(new Map());
 
-  // Performance trace для workout execution
+  // Performance trace for workout execution
   const workoutTrace = useRef<Trace | null>(null);
 
   // Timer

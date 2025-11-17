@@ -7,6 +7,7 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { initializePerformance } from '@/firebase/performance';
 import { logger } from '@/lib/logger';
+import { initializePerformance } from '@/firebase/performance';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
