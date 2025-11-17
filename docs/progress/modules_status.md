@@ -371,24 +371,31 @@
 
 ---
 
-#### 15. Testing & Quality 🟡 20%
+#### 15. Testing & Quality 🟢 34.5%
 **Priority:** MEDIUM
 **Owner:** Core Team
-**Status:** Tooling Setup Complete
+**Status:** Unit Tests 60% Complete
 
 **Implemented Features:**
 - ✅ TypeScript strict mode
 - ✅ ESLint configuration (Next.js + TypeScript)
-- 🟡 Playwright setup (10% - installed, no tests written)
+- 🟡 Playwright setup (10% - configured, tests pending)
+- 🟢 Vitest setup (100% - configured with coverage)
+- 🟢 Unit tests (60% - 60 tests, lib/analytics 63.88% coverage)
+  - ✅ volume.ts: 100% coverage (8 tests)
+  - ✅ muscle-groups.ts: 98.93% coverage (20 tests)
+  - ✅ statistics.ts: 95.72% coverage (19 tests)
+  - ✅ habits.ts: 28.37% coverage (7 tests)
+  - ✅ reflections.ts: 54.8% coverage (6 tests)
 
-**Remaining (80%):**
-- ❌ E2E tests (Playwright - 5 critical flows)
-- ❌ Unit tests (Vitest - utilities, business logic)
-- ❌ Integration tests (API routes, components)
+**Remaining (65.5%):**
+- ❌ E2E tests (Playwright - 5 critical flows) - 31.5% remaining
+- 🟡 Unit tests (Vitest) - 14% remaining (ZTL, date utils, additional coverage)
+- ❌ Integration tests (API routes, components) - 20% remaining
 
-**Files:** `tsconfig.json`, `.eslintrc.json`, `playwright.config.ts`
+**Files:** `vitest.config.ts`, `tests/setup.ts`, `tests/unit/**/*.test.ts`
 
-**Target Completion:** Comprehensive test coverage (36 story points remaining)
+**Target Completion:** Comprehensive test coverage (remaining ~26 story points)
 
 ---
 

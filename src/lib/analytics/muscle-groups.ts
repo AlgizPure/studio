@@ -63,6 +63,16 @@ export type VolumeDistributionData = {
 export function getExerciseMuscleGroup(exerciseName: string): MuscleGroup {
   const name = exerciseName.toLowerCase();
 
+  // Leg exercises (check first to avoid "leg press" matching "press")
+  if (name.includes('squat') || name.includes('leg') || name.includes('lunge') || name.includes('calf')) {
+    return 'Legs';
+  }
+
+  // Shoulder exercises (check before back to avoid "lateral" matching "lat")
+  if (name.includes('shoulder') || name.includes('lateral') || name.includes('overhead') || name.includes('military')) {
+    return 'Shoulders';
+  }
+
   // Chest exercises
   if (name.includes('bench') || name.includes('chest') || name.includes('fly') || name.includes('press') && !name.includes('shoulder')) {
     return 'Chest';
@@ -71,16 +81,6 @@ export function getExerciseMuscleGroup(exerciseName: string): MuscleGroup {
   // Back exercises
   if (name.includes('row') || name.includes('pull') || name.includes('lat') || name.includes('deadlift')) {
     return 'Back';
-  }
-
-  // Leg exercises
-  if (name.includes('squat') || name.includes('leg') || name.includes('lunge') || name.includes('calf')) {
-    return 'Legs';
-  }
-
-  // Shoulder exercises
-  if (name.includes('shoulder') || name.includes('lateral') || name.includes('overhead') || name.includes('military')) {
-    return 'Shoulders';
   }
 
   // Arm exercises
