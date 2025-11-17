@@ -10,6 +10,7 @@ import { DailyReflectionDialog } from '@/components/daily-reflection-dialog';
 import { ReflectionTrendsChart } from '@/components/reflection-trends-chart';
 import { WheelOfLifeAssessment } from '@/components/wheel-of-life-assessment';
 import { WheelOfLifeChart } from '@/components/wheel-of-life-chart';
+import { HabitInsightsPanel } from '@/components/habit-insights-panel';
 import { useUser } from '@/firebase/auth/use-user';
 import { useUserCollection } from '@/hooks/use-user-collection';
 import { useFirestore } from '@/firebase/provider';
@@ -285,6 +286,13 @@ export default function DashboardPage() {
             assessment={wheelOfLifeData.currentAssessment}
             previousAssessment={wheelOfLifeData.previousAssessment}
           />
+        </div>
+      )}
+
+      {/* AI Habit Insights - Stage 5 */}
+      {(habits && habits.length > 0) && (
+        <div className="mt-4">
+          <HabitInsightsPanel autoLoad={true} weeksBack={8} />
         </div>
       )}
 

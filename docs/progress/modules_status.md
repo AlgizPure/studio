@@ -200,10 +200,10 @@
 
 ### 🟡 IN PROGRESS MODULES (2/15)
 
-#### 13. Habit Tracker 2.0 🟡 70%
+#### 13. Habit Tracker 2.0 🟡 80%
 **Priority:** HIGH
 **Owner:** Core Team
-**Status:** Core + Stages 3-4 Complete, Stages 5-6 Pending
+**Status:** Core + Stages 3-5 Complete, Stage 6 Pending
 
 **Implemented Features:**
 - ✅ Core habit system (4 types: daily, weekly, count, duration)
@@ -229,9 +229,17 @@
   - Summary stats (average, strongest, weakest areas)
   - Dimension breakdown with week-over-week changes
   - Auto-generated insights
+- ✅ AI Insights for Habits (Stage 5 - Nov 16, 2025)
+  - Gemini-powered pattern detection
+  - 5 insight types: correlation, weak_spot, suggestion, timing, achievement
+  - Analyzes last 8 weeks of habits + reflections + life balance
+  - Mock fallback when AI unavailable
+  - 24-hour caching per user
+  - Priority badges (high/medium/low)
+  - Auto-load option
+  - Actionable recommendations
 
-**Remaining (30%):**
-- ❌ AI Insights (Stage 5)
+**Remaining (20%):**
 - ❌ Claude Integration (Stage 6)
 - ❌ Export/Import (Stage 6)
 
@@ -248,12 +256,18 @@
   - `src/components/wheel-of-life-assessment.tsx`
   - `src/components/wheel-of-life-chart.tsx`
   - `src/app/page.tsx` (integrated)
+- **Stage 5:**
+  - `src/ai/flows/habit-insights.ts`
+  - `src/app/api/ai/habit-insights/route.ts`
+  - `src/components/habit-insights-panel.tsx`
+  - `src/app/page.tsx` (integrated)
 
-**Target Completion:** Stages 5-6 (16 story points remaining)
+**Target Completion:** Stage 6 (8 story points remaining)
 
 **Completion Dates:**
 - Stage 3: November 16, 2025
 - Stage 4: November 16, 2025
+- Stage 5: November 16, 2025
 
 ---
 
@@ -396,7 +410,7 @@
 - ✅ ZTL (100%)
 - ✅ AI Integration (100% - Stages 4.2.1 + 4.2.2 complete, Nov 16)
 - ✅ Analytics (100% - Function 9.7 complete, Nov 16)
-- 🟡 Habit Tracker 2.0 (70% - Stages 3-4 complete, Nov 16)
+- 🟡 Habit Tracker 2.0 (80% - Stages 3-5 complete, Nov 16)
 
 **High Priority Status:** 3/4 complete (75%)
 
@@ -432,12 +446,12 @@
    - Actual: ~2 hours (under 6-8h estimate!)
 
 ### Medium-term (Next 3-6 Months)
-1. Habit Tracker 2.0 Stages 3-6 (Partially Complete)
+1. Habit Tracker 2.0 Stages 3-6 (Mostly Complete)
    - ✅ Stage 3: Daily Reflection - COMPLETED (Nov 16, 2025, ~2 hours)
    - ✅ Stage 4: Context Systems (Wheel of Life) - COMPLETED (Nov 16, 2025, ~2.5 hours)
-   - ❌ Stage 5: AI Insights (estimated 6-8 hours)
+   - ✅ Stage 5: AI Insights - COMPLETED (Nov 16, 2025, ~2 hours)
    - ❌ Stage 6: Claude Integration + Export/Import (estimated 7-10 hours)
-   - Remaining: 13-18 hours (vs 31-42h original estimate)
+   - Remaining: 7-10 hours (vs 31-42h original estimate)
 2. Performance Monitoring
    - Firebase Performance SDK
    - Estimated: 8-12 hours
