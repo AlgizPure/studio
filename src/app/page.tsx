@@ -8,6 +8,9 @@ import { AiOptimizerDialog } from '@/components/ai-optimizer-dialog';
 import { PlanTomorrowDialog } from '@/components/plan-tomorrow-dialog';
 import { DailyReflectionDialog } from '@/components/daily-reflection-dialog';
 import { ReflectionTrendsChart } from '@/components/reflection-trends-chart';
+import { WheelOfLifeAssessment } from '@/components/wheel-of-life-assessment';
+import { WheelOfLifeChart } from '@/components/wheel-of-life-chart';
+import { HabitInsightsPanel } from '@/components/habit-insights-panel';
 import { useUser } from '@/firebase/auth/use-user';
 import { useUserCollection } from '@/hooks/use-user-collection';
 import { useFirestore } from '@/firebase/provider';
@@ -15,12 +18,13 @@ import type { AppUser } from '@/firebase/auth/use-user';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { startOfWeek, isWithinInterval, isToday, isYesterday, formatISO } from 'date-fns';
-import type { Exercise, Habit, WorkoutExtended, DailyReflection } from '@/lib/types';
+import type { Exercise, Habit, WorkoutExtended, DailyReflection, WeeklyContext } from '@/lib/types';
 import { useMemo, useEffect, useState } from 'react';
 import { doc, updateDoc, type Firestore } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { hasReflectedToday } from '@/lib/reflections';
+import { getWeekStart } from '@/lib/wheel-of-life';
 
 function updateStreak(user: AppUser, firestore: Firestore, anyActivityCompletedToday: boolean) {
     if (!user || !firestore) return;
@@ -75,8 +79,10 @@ export default function DashboardPage() {
   const { data: habits } = useUserCollection<Habit>('habits');
   const { data: workouts } = useUserCollection<WorkoutExtended>('workouts');
   const { data: reflections } = useUserCollection<DailyReflection>('dailyReflections');
+  const { data: weeklyContexts } = useUserCollection<WeeklyContext>('weeklyContexts');
 
   const [reflectionDialogOpen, setReflectionDialogOpen] = useState(false);
+  const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
 
   const weeklyStats = useMemo(() => {
     const now = new Date();
@@ -117,6 +123,25 @@ export default function DashboardPage() {
     const workoutCompleted = (exercises || []).some(ex => ex.lastCompleted && isToday(new Date(ex.lastCompleted)));
     return habitCompleted || workoutCompleted;
   }, [habits, exercises]);
+
+  const wheelOfLifeData = useMemo(() => {
+    const currentWeek = getWeekStart(new Date());
+    const contexts = weeklyContexts || [];
+
+    // Sort by week start (most recent first)
+    const sorted = contexts.sort((a, b) =>
+      new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime()
+    );
+
+    const currentAssessment = sorted.find(c => c.weekStart === currentWeek);
+    const previousAssessment = sorted.find(c => c.weekStart !== currentWeek);
+
+    return {
+      currentAssessment,
+      previousAssessment,
+      hasAssessedThisWeek: !!currentAssessment,
+    };
+  }, [weeklyContexts]);
 
   useEffect(() => {
     if (user && firestore) {
@@ -174,6 +199,14 @@ export default function DashboardPage() {
           >
             <Sparkles className="mr-2 h-4 w-4" />
             {hasReflectedToday(reflections || []) ? 'View Reflection' : 'Daily Reflection'}
+          </Button>
+          <Button
+            variant={wheelOfLifeData.hasAssessedThisWeek ? "outline" : "default"}
+            size="sm"
+            onClick={() => setAssessmentDialogOpen(true)}
+          >
+            <Target className="mr-2 h-4 w-4" />
+            {wheelOfLifeData.hasAssessedThisWeek ? 'View Wheel' : 'Life Balance'}
           </Button>
           <PlanTomorrowDialog />
           <AiOptimizerDialog />
@@ -246,10 +279,33 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Wheel of Life Chart - Stage 4 */}
+      {wheelOfLifeData.currentAssessment && (
+        <div className="mt-4">
+          <WheelOfLifeChart
+            assessment={wheelOfLifeData.currentAssessment}
+            previousAssessment={wheelOfLifeData.previousAssessment}
+          />
+        </div>
+      )}
+
+      {/* AI Habit Insights - Stage 5 */}
+      {(habits && habits.length > 0) && (
+        <div className="mt-4">
+          <HabitInsightsPanel autoLoad={true} weeksBack={8} />
+        </div>
+      )}
+
       {/* Daily Reflection Dialog */}
       <DailyReflectionDialog
         open={reflectionDialogOpen}
         onOpenChange={setReflectionDialogOpen}
+      />
+
+      {/* Wheel of Life Assessment Dialog - Stage 4 */}
+      <WheelOfLifeAssessment
+        open={assessmentDialogOpen}
+        onOpenChange={setAssessmentDialogOpen}
       />
     </div>
   );
