@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { createTrace, TraceNames } from '@/firebase/performance';
 
 /** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
@@ -70,7 +71,13 @@ export function useCollection<T = any>(
     }
 
     setIsLoading(true);
-    
+
+    // Start performance trace for Firestore query
+    const trace = createTrace(TraceNames.FIRESTORE_QUERY);
+    if (trace) {
+      trace.start();
+    }
+
     const unsubscribe = onSnapshot(
       memoizedTargetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
@@ -78,6 +85,12 @@ export function useCollection<T = any>(
         setData(results);
         setError(null);
         setIsLoading(false);
+
+        // Stop trace on success
+        if (trace) {
+          trace.putMetric('document_count', snapshot.docs.length);
+          trace.stop();
+        }
       },
       (err: FirestoreError) => {
         const path: string =
@@ -93,6 +106,11 @@ export function useCollection<T = any>(
         setError(contextualError);
         setData(null);
         setIsLoading(false);
+
+        // Stop trace on error
+        if (trace) {
+          trace.stop();
+        }
 
         errorEmitter.emit('permission-error', contextualError);
       }
