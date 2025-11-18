@@ -82,30 +82,35 @@ describe('Muscle Groups Analytics', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: new Date().toISOString(),
+          startTime: new Date().toISOString(),
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  exerciseName: 'Bench Press',
                   sets: [
-                    { setNumber: 1, reps: 10, weight: 100, completed: true },
-                    { setNumber: 2, reps: 10, weight: 100, completed: true },
+                    { setNumber: 1, reps: 10, weight: 100, completed: true, timestamp: '2025-11-17T10:00:00Z' },
+                    { setNumber: 2, reps: 10, weight: 100, completed: true, timestamp: '2025-11-17T10:05:00Z' },
                   ],
+                  skipped: false,
                 },
                 {
                   exerciseId: 'ex2',
-                  exerciseName: 'Squat',
                   sets: [
-                    { setNumber: 1, reps: 8, weight: 150, completed: true },
+                    { setNumber: 1, reps: 8, weight: 150, completed: true, timestamp: '2025-11-17T10:10:00Z' },
                   ],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: new Date().toISOString(),
@@ -139,20 +144,25 @@ describe('Muscle Groups Analytics', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: oldDate.toISOString(),
+          startTime: oldDate.toISOString(),
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  exerciseName: 'Bench Press',
-                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true, timestamp: '2025-11-17T10:00:00Z' }],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: oldDate.toISOString(),
@@ -173,23 +183,28 @@ describe('Muscle Groups Analytics', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: new Date().toISOString(),
+          startTime: new Date().toISOString(),
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  exerciseName: 'Bench Press',
                   sets: [
-                    { setNumber: 1, reps: 10, weight: 100, completed: true },
-                    { setNumber: 2, reps: 10, weight: 100, completed: false }, // Not completed
+                    { setNumber: 1, reps: 10, weight: 100, completed: true, timestamp: '2025-11-17T10:00:00Z' },
+                    { setNumber: 2, reps: 10, weight: 100, completed: false, timestamp: '2025-11-17T10:05:00Z' }, // Not completed
                   ],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: new Date().toISOString(),
@@ -211,25 +226,30 @@ describe('Muscle Groups Analytics', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: new Date().toISOString(),
+          startTime: new Date().toISOString(),
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  exerciseName: 'Bench Press',
-                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true, timestamp: '2025-11-17T10:00:00Z' }],
+                  skipped: false,
                 },
                 {
                   exerciseId: 'ex2',
-                  exerciseName: 'Barbell Row',
-                  sets: [{ setNumber: 1, reps: 10, weight: 80, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 80, completed: true, timestamp: '2025-11-17T10:00:00Z' }],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: new Date().toISOString(),
@@ -281,25 +301,30 @@ describe('Muscle Groups Analytics', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: new Date().toISOString(),
+          startTime: new Date().toISOString(),
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  exerciseName: 'Bench Press',
-                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true }], // 1000 kg
+                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true, timestamp: '2025-11-17T10:00:00Z' }], // 1000 kg
+                  skipped: false,
                 },
                 {
                   exerciseId: 'ex2',
-                  exerciseName: 'Squat',
-                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true }], // 1000 kg
+                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true, timestamp: '2025-11-17T10:05:00Z' }], // 1000 kg
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: new Date().toISOString(),
@@ -325,30 +350,35 @@ describe('Muscle Groups Analytics', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: new Date().toISOString(),
+          startTime: new Date().toISOString(),
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  exerciseName: 'Bench Press', // Push (Chest)
-                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true, timestamp: '2025-11-17T10:00:00Z' }],
+                  skipped: false,
                 },
                 {
                   exerciseId: 'ex2',
-                  exerciseName: 'Barbell Row', // Pull (Back)
-                  sets: [{ setNumber: 1, reps: 10, weight: 80, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 80, completed: true, timestamp: '2025-11-17T10:05:00Z' }],
+                  skipped: false,
                 },
                 {
                   exerciseId: 'ex3',
-                  exerciseName: 'Squat', // Legs
-                  sets: [{ setNumber: 1, reps: 10, weight: 120, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 120, completed: true, timestamp: '2025-11-17T10:10:00Z' }],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: new Date().toISOString(),
@@ -402,25 +432,30 @@ describe('Muscle Groups Analytics', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: new Date().toISOString(),
+          startTime: new Date().toISOString(),
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  exerciseName: 'Bench Press', // Push
-                  sets: [{ setNumber: 1, reps: 10, weight: 50, completed: true }], // 500 kg
+                  sets: [{ setNumber: 1, reps: 10, weight: 50, completed: true, timestamp: '2025-11-17T10:00:00Z' }], // 500 kg
+                  skipped: false,
                 },
                 {
                   exerciseId: 'ex2',
-                  exerciseName: 'Barbell Row', // Pull
-                  sets: [{ setNumber: 1, reps: 10, weight: 50, completed: true }], // 500 kg
+                  sets: [{ setNumber: 1, reps: 10, weight: 50, completed: true, timestamp: '2025-11-17T10:05:00Z' }], // 500 kg
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: new Date().toISOString(),

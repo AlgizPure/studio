@@ -21,11 +21,12 @@ export default defineConfig({
         'src/components/ui/**', // Shadcn UI components (no need to test)
         'src/components/import-ai-recommendations-example.tsx', // Parse error in coverage
       ],
-      all: true,
-      statements: 40,
-      branches: 40,
-      functions: 40,
-      lines: 40,
+      thresholds: {
+        statements: 40,
+        branches: 40,
+        functions: 40,
+        lines: 40,
+      },
     },
   },
   resolve: {

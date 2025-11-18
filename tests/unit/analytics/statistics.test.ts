@@ -41,10 +41,13 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-15',
+          startTime: '2025-11-15T10:00:00Z',
           duration: 60,
+          status: 'completed',
           totalVolume: 1000,
           cycles: [],
           createdAt: '2025-11-15T10:00:00Z',
@@ -52,10 +55,13 @@ describe('Statistics Utilities', () => {
         },
         {
           id: '2',
+          workoutId: 'workout2',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-16',
+          startTime: '2025-11-16T10:00:00Z',
           duration: 45,
+          status: 'completed',
           totalVolume: 800,
           cycles: [],
           createdAt: '2025-11-16T10:00:00Z',
@@ -85,10 +91,13 @@ describe('Statistics Utilities', () => {
       // Create many workouts to test consistency cap
       const workouts: WorkoutLog[] = Array.from({ length: 100 }, (_, i) => ({
         id: `${i}`,
+        workoutId: `workout${i}`,
         userId: 'user1',
         programId: 'prog1',
         date: `2025-11-${(i % 30) + 1}`,
+        startTime: `2025-11-${(i % 30) + 1}T10:00:00Z`,
         duration: 60,
+        status: 'completed' as const,
         totalVolume: 1000,
         cycles: [],
         createdAt: `2025-11-${(i % 30) + 1}T10:00:00Z`,
@@ -111,10 +120,13 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-17', // Monday
+          startTime: '2025-11-17T10:00:00Z',
           duration: 60,
+          status: 'completed',
           totalVolume: 1000,
           cycles: [],
           createdAt: '2025-11-17T10:00:00Z',
@@ -122,10 +134,13 @@ describe('Statistics Utilities', () => {
         },
         {
           id: '2',
+          workoutId: 'workout2',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-18', // Tuesday
+          startTime: '2025-11-18T10:00:00Z',
           duration: 45,
+          status: 'completed',
           totalVolume: 800,
           cycles: [],
           createdAt: '2025-11-18T10:00:00Z',
@@ -155,10 +170,13 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-17', // Monday
+          startTime: '2025-11-17T10:00:00Z',
           duration: 60,
+          status: 'completed',
           totalVolume: 1000,
           cycles: [],
           createdAt: '2025-11-17T10:00:00Z',
@@ -166,10 +184,13 @@ describe('Statistics Utilities', () => {
         },
         {
           id: '2',
+          workoutId: 'workout2',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-17', // Monday (same day)
+          startTime: '2025-11-17T14:00:00Z',
           duration: 45,
+          status: 'completed',
           totalVolume: 800,
           cycles: [],
           createdAt: '2025-11-17T14:00:00Z',
@@ -189,10 +210,13 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-17', // Monday only
+          startTime: '2025-11-17T10:00:00Z',
           duration: 60,
+          status: 'completed',
           totalVolume: 1000,
           cycles: [],
           createdAt: '2025-11-17T10:00:00Z',
@@ -214,23 +238,28 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-15',
+          startTime: '2025-11-15T10:00:00Z',
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'bench-press',
-                  exerciseName: 'Bench Press',
                   sets: [
-                    { setNumber: 1, reps: 10, weight: 100, completed: true },
-                    { setNumber: 2, reps: 8, weight: 110, completed: true },
+                    { setNumber: 1, reps: 10, weight: 100, completed: true, timestamp: '2025-11-15T10:10:00Z' },
+                    { setNumber: 2, reps: 8, weight: 110, completed: true, timestamp: '2025-11-15T10:15:00Z' },
                   ],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: '2025-11-15T10:00:00Z',
@@ -254,20 +283,25 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-15',
+          startTime: '2025-11-15T10:00:00Z',
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  exerciseName: '',
-                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true, timestamp: '2025-11-15T10:10:00Z' }],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: '2025-11-15T10:00:00Z',
@@ -285,19 +319,25 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-15',
+          startTime: '2025-11-15T10:00:00Z',
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true, timestamp: '2025-11-15T10:10:00Z' }],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: '2025-11-15T10:00:00Z',
@@ -305,19 +345,25 @@ describe('Statistics Utilities', () => {
         },
         {
           id: '2',
+          workoutId: 'workout2',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-16',
+          startTime: '2025-11-16T10:00:00Z',
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  sets: [{ setNumber: 1, reps: 8, weight: 120, completed: true }], // Higher weight
+                  sets: [{ setNumber: 1, reps: 8, weight: 120, completed: true, timestamp: '2025-11-16T10:10:00Z' }], // Higher weight
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: '2025-11-16T10:00:00Z',
@@ -336,27 +382,35 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-15',
+          startTime: '2025-11-15T10:00:00Z',
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  sets: [{ setNumber: 1, reps: 10, weight: 50, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 50, completed: true, timestamp: '2025-11-15T10:10:00Z' }],
+                  skipped: false,
                 },
                 {
                   exerciseId: 'ex2',
-                  sets: [{ setNumber: 1, reps: 10, weight: 150, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 150, completed: true, timestamp: '2025-11-15T10:15:00Z' }],
+                  skipped: false,
                 },
                 {
                   exerciseId: 'ex3',
-                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 100, completed: true, timestamp: '2025-11-15T10:20:00Z' }],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: '2025-11-15T10:00:00Z',
@@ -377,23 +431,29 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-15',
+          startTime: '2025-11-15T10:00:00Z',
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
                   sets: [
-                    { setNumber: 1, reps: 10, weight: 100, rpe: 7, completed: true },
-                    { setNumber: 2, reps: 10, weight: 100, rpe: 8, completed: true },
-                    { setNumber: 3, reps: 10, weight: 100, rpe: 8, completed: true },
+                    { setNumber: 1, reps: 10, weight: 100, rpe: 7, completed: true, timestamp: '2025-11-15T10:10:00Z' },
+                    { setNumber: 2, reps: 10, weight: 100, rpe: 8, completed: true, timestamp: '2025-11-15T10:15:00Z' },
+                    { setNumber: 3, reps: 10, weight: 100, rpe: 8, completed: true, timestamp: '2025-11-15T10:20:00Z' },
                   ],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: '2025-11-15T10:00:00Z',
@@ -432,22 +492,28 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-15',
+          startTime: '2025-11-15T10:00:00Z',
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
                   sets: [
-                    { setNumber: 1, reps: 10, weight: 100, rpe: 7, completed: true },
-                    { setNumber: 2, reps: 10, weight: 100, rpe: 9, completed: false }, // Incomplete
+                    { setNumber: 1, reps: 10, weight: 100, rpe: 7, completed: true, timestamp: '2025-11-15T10:10:00Z' },
+                    { setNumber: 2, reps: 10, weight: 100, rpe: 9, completed: false, timestamp: '2025-11-15T10:15:00Z' }, // Incomplete
                   ],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: '2025-11-15T10:00:00Z',
@@ -468,22 +534,28 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-15',
+          startTime: '2025-11-15T10:00:00Z',
           duration: 60,
+          status: 'completed',
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
                   sets: [
-                    { setNumber: 1, reps: 10, weight: 100, rpe: 7.4, completed: true }, // Rounds to 7
-                    { setNumber: 2, reps: 10, weight: 100, rpe: 7.6, completed: true }, // Rounds to 8
+                    { setNumber: 1, reps: 10, weight: 100, rpe: 7.4, completed: true, timestamp: '2025-11-15T10:10:00Z' }, // Rounds to 7
+                    { setNumber: 2, reps: 10, weight: 100, rpe: 7.6, completed: true, timestamp: '2025-11-15T10:15:00Z' }, // Rounds to 8
                   ],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: '2025-11-15T10:00:00Z',
@@ -506,20 +578,26 @@ describe('Statistics Utilities', () => {
       const workouts: WorkoutLog[] = [
         {
           id: '1',
+          workoutId: 'workout1',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-15',
+          startTime: '2025-11-15T10:00:00Z',
           duration: 60,
+          status: 'completed',
           totalVolume: 1000,
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  sets: [{ setNumber: 1, reps: 10, weight: 100, rpe: 7, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 100, rpe: 7, completed: true, timestamp: '2025-11-15T10:10:00Z' }],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: '2025-11-15T10:00:00Z',
@@ -527,20 +605,26 @@ describe('Statistics Utilities', () => {
         },
         {
           id: '2',
+          workoutId: 'workout2',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-16',
+          startTime: '2025-11-16T10:00:00Z',
           duration: 45,
+          status: 'completed',
           totalVolume: 800,
           cycles: [
             {
+              cycleId: 'cycle1',
               cycleNumber: 1,
               exercises: [
                 {
                   exerciseId: 'ex1',
-                  sets: [{ setNumber: 1, reps: 10, weight: 80, rpe: 8, completed: true }],
+                  sets: [{ setNumber: 1, reps: 10, weight: 80, rpe: 8, completed: true, timestamp: '2025-11-16T10:10:00Z' }],
+                  skipped: false,
                 },
               ],
+              completed: true,
             },
           ],
           createdAt: '2025-11-16T10:00:00Z',
@@ -548,10 +632,13 @@ describe('Statistics Utilities', () => {
         },
         {
           id: '3',
+          workoutId: 'workout3',
           userId: 'user1',
           programId: 'prog1',
           date: '2025-11-20', // Outside period
+          startTime: '2025-11-20T10:00:00Z',
           duration: 50,
+          status: 'completed',
           totalVolume: 900,
           cycles: [],
           createdAt: '2025-11-20T10:00:00Z',

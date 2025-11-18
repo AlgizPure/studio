@@ -140,7 +140,7 @@ describe('Volume Calculations', () => {
               {
                 exerciseId: 'plank',
                 sets: [
-                  { setNumber: 1, durationSeconds: 60, completed: true, timestamp: '2025-11-17T10:10:00Z' }, // No weight/reps
+                  { setNumber: 1, reps: 0, completed: true, timestamp: '2025-11-17T10:10:00Z' }, // No weight/reps (duration exercise)
                 ],
                 skipped: false,
               },
@@ -165,7 +165,7 @@ describe('Volume Calculations', () => {
         startTime: '2025-11-17T10:00:00Z',
         endTime: '2025-11-17T10:05:00Z',
         duration: 5,
-        status: 'cancelled',
+        status: 'completed',
         cycles: [],
         createdAt: '2025-11-17T10:00:00Z',
         updatedAt: '2025-11-17T10:05:00Z',
